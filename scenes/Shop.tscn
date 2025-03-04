@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://c5xwt8xhd2n38"]
+
+[ext_resource type="Script" uid="uid://dwj7hptsb5md3" path="res://scripts/Shop.gd" id="1_s8mw1"]
+[ext_resource type="Texture2D" uid="uid://dd237utbpbqnc" path="res://assets/sprites/shop.png" id="2_2c8fp"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_l4h82"]
+size = Vector2(64, 64)
+
+[node name="Shop" type="StaticBody2D"]
+script = ExtResource("1_s8mw1")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_2c8fp")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_l4h82")
+
+[node name="RestockTimer" type="Timer" parent="."]
+wait_time = 10.0
+one_shot = true

@@ -1,0 +1,71 @@
+.
+├── assets
+│   └── sprites
+│       ├── house_farm.png
+│       ├── house_farm.png.import
+│       ├── house_large.png
+│       ├── house_large.png.import
+│       ├── house_medium.png
+│       ├── house_medium.png.import
+│       ├── house.png
+│       ├── house.png.import
+│       ├── house_small.png
+│       ├── house_small.png.import
+│       ├── light.png
+│       ├── light.png.import
+│       ├── shop.png
+│       ├── shop.png.import
+│       ├── terrain.png
+│       ├── terrain.png.import
+│       ├── Terrain_tilset.tres
+│       ├── villager.png
+│       └── villager.png.import
+├── default_env.tres
+├── directory.layout.txt
+├── godot4-conversion.txt
+├── project.godot
+├── project.godot.bak
+├── scenes
+│   ├── House.tscn
+│   ├── Main.tscn
+│   ├── Shop.tscn
+│   ├── Villager.tscn
+│   └── Village.tscn
+└── scripts
+    ├── Building.gd
+    ├── Building.gd.uid
+    ├── CameraController.gd
+    ├── CameraController.gd.uid
+    ├── CreateTileset.gd
+    ├── CreateTileset.gd.uid
+    ├── GameManager.gd
+    ├── GameManager.gd.bak
+    ├── GameManager.gd.uid
+    ├── House.gd
+    ├── House.gd.uid
+    ├── HTTPResponse.gd
+    ├── HTTPResponse.gd.uid
+    ├── HTTPServer.gd
+    ├── HTTPServer.gd.uid
+    ├── Main.gd
+    ├── Main.gd.uid
+    ├── Navigation.gd
+    ├── Navigation.gd.uid
+    ├── NavigationManager.gd
+    ├── NavigationManager.gd.uid
+    ├── Shop.gd
+    ├── Shop.gd.uid
+    ├── UI.gd
+    ├── UI.gd.uid
+    ├── Village.gd
+    ├── Village.gd.bak
+    ├── Village.gd.bak2
+    ├── Village.gd.uid
+    ├── Villager.gd
+    ├── Villager.gd.bak
+    ├── Villager.gd.bak2
+    ├── Villager.gd.bak3
+    ├── Villager.gd.complete_backup
+    └── Villager.gd.uid
+
+5 directories, 64 files

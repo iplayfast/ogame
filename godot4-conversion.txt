@@ -1,0 +1,180 @@
+# Changes needed for Godot 4.3 compatibility
+
+### 1. Villager.gd Changes
+# extends KinematicBody2D → extends CharacterBody2D
+# move_and_slide(velocity) → move_and_slide()
+# rand_range() → randf_range()
+# randi() % x → randi() % x (unchanged)
+
+# Villager.gd (partial - showing key changes)
+extends CharacterBody2D
+
+# Movement changes
+func _physics_process(delta):
+    if current_state == State.WALKING and path.size() > 0:
+        var target = path[0]
+        var direction = (target - position).normalized()
+        velocity = direction * speed
+        
+        # Move and check if reached waypoint
+        move_and_slide()
+        if position.distance_to(target) < 5:
+            # rest of the function unchanged
+
+# Random number generation changes
+func generate_random_name():
+    var first_names = ["John", "Emma", "Liu", "Fatima", "Carlos", "Sofia", "Raj", "Olga"]
+    var last_names = ["Smith", "Garcia", "Chen", "Patel", "Müller", "Kowalski", "Kim", "Okafor"]
+    return first_names[randi() % first_names.size()] + " " + last_names[randi() % last_names.size()]
+
+func go_to_random_place():
+    # Navigate to a random location in the village
+    var village_size = get_parent().get_village_size()
+    var random_pos = Vector2(
+        randf_range(50, village_size.x - 50),
+        randf_range(50, village_size.y - 50)
+    )
+    navigate_to(random_pos)
+
+### 2. Building.gd Changes
+# extends StaticBody2D → extends StaticBody2D (unchanged)
+# $Sprite.texture.get_size() → $Sprite2D.texture.get_size()
+
+# Building.gd (partial)
+func get_rect():
+    var size = $Sprite2D.texture.get_size() * $Sprite2D.scale
+    return Rect2(position - size/2, size)
+
+### 3. CameraController.gd Changes
+# extends Camera2D → extends Camera2D (unchanged)
+# Button constants: BUTTON_WHEEL_UP → MOUSE_BUTTON_WHEEL_UP
+# Key constants: KEY_SPACE → KEY_SPACE or use Input.is_action_just_pressed()
+
+# CameraController.gd (partial)
+func _input(event):
+    # Handle mouse wheel for zoom
+    if event is InputEventMouseButton:
+        if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+            # Zoom in
+            zoom = Vector2(max(min_zoom, zoom.x - zoom_speed), max(min_zoom, zoom.y - zoom_speed))
+            get_tree().set_input_as_handled()
+        elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+            # Zoom out
+            zoom = Vector2(min(max_zoom, zoom.x + zoom_speed), min(max_zoom, zoom.y + zoom_speed))
+            get_tree().set_input_as_handled()
+        elif event.button_index == MOUSE_BUTTON_MIDDLE:
+            # Middle mouse button for pan
+            if event.pressed:
+                dragging = true
+                drag_start = position
+                drag_current = get_global_mouse_position()
+            else:
+                dragging = false
+    
+    # Handle key presses
+    elif event is InputEventKey and event.pressed:
+        if event.keycode == KEY_SPACE:
+            # Reset zoom
+            zoom = Vector2.ONE
+        elif event.keycode == KEY_ESCAPE:
+            # Stop following
+            following = false
+
+### 4. HTTPServer.gd and HTTPResponse.gd Changes
+# TCP_Server → TCPServer
+# Instance function changes: instance() → instantiate()
+
+# HTTPServer.gd (partial)
+func _ready():
+    set_process(true)
+
+func start():
+    var err = server.listen(port)
+    if err != OK:
+        print("Error starting server: ", err)
+        return false
+    
+    print("REST API server started on port ", port)
+    return true
+
+### 5. Village.gd Changes
+# PackedScene instantiation: scene.instance() → scene.instantiate()
+# API connection - note that Godot 4.3 has HTTPRequest built-in
+
+# Village.gd (partial)
+func generate_buildings():
+    # Generate houses
+    for i in range(num_houses):
+        var house = house_scene.instantiate()
+        var pos = find_valid_position(house.get_node("Sprite2D").texture.get_size())
+        house.position = pos
+        house.name = "House_" + str(i)
+        add_child(house)
+        buildings.append(house)
+    
+    # Generate shops
+    for i in range(num_shops):
+        var shop = shop_scene.instantiate()
+        var pos = find_valid_position(shop.get_node("Sprite2D").texture.get_size())
+        shop.position = pos
+        shop.name = "Shop_" + str(i)
+        add_child(shop)
+        buildings.append(shop)
+
+### 6. UI.gd Changes
+# onready var → @onready var
+# signals → signal keyword and connection changes
+
+# UI.gd (partial)
+# References to UI elements
+@onready var villager_panel = $VillagerInfoPanel
+@onready var building_panel = $BuildingInfoPanel
+@onready var debug_panel = $DebugPanel
+@onready var time_label = $TimeDisplay
+@onready var minimap = $Minimap
+
+func _ready():
+    # Initialize panels
+    hide_all_panels()
+    
+    # Connect UI signals
+    $VillagerInfoPanel/CloseButton.pressed.connect(hide_all_panels)
+    $BuildingInfoPanel/CloseButton.pressed.connect(hide_all_panels)
+    $DebugPanel/CloseButton.pressed.connect(toggle_debug_panel)
+    
+    # Connect follow button
+    $VillagerInfoPanel/FollowButton.pressed.connect(_on_follow_button_pressed)
+
+### 7. Main.gd Changes
+# scene loading and instantiation
+
+# Main.gd (partial)
+func _deferred_load_village():
+    current_scene.queue_free()
+    var village_scene = load("res://scenes/Village.tscn")
+    current_scene = village_scene.instantiate()
+    get_tree().root.add_child(current_scene)
+    get_tree().current_scene = current_scene
+
+### 8. Project.godot Configuration
+# Update main scene path and correct syntax
+
+# project.godot configuration:
+# [application]
+# config/name="Village Simulation"
+# run/main_scene="res://scenes/Main.tscn"
+# config/features=PackedStringArray("4.3")
+
+### 9. Signal Connection Changes
+# All connect() calls now use the new syntax
+# Old: node.connect("signal_name", self, "_on_signal_name")
+# New: node.signal_name.connect(_on_signal_name)
+
+# Example from Villager.gd
+func _ready():
+    # Find navigation node
+    navigation = get_parent().get_node("Navigation2D")
+    
+    # Start daily routine
+    $Timer.timeout.connect(_on_timer_timeout)
+    $Timer.start(1.0)  # Update state every second
