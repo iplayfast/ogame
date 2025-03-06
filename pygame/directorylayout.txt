@@ -1,0 +1,53 @@
+.
+├── asset-generator.py
+├── asset_loader.py
+├── assets
+│   ├── buildings
+│   │   ├── building_medium_3.png
+│   │   ├── building_medium_4.png
+│   │   ├── building_small_1.png
+│   │   ├── building_small_2.png
+│   │   └── roofs
+│   │       ├── roof_medium_3.png
+│   │       ├── roof_medium_4.png
+│   │       ├── roof_small_1.png
+│   │       └── roof_small_2.png
+│   ├── characters
+│   │   ├── villager_1.png
+│   │   ├── villager_2.png
+│   │   ├── villager_3.png
+│   │   ├── villager_4.png
+│   │   └── villager_5.png
+│   ├── environment
+│   │   ├── grass_1.png
+│   │   ├── grass_2.png
+│   │   ├── grass_3.png
+│   │   ├── path_1.png
+│   │   ├── path_2.png
+│   │   ├── tree_1.png
+│   │   ├── tree_2.png
+│   │   ├── tree_3.png
+│   │   ├── tree_4.png
+│   │   ├── tree_5.png
+│   │   ├── water_frame_1.png
+│   │   ├── water_frame_2.png
+│   │   ├── water_frame_3.png
+│   │   └── water_frame_4.png
+│   └── ui
+│       ├── dialog_template.png
+│       ├── icon_energy.png
+│       ├── icon_health.png
+│       ├── icon_money.png
+│       └── icon_mood.png
+├── console_manager.py
+├── directorylayout.txt
+├── game.py
+├── readme.md
+├── renderer.py
+├── time_manager.py
+├── ui_manager.py
+├── village_generator.py
+├── villager_module.py
+└── villager.py
+
+7 directories, 44 files
