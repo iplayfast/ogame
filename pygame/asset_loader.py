@@ -27,22 +27,38 @@ def load_assets():
         except pygame.error as e:
             print(f"Warning: Could not load villager_{i}.png - {e}")
     
-    # Load buildings and roofs
+    # Load buildings and roofs - MODIFIED to match the naming convention in topdown-asset-generator.py
+    building_types = ["house", "tavern", "shop", "blacksmith", "bakery"]
+    
     for size in ['small', 'medium', 'large']:
-        for i in range(1, 5):  # 4 variations
-            building_key = f'{size}_{i}'
-            try:
-                building_path = f'assets/buildings/building_{building_key}.png'
+        for building_type in building_types:
+            for i in range(1, 5):  # 4 variations per type
+                building_path = f'assets/buildings/building_{size}_{building_type}_{i}.png'
                 if os.path.exists(building_path):
-                    assets['buildings'][building_key] = pygame.image.load(building_path).convert_alpha()
-                    print(f"Loaded {building_path}")
+                    # Use a consistent key format that works with both old and new conventions
+                    # We'll use a format that matches how buildings are stored in village_data
+                    key = f"{size}_{building_type}_{i}"
+                    assets['buildings'][key] = pygame.image.load(building_path).convert_alpha()
+                    print(f"Loaded {building_path} as {key}")
                 
-                roof_path = f'assets/buildings/roofs/roof_{building_key}.png'
+                # Also check for the old naming convention for backward compatibility
+                old_building_path = f'assets/buildings/building_{size}_{i}.png'
+                if os.path.exists(old_building_path):
+                    key = f"{size}_{i}"
+                    assets['buildings'][key] = pygame.image.load(old_building_path).convert_alpha()
+                    print(f"Loaded {old_building_path} as {key}")
+                
+                # Check for roof assets
+                roof_path = f'assets/buildings/roofs/roof_{size}_{i}.png'
                 if os.path.exists(roof_path):
-                    assets['buildings']['roofs'][building_key] = pygame.image.load(roof_path).convert_alpha()
+                    assets['buildings']['roofs'][f'{size}_{i}'] = pygame.image.load(roof_path).convert_alpha()
                     print(f"Loaded {roof_path}")
-            except pygame.error as e:
-                print(f"Warning: Could not load building or roof for {building_key} - {e}")
+    
+    # Debug: Print all building keys that were loaded
+    print(f"Loaded {len(assets['buildings'])} building assets (excluding roofs):")
+    for key in assets['buildings'].keys():
+        if key != 'roofs':
+            print(f"  - {key}")
     
     # Load environment assets
     for i in range(1, 6):  # 5 tree variations

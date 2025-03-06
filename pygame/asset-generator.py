@@ -3,7 +3,7 @@ import random
 import os
 import numpy as np
 import math
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter, ImageEnhance
 import colorsys
 
 # Initialize pygame
@@ -22,22 +22,51 @@ def create_directories():
     for directory in directories:
         os.makedirs(directory, exist_ok=True)
 
-# Color palettes for various asset types
+# Enhanced color palettes for more visual variety
 PALETTES = {
     "character_skin": [(255, 220, 178), (255, 213, 164), (255, 200, 159), 
                       (240, 184, 135), (222, 165, 118), (198, 134, 66),
                       (172, 112, 61), (147, 85, 45)],
     "character_hair": [(43, 29, 14), (67, 44, 13), (113, 65, 25), 
-                      (143, 89, 30), (175, 136, 74), (211, 188, 141)],
+                      (143, 89, 30), (175, 136, 74), (211, 188, 141),
+                      (70, 35, 10), (30, 20, 10), (120, 80, 30)],
     "character_clothes": [(45, 49, 66), (86, 90, 105), (152, 93, 93), 
                          (65, 90, 119), (102, 141, 60), (222, 110, 75),
-                         (241, 175, 78), (31, 138, 112)],
-    "building_walls": [(240, 217, 181), (219, 182, 151), (236, 229, 206),
-                      (204, 174, 145), (176, 166, 147), (157, 132, 109)],
-    "building_roofs": [(172, 89, 74), (140, 76, 54), (92, 62, 42),
-                      (109, 79, 51), (140, 118, 84)],
-    "environment_green": [(62, 137, 72), (94, 153, 84), (138, 178, 125),
-                         (49, 135, 118), (83, 160, 121)]
+                         (241, 175, 78), (31, 138, 112), (180, 50, 50),
+                         (50, 100, 150), (100, 60, 120), (160, 130, 50)],
+    # Enhanced building wall colors
+    "building_walls": [
+        (240, 217, 181), (219, 182, 151), (236, 229, 206),
+        (204, 174, 145), (176, 166, 147), (157, 132, 109),
+        (220, 200, 180), (200, 185, 160), (180, 160, 140),
+        (160, 145, 120), (240, 230, 215), (230, 210, 180),
+        (210, 190, 170), (190, 170, 150), (170, 150, 130)
+    ],
+    # Enhanced roof colors for more variety
+    "building_roofs": [
+        (172, 89, 74), (140, 76, 54), (92, 62, 42),
+        (109, 79, 51), (140, 118, 84), (160, 100, 80),
+        (130, 65, 50), (100, 70, 45), (80, 55, 35),
+        (120, 85, 55), (150, 125, 90), (170, 110, 90),
+        (80, 50, 40), (110, 80, 60), (60, 40, 30)
+    ],
+    # More varied greens for environment
+    "environment_green": [
+        (62, 137, 72), (94, 153, 84), (138, 178, 125),
+        (49, 135, 118), (83, 160, 121), (30, 100, 50),
+        (70, 140, 60), (110, 170, 90), (35, 120, 70),
+        (60, 130, 100), (90, 150, 70), (40, 110, 60)
+    ],
+    # New decorative element colors
+    "decorations": [
+        (180, 120, 70),  # Wood
+        (200, 200, 210), # Metal
+        (160, 40, 30),   # Rust
+        (220, 220, 180), # Cream
+        (160, 180, 200), # Light blue
+        (190, 150, 110), # Tan
+        (150, 70, 50),   # Terracotta
+    ]
 }
 
 # Function to create character sprites (48x48 px)
@@ -148,22 +177,28 @@ def generate_character_sprites(num_variations=5):
         character.save(filename)
         print(f"Generated character: {filename}")
 
-# Function to generate buildings (96x96 to 192x192 px)
+# Function to generate buildings (scaled 3x from the original)
 def generate_buildings(num_variations=4):
     for i in range(num_variations):
         # Randomize building size
         building_type = random.choice(["small", "medium", "large"])
         
+        # Scale base sizes by 3x
         if building_type == "small":
-            base_size = 96
+            base_size = 96 * 3  # 288
         elif building_type == "medium":
-            base_size = 128
+            base_size = 128 * 3  # 384
         else:
-            base_size = 192
+            base_size = 192 * 3  # 576
         
         # Create base building image
         building = Image.new('RGBA', (base_size, base_size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(building)
+        
+        # Determine building style
+        building_style = random.choice([
+            "cottage", "house", "shop", "tavern", "workshop"
+        ])
         
         # Wall color
         wall_color = random.choice(PALETTES["building_walls"])
@@ -178,11 +213,23 @@ def generate_buildings(num_variations=4):
                        structure_pos[0] + structure_width, structure_pos[1] + structure_height], 
                        fill=wall_color)
         
+        # Add foundation if desired (slightly darker than wall)
+        if random.random() > 0.3:  # 70% chance
+            foundation_height = base_size // 20
+            foundation_color = (
+                max(0, wall_color[0] - 30),
+                max(0, wall_color[1] - 30),
+                max(0, wall_color[2] - 30)
+            )
+            draw.rectangle([structure_pos[0], structure_pos[1] + structure_height - foundation_height,
+                           structure_pos[0] + structure_width, structure_pos[1] + structure_height],
+                           fill=foundation_color)
+        
         # Add windows and door
-        num_windows = random.randint(2, 5)
+        num_windows = random.randint(4, 8)  # More windows for larger buildings
         window_size = base_size // 12
         door_width = base_size // 8
-        door_height = base_size // 6
+        door_height = base_size // 5
         
         # Door position (centered on bottom)
         door_pos = (structure_pos[0] + (structure_width - door_width) // 2,
@@ -192,9 +239,17 @@ def generate_buildings(num_variations=4):
                        door_pos[0] + door_width, door_pos[1] + door_height], 
                        fill=door_color)
         
+        # Door details
+        # Door frame
+        frame_color = (min(255, door_color[0] + 30), min(255, door_color[1] + 30), min(255, door_color[2] + 30))
+        frame_width = 2
+        draw.rectangle([door_pos[0] - frame_width, door_pos[1] - frame_width,
+                       door_pos[0] + door_width + frame_width, door_pos[1] + door_height + frame_width],
+                       outline=frame_color, width=frame_width)
+        
         # Door handle
         handle_pos = (door_pos[0] + door_width * 3 // 4, door_pos[1] + door_height // 2)
-        handle_size = 2
+        handle_size = 4  # Larger handle
         draw.ellipse([handle_pos[0] - handle_size, handle_pos[1] - handle_size,
                      handle_pos[0] + handle_size, handle_pos[1] + handle_size],
                      fill=(200, 200, 200))
@@ -203,21 +258,29 @@ def generate_buildings(num_variations=4):
         window_positions = []
         window_margin = base_size // 16
         
-        # Determine window row positions (1 or 2 rows)
-        window_rows = 1 if building_type == "small" else random.randint(1, 2)
+        # Determine window row positions (1, 2, or 3 rows for larger buildings)
+        window_rows = 1 if building_type == "small" else (
+                      2 if building_type == "medium" else 3)
         
+        row_positions = []
         if window_rows == 1:
-            row_y = structure_pos[1] + structure_height // 3
-            row_positions = [row_y]
+            row_positions = [structure_pos[1] + structure_height // 3]
+        elif window_rows == 2:
+            row_positions = [
+                structure_pos[1] + structure_height // 4,
+                structure_pos[1] + structure_height * 2 // 4
+            ]
         else:
-            row1_y = structure_pos[1] + structure_height // 4
-            row2_y = structure_pos[1] + structure_height // 2
-            row_positions = [row1_y, row2_y]
+            row_positions = [
+                structure_pos[1] + structure_height // 5,
+                structure_pos[1] + structure_height * 2 // 5,
+                structure_pos[1] + structure_height * 3 // 5
+            ]
         
         # Distribute windows
         for row_y in row_positions:
             # Determine number of windows for this row
-            row_windows = random.randint(2, 3) if building_type == "small" else random.randint(2, 4)
+            row_windows = random.randint(2, 3) if building_type == "small" else random.randint(3, 5)
             
             # Position windows evenly
             for w in range(row_windows):
@@ -230,20 +293,79 @@ def generate_buildings(num_variations=4):
                 window_x = structure_pos[0] + segment_width * (w + 1) - window_size // 2
                 window_positions.append((window_x, row_y))
         
-        # Draw windows
+        # Add shutters to some windows
+        has_shutters = random.random() > 0.5
+        shutter_color = random.choice([
+            (120, 80, 40),  # Brown
+            (60, 80, 40),   # Dark green
+            (80, 40, 40),   # Dark red
+            (40, 60, 80)    # Dark blue
+        ])
+        
+        # Draw windows with possible shutters
         for wx, wy in window_positions:
             window_color = (173, 216, 230, 200)  # Light blue, slightly transparent
+            
+            # Window styles
+            window_style = random.choice(["plain", "cross", "lattice"])
+            
+            # Draw the window
             draw.rectangle([wx, wy, wx + window_size, wy + window_size], fill=window_color)
             
             # Window frame
             frame_color = (255, 255, 255)
-            frame_width = 1
+            frame_width = 2
             draw.rectangle([wx - frame_width, wy - frame_width, 
                            wx + window_size + frame_width, wy + window_size + frame_width], 
                            outline=frame_color, width=frame_width)
+            
+            # Window details based on style
+            if window_style == "cross":
+                # Cross pattern
+                draw.line([(wx, wy + window_size // 2), (wx + window_size, wy + window_size // 2)],
+                          fill=frame_color, width=1)
+                draw.line([(wx + window_size // 2, wy), (wx + window_size // 2, wy + window_size)],
+                          fill=frame_color, width=1)
+            elif window_style == "lattice":
+                # Lattice pattern
+                for j in range(3):
+                    offset = window_size * j // 3
+                    draw.line([(wx, wy + offset), (wx + window_size, wy + offset)],
+                              fill=frame_color, width=1)
+                    draw.line([(wx + offset, wy), (wx + offset, wy + window_size)],
+                              fill=frame_color, width=1)
+            
+            # Add shutters if enabled
+            if has_shutters:
+                shutter_width = window_size // 2
+                shutter_height = window_size + 4
+                
+                # Left shutter
+                draw.rectangle([wx - shutter_width - 2, wy - 2,
+                               wx - 2, wy + shutter_height - 2],
+                               fill=shutter_color)
+                
+                # Right shutter
+                draw.rectangle([wx + window_size + 2, wy - 2,
+                               wx + window_size + shutter_width + 2, wy + shutter_height - 2],
+                               fill=shutter_color)
+                
+                # Shutter details (horizontal slats)
+                for j in range(3):
+                    offset = shutter_height * j // 4
+                    # Left shutter slats
+                    draw.line([(wx - shutter_width - 2, wy + offset),
+                              (wx - 2, wy + offset)],
+                              fill=(0, 0, 0), width=1)
+                    # Right shutter slats
+                    draw.line([(wx + window_size + 2, wy + offset),
+                              (wx + window_size + shutter_width + 2, wy + offset)],
+                              fill=(0, 0, 0), width=1)
         
-        # Add some texture to walls
-        for _ in range(100):
+        # Add architectural details
+        
+        # 1. Wall texture
+        for _ in range(500):  # More texture points for larger buildings
             px = random.randint(structure_pos[0], structure_pos[0] + structure_width)
             py = random.randint(structure_pos[1], structure_pos[1] + structure_height)
             
@@ -266,445 +388,188 @@ def generate_buildings(num_variations=4):
                 )
                 draw.point((px, py), fill=texture_color)
         
+        # 2. Add details based on building style
+        if building_style == "cottage":
+            # Flower boxes under some windows
+            for wx, wy in window_positions:
+                if random.random() > 0.6:  # 40% chance for a flower box
+                    box_width = window_size + 8
+                    box_height = window_size // 3
+                    box_x = wx - 4
+                    box_y = wy + window_size + 2
+                    
+                    # Draw box
+                    box_color = random.choice(PALETTES["decorations"])
+                    draw.rectangle([box_x, box_y, box_x + box_width, box_y + box_height],
+                                  fill=box_color)
+                    
+                    # Draw flowers
+                    for _ in range(3):
+                        flower_x = box_x + random.randint(4, box_width - 4)
+                        flower_y = box_y + 2
+                        flower_color = (
+                            random.randint(200, 255),
+                            random.randint(100, 255),
+                            random.randint(100, 255)
+                        )
+                        flower_size = random.randint(3, 5)
+                        draw.ellipse([flower_x - flower_size, flower_y - flower_size,
+                                     flower_x + flower_size, flower_y + flower_size],
+                                     fill=flower_color)
+        
+        elif building_style == "tavern":
+            # Sign
+            sign_width = door_width * 3 // 2
+            sign_height = door_width // 2
+            sign_x = door_pos[0] - sign_width // 4
+            sign_y = door_pos[1] - sign_height - 8
+            
+            # Sign backing
+            sign_color = random.choice(PALETTES["decorations"])
+            draw.rectangle([sign_x, sign_y, sign_x + sign_width, sign_y + sign_height],
+                          fill=sign_color)
+            
+            # Sign outline
+            sign_border = (
+                max(0, sign_color[0] - 50),
+                max(0, sign_color[1] - 50),
+                max(0, sign_color[2] - 50)
+            )
+            draw.rectangle([sign_x, sign_y, sign_x + sign_width, sign_y + sign_height],
+                          outline=sign_border, width=2)
+            
+            # Sign support
+            support_width = 4
+            support_height = 12
+            support_x = sign_x + sign_width // 2 - support_width // 2
+            support_y = sign_y + sign_height
+            draw.rectangle([support_x, support_y, support_x + support_width, support_y + support_height],
+                          fill=sign_border)
+            
+            # Sign symbol (mug)
+            mug_color = (255, 240, 200)  # Cream color
+            mug_x = sign_x + sign_width // 2
+            mug_y = sign_y + sign_height // 2
+            mug_size = min(sign_width, sign_height) // 3
+            draw.ellipse([mug_x - mug_size, mug_y - mug_size,
+                         mug_x + mug_size, mug_y + mug_size],
+                         fill=mug_color)
+        
+        elif building_style == "shop" or building_style == "workshop":
+            # Awning over door
+            awning_width = door_width * 2
+            awning_height = door_width // 2
+            awning_x = door_pos[0] - awning_width // 4
+            awning_y = door_pos[1] - awning_height
+            
+            # Awning color
+            awning_color = random.choice([
+                (180, 50, 50),  # Red
+                (50, 100, 180), # Blue
+                (180, 150, 50), # Yellow
+                (50, 150, 80)   # Green
+            ])
+            
+            # Draw awning (trapezoid shape)
+            awning_points = [
+                (awning_x, awning_y),
+                (awning_x + awning_width, awning_y),
+                (awning_x + awning_width + awning_width // 8, awning_y + awning_height),
+                (awning_x - awning_width // 8, awning_y + awning_height)
+            ]
+            draw.polygon(awning_points, fill=awning_color)
+            
+            # Awning stripes
+            stripe_color = (
+                max(0, awning_color[0] - 50),
+                max(0, awning_color[1] - 50),
+                max(0, awning_color[2] - 50)
+            )
+            
+            for i in range(1, 4):
+                stripe_y = awning_y + awning_height * i // 4
+                draw.line([(awning_x - awning_width // 8 * i // 4, stripe_y),
+                          (awning_x + awning_width + awning_width // 8 * i // 4, stripe_y)],
+                          fill=stripe_color, width=2)
+        
+        # Add chimney to some buildings
+        if random.random() > 0.5:  # 50% chance
+            chimney_width = base_size // 16
+            chimney_height = base_size // 10
+            chimney_x = random.randint(structure_pos[0] + structure_width // 4, 
+                                      structure_pos[0] + structure_width * 3 // 4 - chimney_width)
+            chimney_y = structure_pos[1] - chimney_height // 2
+            
+            chimney_color = (120, 100, 90)  # Stone/brick color
+            draw.rectangle([chimney_x, chimney_y, 
+                           chimney_x + chimney_width, structure_pos[1]],
+                           fill=chimney_color)
+            
+            # Chimney top
+            chimney_top_width = chimney_width + 4
+            chimney_top_height = 6
+            draw.rectangle([chimney_x - 2, chimney_y, 
+                           chimney_x + chimney_width + 2, chimney_y + chimney_top_height],
+                           fill=(80, 70, 60))
+            
+            # Smoke (if building is active)
+            if random.random() > 0.5:  # 50% chance of smoke
+                smoke_color = (220, 220, 220, 150)  # Light gray, semi-transparent
+                smoke_x = chimney_x + chimney_width // 2
+                for i in range(3):
+                    smoke_y = chimney_y - 10 - i * 8
+                    smoke_size = 8 + i * 4
+                    draw.ellipse([smoke_x - smoke_size // 2, smoke_y - smoke_size // 2,
+                                 smoke_x + smoke_size // 2, smoke_y + smoke_size // 2],
+                                 fill=smoke_color)
+        
+        # Apply a subtle shadow/highlight effect
+        building_array = np.array(building)
+        # Light comes from top-left, so add highlights to top/left edges and shadows to bottom/right edges
+        
+        # Create and save the final building
+        final_building = Image.fromarray(building_array)
+        
+        # Add a slight blur to soften the image
+        if random.random() > 0.5:  # 50% chance for a subtle blur
+            final_building = final_building.filter(ImageFilter.GaussianBlur(radius=0.5))
+        
         # Save building
         filename = f"assets/buildings/building_{building_type}_{i+1}.png"
-        building.save(filename)
+        final_building.save(filename)
         print(f"Generated building: {filename}")
         
         # Generate matching roof
-        roof = Image.new('RGBA', (base_size, base_size), (0, 0, 0, 0))
-        roof_draw = ImageDraw.Draw(roof)
-        
-        # Roof style
-        roof_style = random.choice(["flat", "pitched", "pyramid"])
-        roof_color = random.choice(PALETTES["building_roofs"])
-        
-        if roof_style == "flat":
-            # Simple flat roof
-            roof_draw.rectangle([structure_pos[0], structure_pos[1], 
-                               structure_pos[0] + structure_width, structure_pos[1] + structure_height],
-                               fill=roof_color)
-            
-            # Add some details like vents or a chimney
-            if random.random() > 0.5:
-                chimney_width = base_size // 16
-                chimney_height = base_size // 12
-                chimney_x = structure_pos[0] + random.randint(0, structure_width - chimney_width)
-                chimney_y = structure_pos[1] + random.randint(0, structure_height - chimney_height)
-                roof_draw.rectangle([chimney_x, chimney_y, 
-                                   chimney_x + chimney_width, chimney_y + chimney_height],
-                                   fill=(100, 100, 100))
-            
-        elif roof_style == "pitched":
-            # Pitched roof (simple triangle)
-            roof_height = structure_height // 2
-            
-            # Create a polygon for the roof
-            roof_points = [
-                (structure_pos[0], structure_pos[1] + structure_height),  # Bottom left
-                (structure_pos[0] + structure_width // 2, structure_pos[1]),  # Top center
-                (structure_pos[0] + structure_width, structure_pos[1] + structure_height)  # Bottom right
-            ]
-            roof_draw.polygon(roof_points, fill=roof_color)
-            
-        elif roof_style == "pyramid":
-            # Pyramid roof for square buildings
-            peak_height = structure_height // 2
-            
-            # Create a polygon for each face of the pyramid
-            # Front face
-            front_face = [
-                (structure_pos[0], structure_pos[1] + structure_height),  # Bottom left
-                (structure_pos[0] + structure_width // 2, structure_pos[1] + structure_height - peak_height),  # Top center
-                (structure_pos[0] + structure_width, structure_pos[1] + structure_height)  # Bottom right
-            ]
-            roof_draw.polygon(front_face, fill=roof_color)
-            
-            # Add shading to give 3D effect
-            darker_roof = (
-                max(0, roof_color[0] - 30),
-                max(0, roof_color[1] - 30),
-                max(0, roof_color[2] - 30)
-            )
-            
-            # Left face (darker for shading)
-            left_face = [
-                (structure_pos[0], structure_pos[1]),  # Top left
-                (structure_pos[0] + structure_width // 2, structure_pos[1] + structure_height - peak_height),  # Top center
-                (structure_pos[0], structure_pos[1] + structure_height)  # Bottom left
-            ]
-            roof_draw.polygon(left_face, fill=darker_roof)
-        
-        # Save roof
-        roof_filename = f"assets/buildings/roofs/roof_{building_type}_{i+1}.png"
-        roof.save(roof_filename)
-        print(f"Generated roof: {roof_filename}")
+        generate_matching_roof(final_building, base_size, building_type, i+1)
 
-# Function to generate environmental elements
-def generate_environment():
-    # Generate trees (64x64 px)
-    for i in range(5):
-        tree_size = 64
-        tree = Image.new('RGBA', (tree_size, tree_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(tree)
+def generate_matching_roof(building_image, base_size, building_type, index):
+    """Generate a roof that matches the building."""
+    roof = Image.new('RGBA', (base_size, base_size), (0, 0, 0, 0))
+    roof_draw = ImageDraw.Draw(roof)
+    
+    # Structure dimensions (match with building)
+    structure_width = base_size * 7 // 8
+    structure_height = base_size * 7 // 8
+    structure_pos = ((base_size - structure_width) // 2, (base_size - structure_height) // 2)
+    
+    # Roof style
+    roof_style = random.choice(["flat", "pitched", "pyramid", "mansard", "hipped"])
+    roof_color = random.choice(PALETTES["building_roofs"])
+    
+    if roof_style == "flat":
+        # Simple flat roof
+        roof_draw.rectangle([structure_pos[0], structure_pos[1], 
+                           structure_pos[0] + structure_width, structure_pos[1] + structure_height],
+                           fill=roof_color)
         
-        # Tree trunk
-        trunk_width = tree_size // 8
-        trunk_height = tree_size // 2
-        trunk_pos = (tree_size // 2 - trunk_width // 2, tree_size - trunk_height)
-        
-        trunk_color = (139, 69, 19)  # Brown
-        # Vary the trunk color slightly
-        trunk_color = (
-            max(0, min(255, trunk_color[0] + random.randint(-20, 20))),
-            max(0, min(255, trunk_color[1] + random.randint(-10, 10))),
-            max(0, min(255, trunk_color[2] + random.randint(-10, 10)))
-        )
-        
-        draw.rectangle([trunk_pos[0], trunk_pos[1], 
-                       trunk_pos[0] + trunk_width, trunk_pos[1] + trunk_height], 
-                       fill=trunk_color)
-        
-        # Tree foliage
-        foliage_style = random.choice(["round", "pine", "oak"])
-        foliage_color = random.choice(PALETTES["environment_green"])
-        
-        # Add some variation to the foliage color
-        foliage_color = (
-            max(0, min(255, foliage_color[0] + random.randint(-15, 15))),
-            max(0, min(255, foliage_color[1] + random.randint(-15, 15))),
-            max(0, min(255, foliage_color[2] + random.randint(-15, 15)))
-        )
-        
-        if foliage_style == "round":
-            # Simple round canopy
-            canopy_size = tree_size * 2 // 3
-            canopy_pos = (tree_size // 2 - canopy_size // 2, tree_size // 8)
-            draw.ellipse([canopy_pos[0], canopy_pos[1], 
-                         canopy_pos[0] + canopy_size, canopy_pos[1] + canopy_size], 
-                         fill=foliage_color)
+        # Add some details like vents or a chimney
+        if random.random() > 0.5:
+            # Roof access or skylight
+            feature_width = base_size // 12
+            feature_height = base_size // 12
+            feature_x = structure_pos[0] + random.randint(feature_width, structure_width - 2*feature_width)
+            feature_y = structure_pos[1] + random.randint(feature_height, structure_height - 2*feature_height)
             
-        elif foliage_style == "pine":
-            # Triangular pine tree
-            triangle_width = tree_size * 2 // 3
-            triangle_height = tree_size * 2 // 3
-            
-            # Multiple layers of triangles
-            layers = random.randint(2, 3)
-            for layer in range(layers):
-                layer_y = tree_size // 2 - triangle_height + (triangle_height // layers) * layer
-                layer_width = triangle_width - (triangle_width // 4) * layer
-                
-                triangle_points = [
-                    (tree_size // 2 - layer_width // 2, layer_y + triangle_height // layers),  # Bottom left
-                    (tree_size // 2, layer_y),  # Top center
-                    (tree_size // 2 + layer_width // 2, layer_y + triangle_height // layers)  # Bottom right
-                ]
-                
-                draw.polygon(triangle_points, fill=foliage_color)
-                
-        elif foliage_style == "oak":
-            # More complex tree shape with irregular canopy
-            center_x, center_y = tree_size // 2, tree_size // 3
-            radius = tree_size // 3
-            
-            # Create several overlapping circles for an irregular shape
-            for _ in range(5):
-                offset_x = random.randint(-radius // 3, radius // 3)
-                offset_y = random.randint(-radius // 3, radius // 3)
-                circle_size = random.randint(radius - 5, radius + 5)
-                
-                draw.ellipse([center_x - circle_size // 2 + offset_x, 
-                             center_y - circle_size // 2 + offset_y,
-                             center_x + circle_size // 2 + offset_x, 
-                             center_y + circle_size // 2 + offset_y], 
-                             fill=foliage_color)
-        
-        # Save tree
-        filename = f"assets/environment/tree_{i+1}.png"
-        tree.save(filename)
-        print(f"Generated tree: {filename}")
-    
-    # Generate grass/bush tiles (32x32 px)
-    for i in range(3):
-        grass_size = 32
-        grass = Image.new('RGBA', (grass_size, grass_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(grass)
-        
-        # Base grass color
-        base_color = random.choice(PALETTES["environment_green"])
-        
-        # Fill the tile with the base color
-        draw.rectangle([0, 0, grass_size, grass_size], fill=(100, 200, 100, 100))
-        
-        # Add grass blades or bushes
-        if i == 0:  # Simple grass
-            for _ in range(20):
-                start_x = random.randint(0, grass_size)
-                start_y = random.randint(grass_size // 2, grass_size)
-                end_x = start_x + random.randint(-5, 5)
-                end_y = start_y - random.randint(5, 15)
-                
-                # Vary the grass color slightly
-                blade_color = (
-                    max(0, min(255, base_color[0] + random.randint(-20, 20))),
-                    max(0, min(255, base_color[1] + random.randint(-20, 20))),
-                    max(0, min(255, base_color[2] + random.randint(-20, 20)))
-                )
-                
-                draw.line([start_x, start_y, end_x, end_y], fill=blade_color, width=2)
-                
-        elif i == 1:  # Small bushes
-            for _ in range(3):
-                bush_x = random.randint(4, grass_size - 8)
-                bush_y = random.randint(4, grass_size - 8)
-                bush_size = random.randint(6, 10)
-                
-                # Vary the bush color slightly
-                bush_color = (
-                    max(0, min(255, base_color[0] + random.randint(-20, 20))),
-                    max(0, min(255, base_color[1] + random.randint(-20, 20))),
-                    max(0, min(255, base_color[2] + random.randint(-20, 20)))
-                )
-                
-                draw.ellipse([bush_x, bush_y, bush_x + bush_size, bush_y + bush_size], 
-                            fill=bush_color)
-        
-        else:  # Flowers or detailed grass
-            for _ in range(10):
-                flower_x = random.randint(2, grass_size - 4)
-                flower_y = random.randint(2, grass_size - 4)
-                flower_size = random.randint(2, 4)
-                
-                # Random bright flower colors
-                flower_color = (
-                    random.randint(200, 255),
-                    random.randint(100, 255),
-                    random.randint(100, 255)
-                )
-                
-                draw.ellipse([flower_x, flower_y, 
-                             flower_x + flower_size, flower_y + flower_size], 
-                             fill=flower_color)
-                
-                # Stem
-                stem_color = (0, 100, 0)
-                draw.line([flower_x + flower_size // 2, flower_y + flower_size, 
-                          flower_x + flower_size // 2, flower_y + flower_size + random.randint(2, 6)], 
-                          fill=stem_color, width=1)
-        
-        # Save grass/bush tile
-        filename = f"assets/environment/grass_{i+1}.png"
-        grass.save(filename)
-        print(f"Generated grass/bush: {filename}")
-    
-    # Generate path tiles (32x32 px)
-    for i in range(2):
-        path_size = 32
-        path = Image.new('RGBA', (path_size, path_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(path)
-        
-        # Base path color
-        path_color = (210, 180, 140)  # Tan/dirt color
-        
-        if i == 0:  # Dirt path
-            # Fill with base color
-            draw.rectangle([0, 0, path_size, path_size], fill=path_color)
-            
-            # Add texture with small darker spots
-            for _ in range(30):
-                spot_x = random.randint(0, path_size - 2)
-                spot_y = random.randint(0, path_size - 2)
-                spot_size = random.randint(1, 3)
-                
-                # Darker variation of path color
-                spot_color = (
-                    max(0, path_color[0] - random.randint(20, 40)),
-                    max(0, path_color[1] - random.randint(20, 40)),
-                    max(0, path_color[2] - random.randint(20, 40))
-                )
-                
-                draw.ellipse([spot_x, spot_y, spot_x + spot_size, spot_y + spot_size], 
-                            fill=spot_color)
-        
-        else:  # Stone path
-            # Base color - slightly darker
-            stone_base = (180, 180, 180)
-            draw.rectangle([0, 0, path_size, path_size], fill=stone_base)
-            
-            # Add individual stones
-            for _ in range(10):
-                stone_x = random.randint(0, path_size - 8)
-                stone_y = random.randint(0, path_size - 8)
-                stone_width = random.randint(5, 8)
-                stone_height = random.randint(5, 8)
-                
-                # Stone color variation
-                stone_color = (
-                    random.randint(150, 200),
-                    random.randint(150, 200),
-                    random.randint(150, 200)
-                )
-                
-                # Slightly rounded stone shape
-                draw.rounded_rectangle([stone_x, stone_y, 
-                                      stone_x + stone_width, stone_y + stone_height], 
-                                      radius=2, fill=stone_color)
-                
-                # Add highlight
-                highlight_color = (
-                    min(255, stone_color[0] + 30),
-                    min(255, stone_color[1] + 30),
-                    min(255, stone_color[2] + 30)
-                )
-                
-                # Small highlight on top-left corner
-                draw.rounded_rectangle([stone_x + 1, stone_y + 1, 
-                                      stone_x + 3, stone_y + 3], 
-                                      radius=1, fill=highlight_color)
-        
-        # Save path tile
-        filename = f"assets/environment/path_{i+1}.png"
-        path.save(filename)
-        print(f"Generated path: {filename}")
-    
-    # Generate water tiles (32x32 px, multiple frames for animation)
-    water_size = 32
-    num_frames = 4
-    
-    for frame in range(num_frames):
-        water = Image.new('RGBA', (water_size, water_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(water)
-        
-        # Base water color
-        water_color = (64, 164, 223, 200)  # Blue with transparency
-        
-        # Fill with base color
-        draw.rectangle([0, 0, water_size, water_size], fill=water_color)
-        
-        # Add wave patterns based on frame
-        wave_offset = frame * (math.pi / 2)
-        
-        for y in range(water_size):
-            for x in range(water_size):
-                # Create wave pattern using sine functions
-                wave1 = math.sin((x / water_size * 4 * math.pi) + wave_offset) * 10
-                wave2 = math.sin((y / water_size * 3 * math.pi) + wave_offset) * 10
-                
-                wave_value = (wave1 + wave2) / 2
-                
-                # Adjust pixel alpha based on wave
-                pixel_alpha = int(200 + wave_value)
-                pixel_alpha = max(150, min(230, pixel_alpha))
-                
-                # Vary the blue slightly
-                blue_variation = int(200 + wave_value)
-                blue_variation = max(180, min(240, blue_variation))
-                
-                pixel_color = (64, 164, blue_variation, pixel_alpha)
-                
-                # Apply the pixel color if it differs from base
-                if pixel_color != water_color:
-                    water.putpixel((x, y), pixel_color)
-        
-        # Save water frame
-        filename = f"assets/environment/water_frame_{frame+1}.png"
-        water.save(filename)
-        print(f"Generated water frame: {filename}")
-
-# Generate UI elements
-def generate_ui_elements():
-    # Status icons (16x16 px)
-    icons = [
-        ("health", (255, 0, 0)),    # Red heart
-        ("energy", (0, 200, 255)),  # Blue energy
-        ("mood", (255, 255, 0)),    # Yellow mood
-        ("money", (0, 200, 0))      # Green money
-    ]
-    
-    for icon_name, icon_color in icons:
-        icon_size = 16
-        icon = Image.new('RGBA', (icon_size, icon_size), (0, 0, 0, 0))
-        draw = ImageDraw.Draw(icon)
-        
-        if icon_name == "health":
-            # Heart shape
-            heart_points = [
-                (icon_size//2, icon_size//4),
-                (icon_size//4, icon_size//2),
-                (icon_size//2, 3*icon_size//4),
-                (3*icon_size//4, icon_size//2)
-            ]
-            draw.polygon(heart_points, fill=icon_color)
-            
-        elif icon_name == "energy":
-            # Lightning bolt
-            bolt_points = [
-                (icon_size//2, 2),
-                (icon_size-4, icon_size//2),
-                (icon_size//2, icon_size//2),
-                (4, icon_size-2)
-            ]
-            draw.polygon(bolt_points, fill=icon_color)
-            
-        elif icon_name == "mood":
-            # Smiley face
-            draw.ellipse([2, 2, icon_size-2, icon_size-2], outline=icon_color, width=2)
-            # Eyes
-            draw.ellipse([4, 5, 6, 7], fill=icon_color)
-            draw.ellipse([icon_size-6, 5, icon_size-4, 7], fill=icon_color)
-            # Smile
-            draw.arc([4, 4, icon_size-4, icon_size-4], 0, 180, fill=icon_color, width=2)
-            
-        elif icon_name == "money":
-            # Coin
-            draw.ellipse([2, 2, icon_size-2, icon_size-2], fill=icon_color)
-            # "$" symbol
-            draw.line([(icon_size//2, 4), (icon_size//2, icon_size-4)], fill=(255, 255, 255), width=2)
-            draw.line([(icon_size//2-2, 5), (icon_size//2+2, 5)], fill=(255, 255, 255), width=1)
-            draw.line([(icon_size//2-2, icon_size-5), (icon_size//2+2, icon_size-5)], fill=(255, 255, 255), width=1)
-        
-        # Save icon
-        filename = f"assets/ui/icon_{icon_name}.png"
-        icon.save(filename)
-        print(f"Generated UI icon: {filename}")
-    
-    # Dialog box template (resizable, 9-slice)
-    dialog_size = 64
-    dialog = Image.new('RGBA', (dialog_size, dialog_size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(dialog)
-    
-    # Background with transparency
-    background_color = (50, 50, 50, 220)
-    draw.rectangle([0, 0, dialog_size, dialog_size], fill=background_color)
-    
-    # Border
-    border_color = (200, 200, 200, 255)
-    border_width = 2
-    draw.rectangle([0, 0, dialog_size-1, dialog_size-1], outline=border_color, width=border_width)
-    
-    # Corner decorations
-    corner_size = 8
-    for x, y in [(0, 0), (0, dialog_size-corner_size), (dialog_size-corner_size, 0), (dialog_size-corner_size, dialog_size-corner_size)]:
-        draw.rectangle([x, y, x+corner_size, y+corner_size], outline=border_color, width=1)
-    
-    # Save dialog box template
-    filename = "assets/ui/dialog_template.png"
-    dialog.save(filename)
-    print(f"Generated UI dialog template: {filename}")
-
-# Main function to generate all assets
-def generate_all_assets():
-    print("Starting asset generation for village simulation...")
-    create_directories()
-    
-    # Generate all asset types
-    generate_character_sprites(5)
-    generate_buildings(4)
-    generate_environment()
-    generate_ui_elements()
-    
-    print("Asset generation complete!")
-
-if __name__ == "__main__":
-    generate_all_assets()
+            feature_color = (180, 180, 180)  # Light gray
+            roof_draw.rectangle([feature_x, feature_y, 
+                               feature_
