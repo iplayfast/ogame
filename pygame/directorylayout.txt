@@ -3,15 +3,26 @@
 ├── asset_loader.py
 ├── assets
 │   ├── buildings
-│   │   ├── building_medium_3.png
-│   │   ├── building_medium_4.png
-│   │   ├── building_small_1.png
-│   │   ├── building_small_2.png
-│   │   └── roofs
-│   │       ├── roof_medium_3.png
-│   │       ├── roof_medium_4.png
-│   │       ├── roof_small_1.png
-│   │       └── roof_small_2.png
+│   │   ├── building_large_house_2.png
+│   │   ├── building_large_tavern_1.png
+│   │   ├── building_medium_bakery_1.png
+│   │   ├── building_medium_bakery_3.png
+│   │   ├── building_medium_blacksmith_1.png
+│   │   ├── building_medium_blacksmith_2.png
+│   │   ├── building_medium_blacksmith_3.png
+│   │   ├── building_medium_house_1.png
+│   │   ├── building_medium_house_2.png
+│   │   ├── building_medium_shop_1.png
+│   │   ├── building_medium_shop_2.png
+│   │   ├── building_medium_shop_3.png
+│   │   ├── building_medium_tavern_2.png
+│   │   ├── building_medium_tavern_3.png
+│   │   ├── building_small_bakery_1.png
+│   │   ├── building_small_bakery_2.png
+│   │   ├── building_small_bakery_3.png
+│   │   ├── building_small_house_1.png
+│   │   ├── building_small_house_3.png
+│   │   └── building_small_shop_3.png
 │   ├── characters
 │   │   ├── villager_1.png
 │   │   ├── villager_2.png
@@ -22,8 +33,72 @@
 │   │   ├── grass_1.png
 │   │   ├── grass_2.png
 │   │   ├── grass_3.png
+│   │   ├── LeftRightBridge.png
 │   │   ├── path_1.png
 │   │   ├── path_2.png
+│   │   ├── tree_1.png
+│   │   ├── tree_2.png
+│   │   ├── tree_3.png
+│   │   ├── tree_4.png
+│   │   ├── tree_5.png
+│   │   ├── UpDownBridge.png
+│   │   ├── water_frame_1.png
+│   │   ├── water_frame_2.png
+│   │   ├── water_frame_3.png
+│   │   └── water_frame_4.png
+│   └── ui
+│       ├── dialog_template.png
+│       ├── icon_energy.png
+│       ├── icon_health.png
+│       ├── icon_money.png
+│       └── icon_mood.png
+├── assets.old
+│   ├── buildings
+│   │   ├── building_large_1.png
+│   │   ├── building_large_3.png
+│   │   ├── building_large_house_1.png
+│   │   ├── building_large_house_3.png
+│   │   ├── building_large_tavern_3.png
+│   │   ├── building_medium_3.png
+│   │   ├── building_medium_4.png
+│   │   ├── building_medium_bakery_2.png
+│   │   ├── building_medium_bakery_3.png
+│   │   ├── building_medium_blacksmith_1.png
+│   │   ├── building_medium_blacksmith_2.png
+│   │   ├── building_medium_blacksmith_3.png
+│   │   ├── building_medium_house_2.png
+│   │   ├── building_medium_shop_1.png
+│   │   ├── building_medium_shop_3.png
+│   │   ├── building_medium_tavern_1.png
+│   │   ├── building_medium_tavern_2.png
+│   │   ├── building_small_1.png
+│   │   ├── building_small_2.png
+│   │   ├── building_small_4.png
+│   │   ├── building_small_bakery_1.png
+│   │   ├── building_small_shop_2.png
+│   │   └── roofs
+│   │       ├── roof_large_1.png
+│   │       ├── roof_large_3.png
+│   │       ├── roof_medium_3.png
+│   │       ├── roof_medium_4.png
+│   │       ├── roof_small_1.png
+│   │       ├── roof_small_2.png
+│   │       └── roof_small_4.png
+│   ├── characters
+│   │   ├── villager_1.png
+│   │   ├── villager_2.png
+│   │   ├── villager_3.png
+│   │   ├── villager_4.png
+│   │   └── villager_5.png
+│   ├── environment
+│   │   ├── grass_1.png
+│   │   ├── grass_2.png
+│   │   ├── grass_3.png
+│   │   ├── path_10.png
+│   │   ├── path_1.png
+│   │   ├── path_2.png
+│   │   ├── tree_10.png
+│   │   ├── tree_11.png
 │   │   ├── tree_1.png
 │   │   ├── tree_2.png
 │   │   ├── tree_3.png
@@ -39,15 +114,27 @@
 │       ├── icon_health.png
 │       ├── icon_money.png
 │       └── icon_mood.png
+├── building_interiors_doc.md
+├── building_interiors.py
 ├── console_manager.py
 ├── directorylayout.txt
+├── enhanced-asset-generator-complete.py
+├── enhanced-asset-generator.py
 ├── game.py
+├── heapq
+├── housing_ui.py
+├── math
+├── random
 ├── readme.md
+├── renderer_enhancement.py
 ├── renderer.py
 ├── time_manager.py
+├── topdown-asset-generator.py
 ├── ui_manager.py
+├── village_assignments.json
 ├── village_generator.py
+├── villager_housing.py
 ├── villager_module.py
 └── villager.py
 
-7 directories, 44 files
+12 directories, 126 files

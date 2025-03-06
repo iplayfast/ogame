@@ -2,6 +2,7 @@ import pygame
 import random
 import math
 import heapq  # Add this for pathfinding
+import utils
 
 class Villager(pygame.sprite.Sprite):
     def __init__(self, x, y, assets, tile_size=32):
@@ -32,7 +33,7 @@ class Villager(pygame.sprite.Sprite):
             self.base_image = self.image.copy()
         
         # Villager properties
-        self.name = self.generate_name()
+        self.name = utils.generate_name()
         self.job = random.choice([
             "Farmer", "Blacksmith", "Merchant", "Guard", "Baker",
             "Tailor", "Carpenter", "Miner", "Hunter", "Innkeeper"
@@ -70,23 +71,6 @@ class Villager(pygame.sprite.Sprite):
         
         # Update timestamp
         self.last_update = pygame.time.get_ticks()
-    
-    def generate_name(self):
-        """Generate a random villager name."""
-        first_names = [
-            "Aiden", "Bela", "Clara", "Doran", "Eliza", "Finn", "Greta", "Hilda", 
-            "Ivan", "Julia", "Kai", "Lily", "Milo", "Nina", "Otto", "Petra", 
-            "Quinn", "Rosa", "Sven", "Tilly", "Ulric", "Vera", "Wren", "Xander", 
-            "Yara", "Zeke"
-        ]
-        
-        last_names = [
-            "Smith", "Miller", "Fisher", "Baker", "Cooper", "Fletcher", "Thatcher",
-            "Wood", "Stone", "Field", "Hill", "Brook", "River", "Dale", "Ford",
-            "Green", "White", "Black", "Brown", "Gray", "Reed", "Swift", "Strong"
-        ]
-        
-        return f"{random.choice(first_names)} {random.choice(last_names)}"
     
     def update(self, village_data, current_time, assets):
         # Calculate delta time
