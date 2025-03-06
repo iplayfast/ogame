@@ -35,6 +35,7 @@ func _ready():
 			limit_bottom = get_parent().village_height
 
 func _process(delta):
+	print("Camera position: ", position, " zoom: ", zoom)
 	# Follow target if enabled
 	if following and is_instance_valid(target):
 		position = target.position

@@ -36,60 +36,99 @@ signal villager_removed(villager)
 signal day_changed(day)
 signal weather_changed(weather)
 
-
-
 func _ready():
-	print("Village _ready() called. Position: ", position)
 	# Initialize random number generator
 	randomize()
-
-	# Add debug information about village position and scene
-	print("Village _ready() called. Position: ", position, " Scene path: ", get_tree().current_scene.get_path())
-
+	
+	# Fill the background with tiles first, before setting up other elements
+	fill_tilemap()
+	
 	# Setup village
-	# Wait for GameManager to initialize systems
-	print("Village: Waiting for GameManager to initialize systems...")
-	if not GameManager.village:
-		GameManager.village = self
-
-	# Connect to the systems_initialized signal if needed
-	if not GameManager.is_connected("systems_initialized", Callable(self, "_on_systems_initialized")):
-		GameManager.systems_initialized.connect(_on_systems_initialized)
-
-	# If systems are already initialized, call the handler directly
-	if GameManager.tilemap and GameManager.navigation:
-		print("Village: Systems already initialized, calling handler directly")
-		_on_systems_initialized()
-	else:
-		print("Village: Waiting for systems_initialized signal")
-
+	setup_village()
+	
 	# Make sure navigation is properly initialized
 	call_deferred("_setup_navigation")
-
+	
 	# Initialize timers
 	$DayNightTimer.timeout.connect(_on_day_night_timer_timeout)
 	$DayNightTimer.start(1.0)  # Update time every second
-
+	
 	$WeatherTimer.timeout.connect(_on_weather_timer_timeout)
 	$WeatherTimer.start()
-
+	
 	# Setup input detection for selection
 	set_process_input(true)
 
-	# Verify nodes are properly set up
-	print("Camera2D exists: ", has_node("Camera2D"))
-	if has_node("Camera2D"):
-		print("Camera position: ", $Camera2D.position, " zoom: ", $Camera2D.zoom)
+func fill_tilemap():
+	# Get reference to the TileMap node
+	var tilemap = $TileMap
+	if not is_instance_valid(tilemap):
+		print("ERROR: TileMap node not found in Village scene!")
+		return
 		
-	print("TileMap exists: ", has_node("TileMap"))
-	if has_node("TileMap"):
-		print("TileMap cell count: ", $TileMap.get_used_cells(0).size())
-
-func _on_systems_initialized():
-	print("Village: GameManager systems initialized, continuing setup...")
-	# Now that systems are initialized, continue with village setup
-	setup_village()	
-	print("Village scene loaded successfully")
+	# Ensure the tile set is properly assigned
+	if not tilemap.tile_set:
+		print("ERROR: No TileSet assigned to the TileMap!")
+		return
+		
+	print("Filling TileMap with terrain tiles...")
+	
+	# Calculate how many tiles we need based on village size and tile size
+	# Assuming 64x64 tile size (matching our terrain.png)
+	var tile_size = 64
+	var width_tiles = int(ceil(village_width / tile_size))
+	var height_tiles = int(ceil(village_height / tile_size))
+	
+	# Fill the entire area with grass tiles (0,0) by default
+	var grass_atlas_coords = Vector2i(0, 0)
+	var source_id = 0  # The source ID used in our tileset (should match CreateTileset.gd)
+	
+	for x in range(width_tiles):
+		for y in range(height_tiles):
+			var cell_coords = Vector2i(x, y)
+			tilemap.set_cell(0, cell_coords, source_id, grass_atlas_coords)
+	
+	# Add some random water, path and stone tiles for variety
+	var water_atlas_coords = Vector2i(1, 0)
+	var path_atlas_coords = Vector2i(0, 1)
+	var stone_atlas_coords = Vector2i(1, 1)
+	
+	# Add a lake (water tiles) in a somewhat circular pattern
+	var lake_center_x = int(width_tiles * 0.7)
+	var lake_center_y = int(height_tiles * 0.3)
+	var lake_radius = int(min(width_tiles, height_tiles) * 0.15)
+	
+	for x in range(lake_center_x - lake_radius, lake_center_x + lake_radius):
+		for y in range(lake_center_y - lake_radius, lake_center_y + lake_radius):
+			if x >= 0 and x < width_tiles and y >= 0 and y < height_tiles:
+				var distance = sqrt(pow(x - lake_center_x, 2) + pow(y - lake_center_y, 2))
+				if distance < lake_radius:
+					tilemap.set_cell(0, Vector2i(x, y), source_id, water_atlas_coords)
+	
+	# Add some paths connecting village areas
+	# Horizontal main path
+	var path_y = int(height_tiles * 0.5)
+	for x in range(width_tiles):
+		tilemap.set_cell(0, Vector2i(x, path_y), source_id, path_atlas_coords)
+		
+	# Vertical main path
+	var path_x = int(width_tiles * 0.5)
+	for y in range(height_tiles):
+		tilemap.set_cell(0, Vector2i(path_x, y), source_id, path_atlas_coords)
+	
+	# Add some stone areas for plazas or gathering spots
+	var plaza_center_x = int(width_tiles * 0.5)
+	var plaza_center_y = int(height_tiles * 0.5)
+	var plaza_radius = int(min(width_tiles, height_tiles) * 0.05)
+	
+	for x in range(plaza_center_x - plaza_radius, plaza_center_x + plaza_radius):
+		for y in range(plaza_center_y - plaza_radius, plaza_center_y + plaza_radius):
+			if x >= 0 and x < width_tiles and y >= 0 and y < height_tiles:
+				var distance = sqrt(pow(x - plaza_center_x, 2) + pow(y - plaza_center_y, 2))
+				if distance < plaza_radius:
+					tilemap.set_cell(0, Vector2i(x, y), source_id, stone_atlas_coords)
+					
+	print("TileMap filled successfully with terrain tiles!")
 
 func _setup_navigation():
 	# Wait for a frame to ensure all buildings and villagers are added
@@ -97,23 +136,10 @@ func _setup_navigation():
 	
 	# Get navigation region
 	var nav_region = $NavigationRegion2D
-
-	# Make sure the Navigation script is attached
-	if nav_region and not nav_region.get_script():
-		var navigation_script_path = "res://scripts/Navigation.gd"
-		if ResourceLoader.exists(navigation_script_path):
-			nav_region.set_script(load(navigation_script_path))
-			print("Village: Navigation script attached")
-
+	
 	# Create navigation polygon
 	var nav_poly = NavigationPolygon.new()
-	if nav_region and nav_region.has_method("create_navigation_polygon"):
-		print("Village: Calling Navigation.gd's create_navigation_polygon method")
-		nav_region.create_navigation_polygon()
-	else:
-		print("Village: WARNING - Navigation script not properly attached or method not found")
-
-	print("Village: Navigation setup completed")
+	
 	# Set up village boundaries
 	var outline = PackedVector2Array([
 		Vector2(0, 0),

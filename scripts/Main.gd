@@ -62,15 +62,21 @@ func _deferred_load_village():
 	# Clean up the current scene
 	if current_scene:
 		current_scene.queue_free()
-	
+
 	# Load the village scene
 	var village_scene = load("res://scenes/Village.tscn")
 	current_scene = village_scene.instantiate()
-	
+
 	# Add it to the tree
 	get_tree().root.add_child(current_scene)
 	get_tree().current_scene = current_scene
-	
+
+	# Position the camera at the center of the village
+	var camera = current_scene.get_node("Camera2D")
+	if camera:
+		camera.position = Vector2(current_scene.village_width/2, current_scene.village_height/2)
+		print("Camera positioned at: ", camera.position)
+
 	print("Village scene loaded successfully")
 
 func restart_game():

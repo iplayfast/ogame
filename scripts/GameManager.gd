@@ -140,6 +140,7 @@ func populate_tilemap():
 				tilemap.set_cell(0, Vector2i(stone_x + x, stone_y + y), 0, Vector2i(1, 1))
 	
 	print("GameManager: TileMap population complete!")
+	print("TileMap cells: ", tilemap.get_used_cells(0).size())
 
 func initialize_navigation():
 	# Find the Navigation node in the village scene
