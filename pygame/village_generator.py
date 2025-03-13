@@ -115,9 +115,8 @@ def generate_village(size, assets, tile_size=32):
     
     # Print some stats about the village
     print(f"Village generation complete! {len(buildings)} buildings, {len(paths)} path tiles, {len(bridges)} bridges, {len(trees)} trees")
-
-    # Return the complete village data
-    return {
+    # After buildings, paths, water, etc. are generated:
+    village_data = {
         'size': grid_size,
         'terrain': terrain,
         'buildings': buildings,
@@ -126,6 +125,286 @@ def generate_village(size, assets, tile_size=32):
         'water': water,
         'bridges': bridges
     }
+    
+    # Add this new step:
+    analyze_interaction_points(village_data, tile_size)
+    initialize_village_grid(village_data, tile_size)    
+    #update_village_grid_with_furniture()
+    return village_data
+
+def update_village_grid_with_furniture(self):
+    """Update the village grid with furniture information from interiors."""
+    if 'village_grid' in self.village_data and self.renderer.interior_manager:
+        for i, building in enumerate(self.village_data['buildings']):
+            if i in self.renderer.interior_manager.interiors:
+                pos = building['position']
+                furniture_list = self.renderer.interior_manager.interiors[i]['furniture']
+                
+                # Update grid cells for each piece of furniture
+                for furniture in furniture_list:
+                    rect = furniture['rect']
+                    is_bed = furniture['type'] == 'bed'
+                    
+                    # Convert to grid coordinates
+                    grid_left = rect.left // self.TILE_SIZE
+                    grid_top = rect.top // self.TILE_SIZE
+                    grid_right = (rect.right + self.TILE_SIZE - 1) // self.TILE_SIZE
+                    grid_bottom = (rect.bottom + self.TILE_SIZE - 1) // self.TILE_SIZE
+                    
+                    # Update grid cells
+                    for grid_x in range(grid_left, grid_right):
+                        for grid_y in range(grid_top, grid_bottom):
+                            if self.village_data['get_cell_at'](grid_x * self.TILE_SIZE, grid_y * self.TILE_SIZE):
+                                self.village_data['village_grid'][grid_y][grid_x] = {
+                                    'type': 'furniture',
+                                    'furniture_type': furniture['type'],
+                                    'building_id': i,
+                                    'passable': is_bed,  # Beds are passable
+                                    'preferred': False
+                                }
+        
+        # Mark as updated
+        self.village_data['furniture_updated'] = True
+        print("Village grid updated with furniture information")
+
+
+def analyze_interaction_points(village_data, tile_size):
+    """Analyze buildings and environment to identify interaction points."""
+    # Initialize interaction points collection if it doesn't exist
+    if 'interaction_points' not in village_data:
+        village_data['interaction_points'] = []
+    
+    # Analyze buildings for interaction points
+    for building_id, building in enumerate(village_data['buildings']):
+        building_type = building.get('building_type', '')
+        position = building['position']
+        
+        # Determine building size in pixels
+        size_name = building['size']
+        size_multiplier = 3 if size_name == 'large' else (2 if size_name == 'medium' else 1)
+        size_px = size_multiplier * tile_size
+        
+        # Find door position (usually bottom center of building)
+        door_pos = (position[0] + size_px // 2, position[1] + size_px)
+        
+        # Verify door isn't overlapping with water or other obstacles
+        # Adjust if necessary...
+        
+        # Add door interaction point
+        door_point = {
+            'type': 'door',
+            'position': door_pos,
+            'building_id': building_id,
+            'properties': {'is_entrance': True}
+        }
+        
+        # Add building-specific interaction points
+        interior_points = generate_interior_points(
+            building_type, position, size_px, building_id, tile_size)
+        
+        # Add to building and to global list
+        building['interaction_points'] = [door_point] + interior_points
+        village_data['interaction_points'].extend([door_point] + interior_points)
+    
+    # Analyze natural features (water edges, bridges, etc.)
+    water_positions = {(w['position'][0], w['position'][1]) for w in village_data['water']}
+    find_water_interaction_points(village_data, water_positions, tile_size)
+
+def find_water_interaction_points(village_data, water_positions, tile_size):
+    """
+    Find and create interaction points along water features (rivers, lakes, bridges).
+    
+    Args:
+        village_data: Dictionary containing village data
+        water_positions: Set of (x, y) tuples for all water tile positions
+        tile_size: Size of each tile in pixels
+    """
+    # Initialize interaction points if needed
+    if 'interaction_points' not in village_data:
+        village_data['interaction_points'] = []
+    
+    fishing_spots = []
+    
+    # Find all land tiles adjacent to water (shoreline)
+    shoreline_positions = set()
+    for water_pos in water_positions:
+        wx, wy = water_pos
+        # Check 4 adjacent tiles (cardinal directions)
+        for dx, dy in [(0, -tile_size), (tile_size, 0), (0, tile_size), (-tile_size, 0)]:
+            neighbor_pos = (wx + dx, wy + dy)
+            # If the neighbor is not water, it's a potential fishing spot
+            if neighbor_pos not in water_positions:
+                # Check if position is in bounds and not occupied by buildings
+                grid_size = village_data['size']
+                if (0 <= neighbor_pos[0] < grid_size and 
+                    0 <= neighbor_pos[1] < grid_size and 
+                    not is_position_occupied(neighbor_pos, village_data)):
+                    shoreline_positions.add(neighbor_pos)
+    
+    # Find water type for each position (lake or river)
+    for pos in shoreline_positions:
+        # Classify water type based on surrounding water tiles
+        water_type = classify_water_feature(pos, water_positions, tile_size)
+        
+        # Create properties for this fishing spot
+        properties = {
+            'water_type': water_type,
+            'elevated': False,  # Shore-based spots are not elevated
+            'covered': False,   # Default to not covered
+            'near_village': is_near_village_center(pos, village_data)
+        }
+        
+        # Create the interaction point
+        fishing_spot = {
+            'position': pos,
+            'type': 'fishing_spot',
+            'building_id': None,  # Outdoor spots don't belong to buildings
+            'properties': properties
+        }
+        
+        fishing_spots.append(fishing_spot)
+    
+    # Find all bridges for premium fishing spots
+    if 'bridges' in village_data:
+        for bridge in village_data['bridges']:
+            bridge_pos = bridge['position']
+            bridge_type = bridge.get('type', '')
+            
+            # Classify water type based on surrounding water
+            water_type = classify_water_feature(bridge_pos, water_positions, tile_size)
+            
+            # Create properties for bridge fishing spot
+            properties = {
+                'water_type': water_type,
+                'elevated': True,  # Bridges are elevated
+                'covered': False,  # Default to not covered
+                'near_village': is_near_village_center(bridge_pos, village_data),
+                'bridge_type': bridge_type  # Store bridge type for reference
+            }
+            
+            # Create the interaction point
+            bridge_fishing_spot = {
+                'position': bridge_pos,
+                'type': 'fishing_spot',
+                'building_id': None,
+                'properties': properties
+            }
+            
+            fishing_spots.append(bridge_fishing_spot)
+    
+    # Add all fishing spots to the village data
+    village_data['interaction_points'].extend(fishing_spots)
+    
+    # Print stats
+    print(f"Added {len(fishing_spots)} fishing spots: {len(shoreline_positions)} shoreline, {len(village_data.get('bridges', []))} bridge")
+
+
+def classify_water_feature(position, water_positions, tile_size):
+    """
+    Classify a water-adjacent position as being near a lake or river.
+    
+    Args:
+        position: The position to classify
+        water_positions: Set of water tile positions
+        tile_size: Size of each tile in pixels
+        
+    Returns:
+        String "lake" or "river" describing the water feature
+    """
+    # Count water tiles in increasing radius to determine feature type
+    px, py = position
+    water_counts = []
+    
+    # Check in concentric rings of increasing size
+    for radius in range(1, 6):
+        water_in_radius = 0
+        total_in_radius = 0
+        
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                # Only check positions exactly at this radius (ring)
+                if max(abs(dx), abs(dy)) == radius:
+                    check_pos = (px + dx * tile_size, py + dy * tile_size)
+                    if check_pos in water_positions:
+                        water_in_radius += 1
+                    total_in_radius += 1
+        
+        # Store the ratio of water tiles to total tiles at this radius
+        water_counts.append(water_in_radius / total_in_radius if total_in_radius > 0 else 0)
+    
+    # Lakes tend to have more water tiles in larger rings
+    # Rivers tend to have fewer water tiles as radius increases
+    
+    # Simple heuristic:
+    # - If water density stays high as radius increases, it's a lake
+    # - If water density drops off quickly, it's a river
+    if water_counts[3] > 0.3 and water_counts[4] > 0.25:
+        return "lake"
+    else:
+        return "river"
+
+
+def is_position_occupied(position, village_data):
+    """
+    Check if a position is occupied by buildings or other non-walkable features.
+    
+    Args:
+        position: The (x, y) position to check
+        village_data: Village data dictionary
+        
+    Returns:
+        Boolean indicating if the position is occupied
+    """
+    # Check if position is occupied by a building
+    for building in village_data['buildings']:
+        bx, by = building['position']
+        size_name = building['size']
+        
+        # Determine building size in pixels
+        size_multiplier = 3 if size_name == 'large' else (2 if size_name == 'medium' else 1)
+        size_px = size_multiplier * 32  # Assuming TILE_SIZE is 32
+        
+        # Check if position is within building footprint
+        if (bx <= position[0] < bx + size_px and 
+            by <= position[1] < by + size_px):
+            return True
+    
+    # If we have tree positions, check those too
+    for tree in village_data.get('trees', []):
+        tx, ty = tree['position']
+        # Simple collision check for trees (assuming tree is 1 tile)
+        if (tx <= position[0] < tx + 32 and 
+            ty <= position[1] < ty + 32):
+            return True
+    
+    return False
+
+
+def is_near_village_center(position, village_data):
+    """
+    Determine if a position is near the village center.
+    
+    Args:
+        position: The (x, y) position to check
+        village_data: Village data dictionary
+        
+    Returns:
+        Float value between 0.0 and 1.0 indicating proximity to village center
+        (1.0 means at the center, 0.0 means furthest away)
+    """
+    # Get village center (usually the middle of the map)
+    grid_size = village_data['size']
+    center_x, center_y = grid_size // 2, grid_size // 2
+    
+    # Calculate distance from center
+    px, py = position
+    distance = ((px - center_x) ** 2 + (py - center_y) ** 2) ** 0.5
+    
+    # Normalize to a 0-1 scale (1 at center, 0 at max distance)
+    max_distance = ((grid_size // 2) ** 2 + (grid_size // 2) ** 2) ** 0.5
+    proximity = 1.0 - (distance / max_distance if max_distance > 0 else 0)
+    
+    return max(0.0, min(1.0, proximity))  # Clamp to 0-1 range
 
 def create_village_layout(paths, water_positions, grid_size, tile_size):
     """Create village paths and roads based on the water feature."""
@@ -1879,6 +2158,7 @@ def generate_village(size, assets, tile_size=32):
     print(f"Village generation complete! {len(buildings)} buildings, {len(paths)} path tiles, {len(bridges)} bridges")
     
     paths = fix_path_issues(paths, buildings, grid_size, tile_size, water_positions)
+    
     # Return the complete village data
     return {
         'size': grid_size,
@@ -1889,6 +2169,115 @@ def generate_village(size, assets, tile_size=32):
         'water': water,
         'bridges': bridges
     }            
+
+# Add this to the end of generate_village function in village_generator.py
+
+def initialize_village_grid(village_data, tile_size):
+    """
+    Creates a unified 2D grid representation of the village for efficient pathfinding.
+    This should be called once during village generation.
+    
+    Args:
+        village_data: The village data dictionary
+        tile_size: The size of a tile in pixels
+        
+    Returns:
+        None (modifies village_data in place)
+    """
+    grid_size = village_data['size'] // tile_size
+    grid = [[{'type': 'empty', 'passable': True} for _ in range(grid_size)] for _ in range(grid_size)]
+    
+    # Add terrain (grass types)
+    for pos_str, terrain in village_data['terrain'].items():
+        # Convert position to grid coordinates
+        if isinstance(pos_str, str):
+            x, y = eval(pos_str)
+        else:
+            x, y = pos_str
+            
+        grid_x, grid_y = x // tile_size, y // tile_size
+        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+            grid[grid_y][grid_x] = {
+                'type': 'terrain',
+                'terrain_type': terrain['type'],
+                'variant': terrain.get('variant', 1),
+                'passable': True
+            }
+    
+    # Add water (impassable)
+    for water in village_data['water']:
+        x, y = water['position']
+        grid_x, grid_y = x // tile_size, y // tile_size
+        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+            grid[grid_y][grid_x] = {
+                'type': 'water',
+                'passable': False
+            }
+    
+    # Add bridges (passable)
+    if 'bridges' in village_data:
+        for bridge in village_data['bridges']:
+            x, y = bridge['position']
+            grid_x, grid_y = x // tile_size, y // tile_size
+            if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                grid[grid_y][grid_x] = {
+                    'type': 'bridge',
+                    'bridge_type': bridge.get('type', 'bridge'),
+                    'passable': True,
+                    'preferred': True
+                }
+    
+    # Add paths (passable, preferred)
+    for path in village_data['paths']:
+        x, y = path['position']
+        grid_x, grid_y = x // tile_size, y // tile_size
+        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+            grid[grid_y][grid_x] = {
+                'type': 'path',
+                'variant': path.get('variant', 1),
+                'passable': True,
+                'preferred': True
+            }
+    
+    # Add buildings and mark their positions
+    for i, building in enumerate(village_data['buildings']):
+        pos = building['position']
+        size_name = building['size']
+        
+        # Determine building size in tiles
+        size_multiplier = 3 if size_name == 'large' else (
+                         2 if size_name == 'medium' else 1)
+        size_tiles = size_multiplier
+        
+        # Add building footprint
+        for dx in range(size_tiles):
+            for dy in range(size_tiles):
+                grid_x = (pos[0] // tile_size) + dx
+                grid_y = (pos[1] // tile_size) + dy
+                
+                if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                    grid[grid_y][grid_x] = {
+                        'type': 'building',
+                        'building_id': i,
+                        'building_type': building.get('building_type', 'Unknown'),
+                        'passable': True,
+                        'preferred': True
+                    }
+    
+    # Store the grid in village_data
+    village_data['village_grid'] = grid
+    print(f"Village grid initialized: {grid_size}x{grid_size}")
+    
+    # Create utility method for grid access
+    def get_cell_at(x, y):
+        """Get the grid cell at the given pixel coordinates."""
+        grid_x = x // tile_size
+        grid_y = y // tile_size
+        if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+            return grid[grid_y][grid_x]
+        return None
+    
+    village_data['get_cell_at'] = get_cell_at
 
 def scanmap(grid_size, tile_size, pattern_check_fn, fix_fn):
     """
