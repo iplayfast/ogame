@@ -918,3 +918,418 @@ def find_path_between_points(start, end, obstacles, grid_size, tile_size,
     
     # No path found
     return []
+import math
+import random
+
+def align_to_grid(x, y, tile_size):
+    """Align a position to the grid.
+    
+    Args:
+        x, y: Position coordinates
+        tile_size: Size of a tile in pixels
+        
+    Returns:
+        Tuple of (x, y) aligned to the grid
+    """
+    grid_x = (x // tile_size) * tile_size
+    grid_y = (y // tile_size) * tile_size
+    return grid_x, grid_y
+
+def is_in_bounds(x, y, grid_size):
+    """Check if a position is within the grid bounds.
+    
+    Args:
+        x, y: Position coordinates
+        grid_size: Size of the grid in pixels
+        
+    Returns:
+        Boolean indicating if the position is in bounds
+    """
+    return 0 <= x < grid_size and 0 <= y < grid_size
+
+def calculate_distance(x1, y1, x2, y2):
+    """Calculate Euclidean distance between two points.
+    
+    Args:
+        x1, y1: First point coordinates
+        x2, y2: Second point coordinates
+        
+    Returns:
+        Distance between the points
+    """
+    dx = x2 - x1
+    dy = y2 - y1
+    return math.sqrt(dx*dx + dy*dy)
+
+def polar_to_cartesian(cx, cy, angle, distance):
+    """Convert polar coordinates to Cartesian coordinates.
+    
+    Args:
+        cx, cy: Center point coordinates
+        angle: Angle in radians
+        distance: Distance from center
+        
+    Returns:
+        Tuple of (x, y) in Cartesian coordinates
+    """
+    x = cx + math.cos(angle) * distance
+    y = cy + math.sin(angle) * distance
+    return x, y
+
+def get_neighbors(x, y, tile_size, include_self=False):
+    """Get neighboring positions (8-way).
+    
+    Args:
+        x, y: Position coordinates
+        tile_size: Size of a tile in pixels
+        include_self: Whether to include the position itself
+        
+    Returns:
+        List of neighboring positions
+    """
+    neighbors = []
+    
+    for dx in [-tile_size, 0, tile_size]:
+        for dy in [-tile_size, 0, tile_size]:
+            if dx == 0 and dy == 0 and not include_self:
+                continue
+            neighbors.append((x + dx, y + dy))
+    
+    return neighbors
+
+def generate_points_in_irregular_shape(center_x, center_y, base_radius, irregularity):
+    """Generate points that define an irregular shape.
+    
+    Args:
+        center_x, center_y: Center of the shape
+        base_radius: Base radius of the shape
+        irregularity: Factor for irregularity (0.0-1.0)
+        
+    Returns:
+        List of points defining the shape perimeter
+    """
+    # Number of points based on size
+    num_points = max(8, int(base_radius / 10))
+    
+    # Angle step between points
+    angle_step = 2 * math.pi / num_points
+    
+    # Generate perimeter points
+    perimeter_points = []
+    for i in range(num_points):
+        angle = i * angle_step
+        
+        # Random radius variation
+        radius_variation = random.uniform(1.0 - irregularity, 1.0 + irregularity)
+        radius = base_radius * radius_variation
+        
+        # Calculate point position
+        x = center_x + math.cos(angle) * radius
+        y = center_y + math.sin(angle) * radius
+        
+        perimeter_points.append((x, y))
+    
+    return perimeter_points
+
+def is_point_in_shape(px, py, shape_points, center_x, center_y):
+    """Check if a point is inside a shape defined by perimeter points.
+    
+    Args:
+        px, py: Point coordinates
+        shape_points: List of points defining the shape perimeter
+        center_x, center_y: Center of the shape
+        
+    Returns:
+        Boolean indicating if the point is inside the shape
+    """
+    # Special case: if the shape has no points
+    if not shape_points:
+        return False
+        
+    # Check if the point is close to the center
+    if calculate_distance(px, py, center_x, center_y) < 10:
+        return True
+    
+    # Ray casting algorithm
+    inside = False
+    j = len(shape_points) - 1
+    
+    for i in range(len(shape_points)):
+        xi, yi = shape_points[i]
+        xj, yj = shape_points[j]
+        
+        intersect = ((yi > py) != (yj > py)) and (px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+        if intersect:
+            inside = not inside
+        
+        j = i
+    
+    return inside
+
+def iterate_area(x, y, width, height, tile_size):
+    """Iterate over all tiles in an area.
+    
+    Args:
+        x, y: Top-left corner coordinates
+        width, height: Size of the area in pixels
+        tile_size: Size of a tile in pixels
+        
+    Returns:
+        Generator yielding tile positions
+    """
+    x_start, y_start = align_to_grid(x, y, tile_size)
+    x_end = x_start + width
+    y_end = y_start + height
+    
+    for tile_y in range(y_start, y_end, tile_size):
+        for tile_x in range(x_start, x_end, tile_size):
+            yield (tile_x, tile_y)
+
+def get_buffer_positions(x, y, buffer_tiles, tile_size):
+    """Get all positions in a buffer zone around a position.
+    
+    Args:
+        x, y: Position coordinates
+        buffer_tiles: Size of buffer in tiles
+        tile_size: Size of a tile in pixels
+        
+    Returns:
+        Generator yielding buffer positions
+    """
+    for dx in range(-buffer_tiles, buffer_tiles + 1):
+        for dy in range(-buffer_tiles, buffer_tiles + 1):
+            # Skip the center tile
+            if dx == 0 and dy == 0:
+                continue
+                
+            yield (x + dx * tile_size, y + dy * tile_size)
+
+def is_footprint_valid(x, y, footprint_tiles, tile_size, excluded_sets, grid_size):
+    """Check if a building footprint is valid.
+    
+    Args:
+        x, y: Top-left corner coordinates
+        footprint_tiles: Size of footprint in tiles
+        tile_size: Size of a tile in pixels
+        excluded_sets: List of sets with positions to exclude
+        grid_size: Size of the grid in pixels
+        
+    Returns:
+        Boolean indicating if the footprint is valid
+    """
+    # Check all tiles in the building footprint
+    for tile_x, tile_y in iterate_area(x, y, footprint_tiles * tile_size, footprint_tiles * tile_size, tile_size):
+        # Skip if out of bounds
+        if not is_in_bounds(tile_x, tile_y, grid_size):
+            return False
+            
+        # Check if position is in any excluded set
+        pos = (tile_x, tile_y)
+        for excluded_set in excluded_sets:
+            if pos in excluded_set:
+                return False
+                
+    return True
+
+def get_direction_name(dx, dy):
+    """Get the name of a direction from delta coordinates.
+    
+    Args:
+        dx, dy: Delta coordinates
+        
+    Returns:
+        Direction name (N, NE, E, SE, S, SW, W, NW)
+    """
+    if dx == 0 and dy < 0:
+        return "N"
+    elif dx > 0 and dy < 0:
+        return "NE"
+    elif dx > 0 and dy == 0:
+        return "E"
+    elif dx > 0 and dy > 0:
+        return "SE"
+    elif dx == 0 and dy > 0:
+        return "S"
+    elif dx < 0 and dy > 0:
+        return "SW"
+    elif dx < 0 and dy == 0:
+        return "W"
+    elif dx < 0 and dy < 0:
+        return "NW"
+    else:
+        return ""
+
+def get_angle_between_points(x1, y1, x2, y2):
+    """Get the angle between two points in radians.
+    
+    Args:
+        x1, y1: First point coordinates
+        x2, y2: Second point coordinates
+        
+    Returns:
+        Angle in radians
+    """
+    dx = x2 - x1
+    dy = y2 - y1
+    return math.atan2(dy, dx)
+
+def perlin_noise_2d(x, y, seed=0):
+    """Simple 2D Perlin noise implementation.
+    
+    Args:
+        x, y: Coordinates
+        seed: Random seed
+        
+    Returns:
+        Noise value between -1 and 1
+    """
+    # Initialize the permutation table
+    random.seed(seed)
+    p = list(range(256))
+    random.shuffle(p)
+    p += p
+    
+    # Coordinates of the unit cube
+    xi, yi = int(x) & 255, int(y) & 255
+    xf, yf = x - int(x), y - int(y)
+    
+    # Fade curves
+    u, v = fade(xf), fade(yf)
+    
+    # Hash coordinates of the 4 cube corners
+    a = p[p[xi] + yi]
+    b = p[p[xi + 1] + yi]
+    c = p[p[xi] + yi + 1]
+    d = p[p[xi + 1] + yi + 1]
+    
+    # And add blended results from the 4 corners
+    return lerp(v, 
+                lerp(u, grad(a, xf, yf), grad(b, xf - 1, yf)),
+                lerp(u, grad(c, xf, yf - 1), grad(d, xf - 1, yf - 1)))
+
+def fade(t):
+    """Fade function for Perlin noise."""
+    return t * t * t * (t * (t * 6 - 15) + 10)
+
+def lerp(t, a, b):
+    """Linear interpolation."""
+    return a + t * (b - a)
+
+def grad(hash, x, y):
+    """Gradient function for Perlin noise."""
+    h = hash & 15
+    u = x if h < 8 else y
+    v = y if h < 4 else (x if h == 12 or h == 14 else 0)
+    return (u if (h & 1) == 0 else -u) + (v if (h & 2) == 0 else -v)
+
+def scan_terrain(village, bounds=None, filter_fn=None, processor_fn=None):
+    """Scan village terrain and process matching positions.
+    
+    Args:
+        village: Village instance
+        bounds: Optional (left, top, right, bottom) bounds to limit scan
+        filter_fn: Function that takes (x, y, cell_data) and returns True if position should be processed
+        processor_fn: Function that takes (x, y, cell_data) to process matching positions
+        
+    Returns:
+        List of results from processor_fn if it returns values
+    """
+    results = []
+    
+    # Determine scan bounds
+    left = bounds[0] if bounds else 0
+    top = bounds[1] if bounds else 0
+    right = bounds[2] if bounds else village.grid_size
+    bottom = bounds[3] if bounds else village.grid_size
+    
+    # Align to tile grid and convert to integers
+    left = int((left // village.tile_size) * village.tile_size)
+    top = int((top // village.tile_size) * village.tile_size)
+    right = int((right // village.tile_size) * village.tile_size)
+    bottom = int((bottom // village.tile_size) * village.tile_size)
+    
+    # Ensure we have at least one tile to scan
+    if right <= left:
+        right = left + village.tile_size
+    if bottom <= top:
+        bottom = top + village.tile_size
+    
+    # Scan territory
+    for y in range(top, bottom, village.tile_size):
+        for x in range(left, right, village.tile_size):
+            pos = (x, y)
+            cell_data = {}
+            
+            # Gather data about this position
+            if pos in village.terrain:
+                cell_data['terrain'] = village.terrain[pos]
+            if pos in village.water_positions:
+                cell_data['water'] = True
+            if pos in village.path_positions:
+                cell_data['path'] = True
+            if pos in village.building_positions:
+                cell_data['building'] = True
+                
+            # Apply filter if provided
+            if filter_fn and not filter_fn(x, y, cell_data):
+                continue
+                
+            # Process position if processor provided
+            if processor_fn:
+                result = processor_fn(x, y, cell_data)
+                if result is not None:
+                    results.append(result)
+    
+    return results
+    """Scan village terrain and process matching positions.
+    
+    Args:
+        village: Village instance
+        bounds: Optional (left, top, right, bottom) bounds to limit scan
+        filter_fn: Function that takes (x, y, cell_data) and returns True if position should be processed
+        processor_fn: Function that takes (x, y, cell_data) to process matching positions
+        
+    Returns:
+        List of results from processor_fn if it returns values
+    """
+    results = []
+    
+    # Determine scan bounds
+    left = bounds[0] if bounds else 0
+    top = bounds[1] if bounds else 0
+    right = bounds[2] if bounds else village.grid_size
+    bottom = bounds[3] if bounds else village.grid_size
+    
+    # Align to tile grid
+    left = (left // village.tile_size) * village.tile_size
+    top = (top // village.tile_size) * village.tile_size
+    right = (right // village.tile_size) * village.tile_size
+    bottom = (bottom // village.tile_size) * village.tile_size
+    
+    # Scan territory
+    for y in range(top, bottom, village.tile_size):
+        for x in range(left, right, village.tile_size):
+            pos = (x, y)
+            cell_data = {}
+            
+            # Gather data about this position
+            if pos in village.terrain:
+                cell_data['terrain'] = village.terrain[pos]
+            if pos in village.water_positions:
+                cell_data['water'] = True
+            if pos in village.path_positions:
+                cell_data['path'] = True
+            if pos in village.building_positions:
+                cell_data['building'] = True
+                
+            # Apply filter if provided
+            if filter_fn and not filter_fn(x, y, cell_data):
+                continue
+                
+            # Process position if processor provided
+            if processor_fn:
+                result = processor_fn(x, y, cell_data)
+                if result is not None:
+                    results.append(result)
+    
+    return results

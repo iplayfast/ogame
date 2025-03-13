@@ -7,7 +7,10 @@ from pygame.locals import *
 
 # Import custom modules
 from asset_loader import load_assets
-from village_generator import generate_village
+# Replace this import
+# from village_generator import generate_village
+# With this import
+from village_generator_class import generate_village
 from villager import Villager
 from ui_manager import UIManager
 from renderer import Renderer
@@ -17,6 +20,7 @@ from time_manager import TimeManager
 from villager_housing import assign_housing_and_jobs, load_assignments, update_game_with_assignments
 from housing_ui import HousingUI
 from renderer_enhancement import enhance_renderer_for_interiors
+
 
 # Initialize pygame
 pygame.init()
