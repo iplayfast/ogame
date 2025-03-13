@@ -87,7 +87,22 @@ def load_assets():
                 print(f"Loaded {path_path}")
         except pygame.error as e:
             print(f"Warning: Could not load path_{i}.png - {e}")
-    
+       # Load bridge sprites
+    try:
+        bridge_path = 'assets/environment/LeftRightBridge.png'
+        if os.path.exists(bridge_path):
+            assets['environment']['LeftRightBridge'] = pygame.image.load(bridge_path).convert_alpha()
+            print(f"Loaded {bridge_path}")
+    except pygame.error as e:
+        print(f"Warning: Could not load LeftRightBridge.png - {e}")
+        
+    try:
+        bridge_path = 'assets/environment/UpDownBridge.png'
+        if os.path.exists(bridge_path):
+            assets['environment']['UpDownBridge'] = pygame.image.load(bridge_path).convert_alpha()
+            print(f"Loaded {bridge_path}")
+    except pygame.error as e:
+        print(f"Warning: Could not load UpDownBridge.png - {e}")
     # Load water animation frames
     assets['environment']['water'] = []
     for i in range(1, 5):  # 4 animation frames

@@ -63,7 +63,7 @@ class Renderer:
         self._render_terrain(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
         self._render_paths(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
         self._render_water(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, water_frame)
-        
+        self._render_bridges(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
         # Get current shadow length from time manager if available
         shadow_length = 0
         if time_manager:
@@ -255,7 +255,7 @@ class Renderer:
         
         # Blit the shadow surface onto the screen
         self.screen.blit(shadow_surface, (0, 0))
-    
+
     def _render_buildings(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager, selected_villager=None):
         """Render buildings and their indicators."""
         # Initialize the home and workplace IDs
@@ -289,34 +289,8 @@ class Renderer:
             if ((visible_left - 3) * self.tile_size <= x <= visible_right * self.tile_size and
                 (visible_top - 3) * self.tile_size <= y <= visible_bottom * self.tile_size):
                 
-                # Get building type for lookup in assets
-                building_type = building.get('type', '')
-                building_size_str = building.get('size', 'small')
-                building_type_str = building.get('building_type', '').lower() if 'building_type' in building else ''
-                
-                # Try multiple possible key formats for backward compatibility
-                found = False
-                possible_keys = [
-                    building_type,  # Original format from 'type' field
-                    f"{building_size_str}_{building_type_str}_1",  # New format with building_type
-                    f"{building_size_str}_1"  # Simple format with just size
-                ]
-                
-                for key in possible_keys:
-                    if key in self.assets['buildings']:
-                        try:
-                            self.screen.blit(self.assets['buildings'][key], (x - camera_x, y - camera_y))
-                            found = True
-                            break
-                        except Exception as e:
-                            print(f"Error rendering building with key {key}: {e}")
-                
-                # Use fallback if no matching building texture found
-                if not found:
-                    print(f"No building texture found for building: size={building_size_str}, type={building_type_str}, keys tried: {possible_keys}")
-                    pygame.draw.rect(self.screen, (200, 200, 200), 
-                                (x - camera_x, y - camera_y, 
-                                    building_size, building_size))
+                # Render the building texture
+                self._find_and_render_building_texture(building, x, y, camera_x, camera_y)
                 
                 # Draw building type indicator using UI manager
                 ui_manager.draw_building_type_indicator(
@@ -341,33 +315,8 @@ class Renderer:
                         highlight_surface = pygame.Surface((building_size, building_size), pygame.SRCALPHA)
                         highlight_surface.fill(highlight_color)
                         
-                        # Get building type for lookup in assets (using same approach as above)
-                        building_type = building.get('type', '')
-                        building_size_str = building.get('size', 'small')
-                        building_type_str = building.get('building_type', '').lower() if 'building_type' in building else ''
-                        
-                        # Try multiple possible key formats for backward compatibility
-                        found = False
-                        possible_keys = [
-                            building_type,  # Original format from 'type' field
-                            f"{building_size_str}_{building_type_str}_1",  # New format with building_type
-                            f"{building_size_str}_1"  # Simple format with just size
-                        ]
-                        
-                        for key in possible_keys:
-                            if key in self.assets['buildings']:
-                                try:
-                                    self.screen.blit(self.assets['buildings'][key], (x - camera_x, y - camera_y))
-                                    found = True
-                                    break
-                                except Exception as e:
-                                    print(f"Error rendering highlighted building with key {key}: {e}")
-                        
-                        # Use fallback if no matching building texture found
-                        if not found:
-                            pygame.draw.rect(self.screen, (200, 200, 200), 
-                                        (x - camera_x, y - camera_y, 
-                                            building_size, building_size))
+                        # Render the building texture
+                        self._find_and_render_building_texture(building, x, y, camera_x, camera_y)
                         
                         # Draw highlight over building
                         self.screen.blit(highlight_surface, (x - camera_x, y - camera_y))
@@ -404,6 +353,72 @@ class Renderer:
                         
                         # Draw label
                         self.screen.blit(label_text, (label_x, label_y))
+
+
+    def _find_and_render_building_texture(self, building, x, y, camera_x, camera_y):
+        """Helper method to find and render the appropriate building texture.
+        
+        Args:
+            building: The building to render
+            x, y: Building position
+            camera_x, camera_y: Camera position
+            
+        Returns:
+            Boolean indicating if a texture was found and rendered
+        """
+        # Get building properties
+        building_type = building.get('type', '')
+        building_size_str = building.get('size', 'small')
+        building_type_str = building.get('building_type', '').lower() if 'building_type' in building else ''
+        
+        # Try multiple possible key formats for backward compatibility
+        found = False
+        possible_keys = [
+            building_type,  # Original format from 'type' field
+            f"{building_size_str}_{building_type_str}_1",  # New format with building_type
+            f"{building_size_str}_1"  # Simple format with just size
+        ]
+        
+        for key in possible_keys:
+            if key in self.assets['buildings']:
+                try:
+                    self.screen.blit(self.assets['buildings'][key], (x - camera_x, y - camera_y))
+                    found = True
+                    break
+                except Exception as e:
+                    print(f"Error rendering building with key {key}: {e}")
+        
+        # Use fallback if no matching building texture found
+        if not found:
+            # Get building size in pixels
+            building_size = self.tile_size * 3 if building_size_str == 'large' else (
+                        self.tile_size * 2 if building_size_str == 'medium' else self.tile_size)
+            
+            pygame.draw.rect(self.screen, (200, 200, 200), 
+                        (x - camera_x, y - camera_y, 
+                            building_size, building_size))
+        
+        return found
+
+
+    def _render_bridges(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
+        """Render bridges that go over water."""
+        if 'bridges' not in village_data:
+            return
+            
+        for bridge in village_data['bridges']:
+            x, y = bridge['position']
+            if (visible_left * self.tile_size <= x <= visible_right * self.tile_size and
+                visible_top * self.tile_size <= y <= visible_bottom * self.tile_size):
+                try:
+                    bridge_type = bridge['type']
+                    bridge_img = self.assets['environment'][bridge_type]
+                    self.screen.blit(bridge_img, (x - camera_x, y - camera_y))
+                except (KeyError, AttributeError):
+                    # Fallback if bridge texture is missing
+                    pygame.draw.rect(self.screen, (150, 100, 50), 
+                                (x - camera_x, y - camera_y, 
+                                    self.tile_size, self.tile_size))
 
     def _render_trees(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
         """Render trees."""

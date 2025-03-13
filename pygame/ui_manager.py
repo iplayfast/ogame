@@ -268,6 +268,45 @@ class UIManager:
         text_rect = text.get_rect(center=(screen_x, screen_y))
         self.screen.blit(text, text_rect)
 
+    def draw_multiple_villagers_indicator(self, selected_villager, villagers, camera_x, camera_y):
+        """Draw an indicator when multiple villagers are in the same location."""
+        if not selected_villager:
+            return
+            
+        # Get selected villager position
+        center_x = selected_villager.rect.centerx - camera_x
+        center_y = selected_villager.rect.centery - camera_y
+        
+        # Count villagers at this position
+        villagers_at_position = 0
+        for villager in villagers:
+            if abs(villager.position.x - selected_villager.position.x) < 10 and \
+            abs(villager.position.y - selected_villager.position.y) < 10:
+                villagers_at_position += 1
+        
+        # Only draw indicator if multiple villagers exist at this position
+        if villagers_at_position > 1:
+            # Draw indicator text
+            indicator_text = self.small_font.render(
+                f"[{villagers_at_position} villagers here - click to cycle]", True, (255, 255, 255))
+            
+            # Draw background for better visibility
+            text_bg_rect = pygame.Rect(
+                center_x - indicator_text.get_width() // 2 - 5,
+                center_y - 40,
+                indicator_text.get_width() + 10,
+                indicator_text.get_height() + 6
+            )
+            
+            # Semi-transparent background
+            bg_surface = pygame.Surface((text_bg_rect.width, text_bg_rect.height), pygame.SRCALPHA)
+            bg_surface.fill((0, 0, 0, 160))
+            self.screen.blit(bg_surface, text_bg_rect)
+            
+            # Draw text
+            self.screen.blit(indicator_text, (center_x - indicator_text.get_width() // 2, center_y - 37))
+
+
     def draw_building_info(self, building, camera_x, camera_y):
         """Draw information about a building when hovered.
         

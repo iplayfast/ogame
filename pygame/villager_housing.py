@@ -2,6 +2,7 @@ import json
 import random
 import os
 
+            
 def assign_housing_and_jobs(villagers, village_data):
     """
     Assign villagers to houses and workplaces, creating a JSON file with their info.
@@ -157,6 +158,7 @@ def assign_housing_and_jobs(villagers, village_data):
         "Collect water from well"
     ]
     
+    # Fix this line - use the villagers parameter that was passed in
     for villager in villagers:
         # Find workplace based on job
         workplace = None
@@ -312,7 +314,6 @@ def assign_housing_and_jobs(villagers, village_data):
     
     print(f"Saved villager assignments to village_assignments.json")
     return village_assignments
-
 
 def load_assignments(filename='village_assignments.json'):
     """

@@ -16,7 +16,8 @@ class TimeManager:
         
         # Current time values (0.0 to 24.0)
         self.current_hour = 6.0 # Start at 6 am
-        
+        self.old_hour = 6.0
+
         # Time names
         self.time_names = {
             (5, 7): "Dawn",
@@ -37,7 +38,9 @@ class TimeManager:
         Args:
             dt: Delta time in milliseconds
             time_scale: Time scale multiplier
-        """
+        """        
+        old_time_name = self.get_time_name()
+        
         # Calculate seconds per game hour
         seconds_per_hour = self.day_length_seconds / 24
         
@@ -47,6 +50,19 @@ class TimeManager:
         # Update current hour
         hour_change = dt_seconds / seconds_per_hour
         self.current_hour = (self.current_hour + hour_change) % 24.0
+        
+        # Debug time progress for significant changes (at least 15 minutes)
+        if abs(self.current_hour - self.old_hour) > 0.25 or self.get_time_name() != old_time_name:
+            # Format time strings
+            old_time_str = f"{int(self.old_hour)}:{int((self.old_hour % 1) * 60):02d}"
+            new_time_str = f"{int(self.current_hour)}:{int((self.current_hour % 1) * 60):02d}"
+            #print(f"Time advanced from {old_time_str} ({old_time_name}) to {new_time_str} ({self.get_time_name()})")
+            #print(f"Time change: {hour_change:.4f} hours, Speed: {time_scale}x")
+            
+            # Print wake/sleep info for selected villager if any
+            for villager in [v for v in globals().get('game_state', {}).get('villagers', []) if hasattr(v, 'is_selected') and v.is_selected]:
+                print(f"Selected villager {villager.name}: Wake at {villager.wake_hour:.2f}, Sleep at {villager.sleep_hour:.2f}")
+                print(f"Current sleep state: {'Sleeping' if villager.is_sleeping else 'Awake'}")
     
     def set_time(self, hour):
         """Set the current time to a specific hour.
@@ -85,35 +101,26 @@ class TimeManager:
             
         return f"{display_hour}:{minutes:02d} {am_pm} ({self.get_time_name()})"
     
+
     def get_light_level(self):
-        """Get the current light level (0.0 to 1.0)."""
-        # Determine light level based on time of day
+        """Get the current light level (0.0 to 1.0) using a smoother curve."""
         hour = self.current_hour
         
-        # Full daylight from 7 AM to 7 PM
-        if 7 <= hour < 19:
-            # Mid-day brightness peaks at noon
-            if 7 <= hour < 12:
-                # Morning: Gradually getting brighter
-                return 0.7 + 0.3 * ((hour - 7) / 5)
-            elif 12 <= hour < 19:
-                # Afternoon: Gradually getting dimmer
-                return 1.0 - 0.3 * ((hour - 12) / 7)
-        # Dawn (5 AM to 7 AM)
-        elif 5 <= hour < 7:
-            return 0.3 + 0.4 * ((hour - 5) / 2)
-        # Dusk (7 PM to 9 PM)
-        elif 19 <= hour < 21:
-            return 0.7 - 0.4 * ((hour - 19) / 2)
-        # Night (9 PM to 5 AM)
-        else:
-            # Darkest at midnight
-            night_hour = hour if hour >= 21 else hour + 24
-            if 21 <= night_hour < 24:
-                return 0.3 - 0.2 * ((night_hour - 21) / 3)
-            else:  # 0-5 AM
+        # Use a continuous function instead of multiple if-else blocks
+        if 5 <= hour < 21:  # Daytime hours - use a cosine curve
+            # Scale from 5am to 9pm (16 hour period)
+            phase = (hour - 5) / 16
+            # Cosine curve peaks at noon (0.5 phase)
+            return 0.5 + 0.5 * math.cos(math.pi * (phase - 0.5))
+        else:  # Night hours
+            # Base night level is 0.1
+            if hour < 5:  # Late night to early morning
+                # Gradual increase from 0.1 at midnight to 0.3 at 5am
                 return 0.1 + 0.2 * (hour / 5)
-    
+            else:  # Evening to midnight
+                # Gradual decrease from 0.3 at 9pm to 0.1 at midnight
+                return 0.3 - 0.2 * ((hour - 21) / 3)
+
     def get_darkness_overlay(self, screen_width, screen_height):
         """Get a darkness overlay surface for the current time.
         

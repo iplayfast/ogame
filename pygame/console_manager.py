@@ -1,6 +1,7 @@
 import pygame
 import random
 import re
+import Interface
 
 class ConsoleManager:
     def __init__(self, screen, assets, screen_width, screen_height):
@@ -728,3 +729,172 @@ class ConsoleManager:
                 self.add_output(f"Time scale set to {time_scale:.1f}x.")
         except ValueError:
             self.add_output("Invalid time scale. Please provide a number between 0.1 and 10.0.")
+    def process_command_with_interface(self, text, game_state):
+        """Process a console command with Interface notification."""
+        # Add input to console output with prefix
+        self.add_output("> " + text)
+        
+        # Parse the command
+        parts = text.split()
+        if not parts:
+            return
+        
+        command = parts[0].lower()
+        args = parts[1:]
+        
+        # Result storage for Interface notification
+        result = None
+        
+        # Execute the command if it exists
+        if command in self.commands:
+            try:
+                result = self.commands[command](args, game_state)
+                
+                # If result is None (the default for most commands), set it to True
+                # to indicate success
+                if result is None:
+                    result = True
+            except Exception as e:
+                self.add_output(f"Error executing command: {e}")
+                result = False
+        else:
+            self.add_output(f"Unknown command: '{command}'. Type 'help' for available commands.")
+            result = False
+        
+        # Notify Interface
+        Interface.on_console_command(command, args, result)
+        
+        return result
+
+    # --- MODIFY specific command implementations ---
+
+    # Example: Modify _cmd_time to return a result
+    def _cmd_time_with_interface(self, args, game_state):
+        """Get or set game time speed."""
+        if not args:
+            if hasattr(game_state, 'time_scale'):
+                self.add_output(f"Current time scale: {game_state.time_scale:.1f}x")
+            else:
+                self.add_output("Time scale: 1.0x (default)")
+            return None  # No change
+        
+        try:
+            time_scale = float(args[0])
+            if time_scale < 0.1 or time_scale > 10.0:
+                self.add_output("Time scale must be between 0.1 and 10.0.")
+                return False  # Failed
+            
+            # Set the time scale
+            if hasattr(game_state, 'time_scale'):
+                old_scale = game_state.time_scale
+                game_state.time_scale = time_scale
+                self.add_output(f"Time scale changed from {old_scale:.1f}x to {time_scale:.1f}x.")
+            else:
+                # Add time_scale attribute if it doesn't exist
+                game_state.time_scale = time_scale
+                self.add_output(f"Time scale set to {time_scale:.1f}x.")
+            
+            return time_scale  # Return the new time scale
+        except ValueError:
+            self.add_output("Invalid time scale. Please provide a number between 0.1 and 10.0.")
+            return False  # Failed
+
+    # --- ADD NEW COMMANDS that interact with Interface ---
+
+    def _cmd_listen(self, args, game_state):
+        """Enable or disable Interface event logging."""
+        if not args:
+            self.add_output("Usage: listen <on|off> [event_type]")
+            self.add_output("Event types: villager, building, environment, game, ui, all")
+            return False
+        
+        mode = args[0].lower()
+        event_type = args[1].lower() if len(args) > 1 else "all"
+        
+        if mode not in ["on", "off"]:
+            self.add_output("Mode must be 'on' or 'off'")
+            return False
+        
+        enabled = (mode == "on")
+        
+        # Set up a logging function
+        def log_event(event_name, **kwargs):
+            args_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
+            self.add_output(f"[EVENT] {event_name}({args_str})")
+        
+        # Register or unregister callbacks based on event type
+        if event_type == "all" or event_type == "villager":
+            # Villager events
+            events = [
+                "villager_moved", "villager_activity_changed", 
+                "villager_sleep_state_changed", "villager_selected"
+            ]
+            for event in events:
+                if enabled:
+                    Interface._register_callback(event, log_event)
+                # Unregistering would need a reference to the specific function
+        
+        # Similar for other event types...
+        
+        # Enable debug mode in Interface itself
+        Interface.set_debug(enabled)
+        
+        self.add_output(f"Event listening turned {mode} for {event_type} events")
+        return enabled
+
+    def _cmd_interface(self, args, game_state):
+        """Control Interface module settings."""
+        if not args:
+            self.add_output("Usage: interface <debug|stats> [on|off]")
+            return False
+        
+        subcommand = args[0].lower()
+        
+        if subcommand == "debug":
+            # Handle debug mode
+            if len(args) < 2:
+                current_debug = Interface._debug_mode
+                self.add_output(f"Interface debug mode is currently {'ON' if current_debug else 'OFF'}")
+                return current_debug
+            
+            mode = args[1].lower() == "on"
+            Interface.set_debug(mode)
+            self.add_output(f"Interface debug mode turned {'ON' if mode else 'OFF'}")
+            return mode
+            
+        elif subcommand == "stats":
+            # Retrieve and display stats about registered callbacks
+            villager_count = sum(len(cbs) for cbs in Interface._villager_callbacks.values())
+            building_count = sum(len(cbs) for cbs in Interface._building_callbacks.values())
+            environment_count = sum(len(cbs) for cbs in Interface._environment_callbacks.values())
+            game_count = sum(len(cbs) for cbs in Interface._game_event_callbacks.values())
+            ui_count = sum(len(cbs) for cbs in Interface._ui_callbacks.values())
+            time_count = len(Interface._time_callbacks)
+            
+            total = villager_count + building_count + environment_count + game_count + ui_count + time_count
+            
+            self.add_output(f"Interface Callback Statistics:")
+            self.add_output(f"- Time callbacks: {time_count}")
+            self.add_output(f"- Villager callbacks: {villager_count}")
+            self.add_output(f"- Building callbacks: {building_count}")
+            self.add_output(f"- Environment callbacks: {environment_count}")
+            self.add_output(f"- Game callbacks: {game_count}")
+            self.add_output(f"- UI callbacks: {ui_count}")
+            self.add_output(f"- Total callbacks: {total}")
+            
+            return total
+        
+        else:
+            self.add_output(f"Unknown subcommand: {subcommand}")
+            return False
+
+    # --- MAKE SURE TO UPDATE THE commands DICTIONARY ---
+
+    # In the ConsoleManager.__init__ method, add the new commands:
+    # self.commands.update({
+    #     "listen": self._cmd_listen,
+    #     "interface": self._cmd_interface
+    # })
+
+    # And replace the existing command with the enhanced version:
+    # self.commands["time"] = self._cmd_time_with_interface

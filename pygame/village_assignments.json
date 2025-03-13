@@ -1,629 +1,633 @@
 {
     "villagers": [
         {
-            "name": "Zeke Field",
-            "job": "Guard",
+            "name": "Eliza Fletcher",
+            "job": "Miner",
             "home": {
-                "id": 4,
+                "id": 1,
                 "type": "House",
                 "position": [
-                    704,
-                    768
+                    2848,
+                    2144
                 ],
                 "roommates": [
-                    "Zeke Field",
-                    "Tilly Dale"
+                    "Eliza Fletcher",
+                    "Quinn Strong"
                 ],
-                "name": "Zeke Field and Tilly Dale's House"
+                "name": "Eliza Fletcher and Quinn Strong's House"
             },
             "daily_activities": [
-                "Train with weapons",
-                "Stand watch at gate",
+                "Travel to mines",
+                "Dig for ore",
+                "Sell findings",
+                "Sort materials",
+                "Chat with neighbors",
+                "Repair tools",
                 "Visit the market",
-                "Check on merchants",
-                "Report to captain",
-                "Patrol village",
-                "Attend town gathering",
                 "Return home"
             ]
         },
         {
-            "name": "Tilly Dale",
+            "name": "Sven Fletcher",
             "job": "Blacksmith",
             "home": {
-                "id": 4,
-                "type": "House",
-                "position": [
-                    704,
-                    768
-                ],
-                "roommates": [
-                    "Zeke Field",
-                    "Tilly Dale"
-                ],
-                "name": "Zeke Field and Tilly Dale's House"
-            },
-            "daily_activities": [
-                "Forge tools and weapons",
-                "Work on special orders",
-                "Visit the market",
-                "Sell wares",
-                "Repair items",
-                "Go for a walk",
-                "Get materials ready",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Vera Stone",
-            "job": "Tailor",
-            "home": {
-                "id": 6,
-                "type": "House",
-                "position": [
-                    928,
-                    1280
-                ],
-                "roommates": [
-                    "Vera Stone",
-                    "Julia Ford"
-                ],
-                "name": "Vera Stone and Julia Ford's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    800,
-                    1312
-                ]
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Meet with clients",
-                "Visit the market",
-                "Cut fabric",
-                "Design new styles",
-                "Make alterations",
-                "Attend town gathering",
-                "Sew garments",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Julia Ford",
-            "job": "Guard",
-            "home": {
-                "id": 6,
-                "type": "House",
-                "position": [
-                    928,
-                    1280
-                ],
-                "roommates": [
-                    "Vera Stone",
-                    "Julia Ford"
-                ],
-                "name": "Vera Stone and Julia Ford's House"
-            },
-            "daily_activities": [
-                "Stand watch at gate",
-                "Collect water from well",
-                "Chat with neighbors",
-                "Visit the market",
-                "Train with weapons",
-                "Check on merchants",
-                "Patrol village",
-                "Report to captain",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Zeke Thatcher",
-            "job": "Carpenter",
-            "home": {
-                "id": 0,
-                "type": "Cottage",
-                "position": [
-                    608,
-                    800
-                ],
-                "roommates": [
-                    "Zeke Thatcher",
-                    "Bela Gray"
-                ],
-                "name": "Zeke Thatcher and Bela Gray's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    800,
-                    1312
-                ]
-            },
-            "daily_activities": [
-                "Select wood",
-                "Finish projects",
-                "Cut lumber",
-                "Go for a walk",
-                "Make repairs around village",
-                "Eat at the Inn",
-                "Build furniture",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Sven Brown",
-            "job": "Baker",
-            "home": {
                 "id": 12,
-                "type": "House",
+                "type": "Manor",
                 "position": [
-                    1216,
-                    736
+                    2144,
+                    1728
                 ],
                 "roommates": [
-                    "Sven Brown",
-                    "Petra Brown"
+                    "Sven Fletcher",
+                    "Julia Field",
+                    "Quinn Brook",
+                    "Nina Brown"
                 ],
-                "name": "The Brown House"
+                "name": "Sven Fletcher and Others' House"
             },
             "workplace": {
-                "id": 8,
-                "type": "Bakery",
+                "id": 7,
+                "type": "Smithy",
                 "position": [
-                    1024,
-                    1312
+                    2080,
+                    2144
                 ]
             },
             "daily_activities": [
-                "Wake up early",
-                "Chat with customers",
-                "Visit the market",
-                "Sell goods to customers",
-                "Bake bread",
-                "Collect water from well",
-                "Clean bakery",
+                "Sell wares",
+                "Get materials ready",
+                "Repair items",
+                "Work on special orders",
                 "Attend town gathering",
-                "Prepare dough",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Bela Gray",
-            "job": "Carpenter",
-            "home": {
-                "id": 0,
-                "type": "Cottage",
-                "position": [
-                    608,
-                    800
-                ],
-                "roommates": [
-                    "Zeke Thatcher",
-                    "Bela Gray"
-                ],
-                "name": "Zeke Thatcher and Bela Gray's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    800,
-                    1312
-                ]
-            },
-            "daily_activities": [
-                "Make repairs around village",
-                "Build furniture",
+                "Forge tools and weapons",
                 "Go for a walk",
-                "Cut lumber",
-                "Visit the market",
-                "Finish projects",
-                "Select wood",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Doran Brown",
-            "job": "Merchant",
-            "home": {
-                "id": 18,
-                "type": "Cottage",
-                "position": [
-                    320,
-                    992
-                ],
-                "roommates": [
-                    "Doran Brown",
-                    "Xander Swift"
-                ],
-                "name": "Doran Brown and Xander Swift's House"
-            },
-            "workplace": {
-                "id": 1,
-                "type": "Store",
-                "position": [
-                    608,
-                    928
-                ]
-            },
-            "daily_activities": [
-                "Close shop",
-                "Restock inventory",
-                "Count earnings",
-                "Go for a walk",
-                "Visit the market",
-                "Bargain with customers",
-                "Arrange merchandise",
-                "Open shop",
                 "Relax at home"
             ]
         },
         {
-            "name": "Petra Brown",
+            "name": "Quinn Strong",
+            "job": "Miner",
+            "home": {
+                "id": 1,
+                "type": "House",
+                "position": [
+                    2848,
+                    2144
+                ],
+                "roommates": [
+                    "Eliza Fletcher",
+                    "Quinn Strong"
+                ],
+                "name": "Eliza Fletcher and Quinn Strong's House"
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Repair tools",
+                "Sort materials",
+                "Sell findings",
+                "Travel to mines",
+                "Go for a walk",
+                "Dig for ore",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Wren Stone",
             "job": "Blacksmith",
             "home": {
-                "id": 12,
+                "id": 2,
                 "type": "House",
                 "position": [
-                    1216,
-                    736
+                    3264,
+                    2656
                 ],
                 "roommates": [
-                    "Sven Brown",
-                    "Petra Brown"
+                    "Wren Stone",
+                    "Hilda Wood"
                 ],
-                "name": "The Brown House"
+                "name": "Wren Stone and Hilda Wood's House"
             },
             "daily_activities": [
-                "Work on special orders",
-                "Repair items",
-                "Sell wares",
-                "Chat with neighbors",
-                "Visit the market",
                 "Get materials ready",
+                "Sell wares",
+                "Collect water from well",
+                "Visit the market",
+                "Repair items",
                 "Forge tools and weapons",
-                "Return home"
+                "Work on special orders",
+                "Relax at home"
             ]
         },
         {
-            "name": "Greta White",
-            "job": "Hunter",
+            "name": "Hilda Wood",
+            "job": "Guard",
             "home": {
-                "id": 21,
+                "id": 2,
                 "type": "House",
                 "position": [
-                    544,
-                    544
+                    3264,
+                    2656
                 ],
                 "roommates": [
-                    "Greta White",
-                    "Sven Ford"
+                    "Wren Stone",
+                    "Hilda Wood"
                 ],
-                "name": "Greta White and Sven Ford's House"
+                "name": "Wren Stone and Hilda Wood's House"
             },
             "daily_activities": [
-                "Check traps",
-                "Sell meat at market",
-                "Track animals",
-                "Prepare hides",
                 "Eat at the Inn",
-                "Collect water from well",
-                "Hunt for game",
+                "Stand watch at gate",
+                "Report to captain",
+                "Check on merchants",
+                "Train with weapons",
+                "Patrol village",
+                "Visit the market",
                 "Return home"
             ]
         },
         {
-            "name": "Xander Swift",
-            "job": "Innkeeper",
+            "name": "Zeke Fisher",
+            "job": "Merchant",
             "home": {
-                "id": 18,
+                "id": 15,
                 "type": "Cottage",
                 "position": [
-                    320,
-                    992
+                    1568,
+                    2048
                 ],
                 "roommates": [
-                    "Doran Brown",
-                    "Xander Swift"
+                    "Zeke Fisher",
+                    "Ulric Wood"
                 ],
-                "name": "Doran Brown and Xander Swift's House"
+                "name": "Zeke Fisher and Ulric Wood's House"
             },
             "workplace": {
-                "id": 3,
-                "type": "Inn",
+                "id": 16,
+                "type": "Store",
                 "position": [
-                    672,
-                    1120
+                    1984,
+                    2336
                 ]
             },
             "daily_activities": [
-                "Clean rooms",
-                "Manage staff",
-                "Go for a walk",
-                "Prepare breakfast for guests",
-                "Serve food and drinks",
-                "Collect water from well",
-                "Welcome new travelers",
-                "Visit the market",
-                "Close up for the night"
-            ]
-        },
-        {
-            "name": "Sven Ford",
-            "job": "Baker",
-            "home": {
-                "id": 21,
-                "type": "House",
-                "position": [
-                    544,
-                    544
-                ],
-                "roommates": [
-                    "Greta White",
-                    "Sven Ford"
-                ],
-                "name": "Greta White and Sven Ford's House"
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Prepare dough",
-                "Sell goods to customers",
-                "Bake bread",
-                "Eat at the Inn",
-                "Chat with customers",
-                "Wake up early",
-                "Clean bakery",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Nina Smith",
-            "job": "Hunter",
-            "home": {
-                "id": 22,
-                "type": "House",
-                "position": [
-                    928,
-                    544
-                ],
-                "roommates": [
-                    "Nina Smith",
-                    "Yara Swift"
-                ],
-                "name": "Nina Smith and Yara Swift's House"
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Track animals",
-                "Hunt for game",
-                "Collect water from well",
-                "Prepare hides",
-                "Sell meat at market",
-                "Eat at the Inn",
-                "Check traps",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara Swift",
-            "job": "Hunter",
-            "home": {
-                "id": 22,
-                "type": "House",
-                "position": [
-                    928,
-                    544
-                ],
-                "roommates": [
-                    "Nina Smith",
-                    "Yara Swift"
-                ],
-                "name": "Nina Smith and Yara Swift's House"
-            },
-            "daily_activities": [
-                "Hunt for game",
-                "Eat at the Inn",
-                "Sell meat at market",
                 "Chat with neighbors",
-                "Prepare hides",
-                "Check traps",
-                "Track animals",
+                "Collect water from well",
+                "Bargain with customers",
+                "Restock inventory",
+                "Close shop",
+                "Arrange merchandise",
+                "Count earnings",
+                "Open shop",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Finn Reed",
+            "job": "Miner",
+            "home": {
+                "id": 24,
+                "type": "House",
+                "position": [
+                    1280,
+                    1504
+                ],
+                "roommates": [
+                    "Finn Reed",
+                    "Finn Wood"
+                ],
+                "name": "Finn Reed and Finn Wood's House"
+            },
+            "daily_activities": [
+                "Travel to mines",
+                "Repair tools",
+                "Sell findings",
+                "Visit the market",
+                "Eat at the Inn",
+                "Sort materials",
+                "Dig for ore",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ulric Wood",
+            "job": "Merchant",
+            "home": {
+                "id": 15,
+                "type": "Cottage",
+                "position": [
+                    1568,
+                    2048
+                ],
+                "roommates": [
+                    "Zeke Fisher",
+                    "Ulric Wood"
+                ],
+                "name": "Zeke Fisher and Ulric Wood's House"
+            },
+            "workplace": {
+                "id": 16,
+                "type": "Store",
+                "position": [
+                    1984,
+                    2336
+                ]
+            },
+            "daily_activities": [
+                "Bargain with customers",
+                "Go for a walk",
+                "Count earnings",
+                "Open shop",
+                "Chat with neighbors",
+                "Close shop",
+                "Restock inventory",
+                "Arrange merchandise",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Julia Field",
+            "job": "Carpenter",
+            "home": {
+                "id": 12,
+                "type": "Manor",
+                "position": [
+                    2144,
+                    1728
+                ],
+                "roommates": [
+                    "Sven Fletcher",
+                    "Julia Field",
+                    "Quinn Brook",
+                    "Nina Brown"
+                ],
+                "name": "Sven Fletcher and Others' House"
+            },
+            "workplace": {
+                "id": 0,
+                "type": "Workshop",
+                "position": [
+                    2016,
+                    1888
+                ]
+            },
+            "daily_activities": [
+                "Make repairs around village",
+                "Build furniture",
+                "Select wood",
+                "Eat at the Inn",
+                "Visit the market",
+                "Cut lumber",
+                "Attend town gathering",
+                "Finish projects",
                 "Return home"
             ]
         },
         {
             "name": "Finn Wood",
-            "job": "Tailor",
-            "home": {
-                "id": 7,
-                "type": "Cottage",
-                "position": [
-                    864,
-                    640
-                ],
-                "roommates": [
-                    "Finn Wood",
-                    "Bela Hill"
-                ],
-                "name": "Finn Wood and Bela Hill's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    800,
-                    1312
-                ]
-            },
-            "daily_activities": [
-                "Sew garments",
-                "Design new styles",
-                "Cut fabric",
-                "Make alterations",
-                "Visit the market",
-                "Meet with clients",
-                "Attend town gathering",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Bela Hill",
-            "job": "Tailor",
-            "home": {
-                "id": 7,
-                "type": "Cottage",
-                "position": [
-                    864,
-                    640
-                ],
-                "roommates": [
-                    "Finn Wood",
-                    "Bela Hill"
-                ],
-                "name": "Finn Wood and Bela Hill's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    800,
-                    1312
-                ]
-            },
-            "daily_activities": [
-                "Sew garments",
-                "Make alterations",
-                "Cut fabric",
-                "Meet with clients",
-                "Design new styles",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Greta Wood",
-            "job": "Innkeeper",
+            "job": "Farmer",
             "home": {
                 "id": 24,
                 "type": "House",
                 "position": [
-                    1344,
-                    640
+                    1280,
+                    1504
                 ],
                 "roommates": [
-                    "Greta Wood",
-                    "Kai White"
+                    "Finn Reed",
+                    "Finn Wood"
                 ],
-                "name": "Greta Wood and Kai White's House"
+                "name": "Finn Reed and Finn Wood's House"
             },
             "daily_activities": [
+                "Plant new seeds",
+                "Feed animals",
+                "Repair fences",
+                "Take produce to market",
+                "Tend to crops",
+                "Eat at the Inn",
+                "Collect water from well",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ulric Field",
+            "job": "Innkeeper",
+            "home": {
+                "id": 10,
+                "type": "Cottage",
+                "position": [
+                    1760,
+                    1728
+                ],
+                "roommates": [
+                    "Ulric Field",
+                    "Tilly White"
+                ],
+                "name": "Ulric Field and Tilly White's House"
+            },
+            "workplace": {
+                "id": 6,
+                "type": "Inn",
+                "position": [
+                    1600,
+                    2336
+                ]
+            },
+            "daily_activities": [
+                "Clean rooms",
+                "Prepare breakfast for guests",
+                "Chat with neighbors",
                 "Serve food and drinks",
                 "Manage staff",
-                "Clean rooms",
-                "Collect water from well",
+                "Attend town gathering",
                 "Welcome new travelers",
-                "Prepare breakfast for guests",
                 "Close up for the night",
                 "Relax at home"
             ]
         },
         {
-            "name": "Kai White",
-            "job": "Hunter",
+            "name": "Quinn Brook",
+            "job": "Carpenter",
             "home": {
-                "id": 24,
-                "type": "House",
+                "id": 12,
+                "type": "Manor",
                 "position": [
-                    1344,
-                    640
+                    2144,
+                    1728
                 ],
                 "roommates": [
-                    "Greta Wood",
-                    "Kai White"
+                    "Sven Fletcher",
+                    "Julia Field",
+                    "Quinn Brook",
+                    "Nina Brown"
                 ],
-                "name": "Greta Wood and Kai White's House"
+                "name": "Sven Fletcher and Others' House"
+            },
+            "workplace": {
+                "id": 0,
+                "type": "Workshop",
+                "position": [
+                    2016,
+                    1888
+                ]
             },
             "daily_activities": [
-                "Hunt for game",
-                "Eat at the Inn",
-                "Track animals",
-                "Prepare hides",
+                "Finish projects",
                 "Chat with neighbors",
-                "Check traps",
-                "Sell meat at market",
+                "Build furniture",
+                "Make repairs around village",
+                "Visit the market",
+                "Select wood",
+                "Cut lumber",
                 "Return home"
             ]
         },
         {
-            "name": "Yara Black",
+            "name": "Nina Brown",
+            "job": "Innkeeper",
+            "home": {
+                "id": 12,
+                "type": "Manor",
+                "position": [
+                    2144,
+                    1728
+                ],
+                "roommates": [
+                    "Sven Fletcher",
+                    "Julia Field",
+                    "Quinn Brook",
+                    "Nina Brown"
+                ],
+                "name": "Sven Fletcher and Others' House"
+            },
+            "workplace": {
+                "id": 14,
+                "type": "Inn",
+                "position": [
+                    1984,
+                    1696
+                ]
+            },
+            "daily_activities": [
+                "Close up for the night",
+                "Collect water from well",
+                "Welcome new travelers",
+                "Clean rooms",
+                "Prepare breakfast for guests",
+                "Attend town gathering",
+                "Manage staff",
+                "Serve food and drinks"
+            ]
+        },
+        {
+            "name": "Bela Black",
+            "job": "Innkeeper",
+            "home": {
+                "id": 22,
+                "type": "Cottage",
+                "position": [
+                    2144,
+                    3136
+                ],
+                "roommates": [
+                    "Bela Black",
+                    "Petra Fisher"
+                ],
+                "name": "Bela Black and Petra Fisher's House"
+            },
+            "workplace": {
+                "id": 23,
+                "type": "Inn",
+                "position": [
+                    2304,
+                    2432
+                ]
+            },
+            "daily_activities": [
+                "Prepare breakfast for guests",
+                "Manage staff",
+                "Serve food and drinks",
+                "Collect water from well",
+                "Clean rooms",
+                "Close up for the night",
+                "Welcome new travelers",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Bela Thatcher",
             "job": "Baker",
             "home": {
-                "id": 23,
+                "id": 4,
                 "type": "Cottage",
                 "position": [
-                    896,
-                    448
+                    288,
+                    1568
                 ],
                 "roommates": [
-                    "Yara Black",
-                    "Greta Green"
+                    "Bela Thatcher",
+                    "Xander River"
                 ],
-                "name": "Yara Black and Greta Green's House"
+                "name": "Bela Thatcher and Xander River's House"
             },
             "daily_activities": [
-                "Wake up early",
-                "Prepare dough",
-                "Eat at the Inn",
                 "Sell goods to customers",
+                "Eat at the Inn",
+                "Wake up early",
                 "Chat with customers",
-                "Clean bakery",
                 "Bake bread",
-                "Attend town gathering",
-                "Relax at home"
+                "Visit the market",
+                "Clean bakery",
+                "Prepare dough",
+                "Return home"
             ]
         },
         {
-            "name": "Greta Green",
-            "job": "Innkeeper",
+            "name": "Xander River",
+            "job": "Baker",
             "home": {
-                "id": 23,
+                "id": 4,
                 "type": "Cottage",
                 "position": [
-                    896,
-                    448
+                    288,
+                    1568
                 ],
                 "roommates": [
-                    "Yara Black",
-                    "Greta Green"
+                    "Bela Thatcher",
+                    "Xander River"
                 ],
-                "name": "Yara Black and Greta Green's House"
+                "name": "Bela Thatcher and Xander River's House"
             },
             "daily_activities": [
-                "Close up for the night",
-                "Welcome new travelers",
-                "Serve food and drinks",
-                "Prepare breakfast for guests",
-                "Clean rooms",
-                "Attend town gathering",
+                "Chat with customers",
                 "Collect water from well",
+                "Wake up early",
+                "Sell goods to customers",
+                "Chat with neighbors",
+                "Clean bakery",
+                "Bake bread",
+                "Visit the market",
+                "Prepare dough",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Tilly White",
+            "job": "Innkeeper",
+            "home": {
+                "id": 10,
+                "type": "Cottage",
+                "position": [
+                    1760,
+                    1728
+                ],
+                "roommates": [
+                    "Ulric Field",
+                    "Tilly White"
+                ],
+                "name": "Ulric Field and Tilly White's House"
+            },
+            "daily_activities": [
+                "Clean rooms",
+                "Serve food and drinks",
+                "Attend town gathering",
+                "Chat with neighbors",
+                "Welcome new travelers",
                 "Manage staff",
-                "Relax at home"
+                "Prepare breakfast for guests",
+                "Close up for the night"
+            ]
+        },
+        {
+            "name": "Greta Reed",
+            "job": "Blacksmith",
+            "home": {
+                "id": 18,
+                "type": "Cottage",
+                "position": [
+                    1888,
+                    1440
+                ],
+                "roommates": [
+                    "Greta Reed",
+                    "Eliza Field"
+                ],
+                "name": "Greta Reed and Eliza Field's House"
+            },
+            "daily_activities": [
+                "Go for a walk",
+                "Get materials ready",
+                "Sell wares",
+                "Chat with neighbors",
+                "Repair items",
+                "Forge tools and weapons",
+                "Work on special orders",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Eliza Field",
+            "job": "Hunter",
+            "home": {
+                "id": 18,
+                "type": "Cottage",
+                "position": [
+                    1888,
+                    1440
+                ],
+                "roommates": [
+                    "Greta Reed",
+                    "Eliza Field"
+                ],
+                "name": "Greta Reed and Eliza Field's House"
+            },
+            "daily_activities": [
+                "Track animals",
+                "Chat with neighbors",
+                "Check traps",
+                "Collect water from well",
+                "Sell meat at market",
+                "Hunt for game",
+                "Prepare hides",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Petra Fisher",
+            "job": "Farmer",
+            "home": {
+                "id": 22,
+                "type": "Cottage",
+                "position": [
+                    2144,
+                    3136
+                ],
+                "roommates": [
+                    "Bela Black",
+                    "Petra Fisher"
+                ],
+                "name": "Bela Black and Petra Fisher's House"
+            },
+            "daily_activities": [
+                "Repair fences",
+                "Go for a walk",
+                "Feed animals",
+                "Take produce to market",
+                "Tend to crops",
+                "Plant new seeds",
+                "Return home"
             ]
         }
     ],
     "house_names": {
-        "4": "Zeke Field and Tilly Dale's House",
-        "6": "Vera Stone and Julia Ford's House",
-        "0": "Zeke Thatcher and Bela Gray's House",
-        "12": "The Brown House",
-        "18": "Doran Brown and Xander Swift's House",
-        "21": "Greta White and Sven Ford's House",
-        "22": "Nina Smith and Yara Swift's House",
-        "7": "Finn Wood and Bela Hill's House",
-        "24": "Greta Wood and Kai White's House",
-        "23": "Yara Black and Greta Green's House"
+        "1": "Eliza Fletcher and Quinn Strong's House",
+        "12": "Sven Fletcher and Others' House",
+        "2": "Wren Stone and Hilda Wood's House",
+        "15": "Zeke Fisher and Ulric Wood's House",
+        "24": "Finn Reed and Finn Wood's House",
+        "10": "Ulric Field and Tilly White's House",
+        "22": "Bela Black and Petra Fisher's House",
+        "4": "Bela Thatcher and Xander River's House",
+        "18": "Greta Reed and Eliza Field's House"
     }
 }

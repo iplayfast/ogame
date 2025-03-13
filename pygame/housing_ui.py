@@ -1,5 +1,6 @@
 import pygame
 import math
+import Interface
 
 class HousingUI:
     """Handles UI elements related to villager housing and jobs."""
@@ -329,3 +330,43 @@ class HousingUI:
             activity_text = self.small_font.render(f"{i+1}. {activity}", True, self.WHITE)
             self.screen.blit(activity_text, (panel_x + 20, y_offset))
             y_offset += 20
+    # This code should be added to housing_ui.py
+
+    def set_selected_building(self, building):
+        """Set the currently selected building with Interface notification."""
+        # Store previous selection
+        old_selection = self.selected_building
+        
+        # Normal update
+        self.selected_building = building
+        
+        # Notify if selection changed
+        if building is not None and building != old_selection:
+            Interface.on_building_selected(building)
+            print(f"Building selected: {building.get('building_type', 'unknown')}")
+
+    # This code goes in assign_housing_and_jobs function within villager_housing.py to notify of assignments
+
+    def notify_housing_assignments(villagers, assignments):
+        """Notify Interface of housing and workplace assignments."""
+        if not assignments or 'villagers' not in assignments:
+            return
+            
+        for villager in villagers:
+            for v_data in assignments['villagers']:
+                if villager.name == v_data['name']:
+                    # Find the home building
+                    if 'home' in v_data and 'id' in v_data['home'] and v_data['home']['id'] >= 0:
+                        home_id = v_data['home']['id']
+                        # Notify Interface
+                        Interface.on_building_housing_assigned(villager, {'id': home_id}, 'home')
+                    
+                    # Find the workplace building
+                    if 'workplace' in v_data and 'id' in v_data['workplace']:
+                        workplace_id = v_data['workplace']['id']
+                        # Notify Interface
+                        Interface.on_building_housing_assigned(villager, {'id': workplace_id}, 'workplace')
+                        
+        print("Interface notified of all housing and workplace assignments")
+
+    # Call this at the end of assign_housing_and_jobs

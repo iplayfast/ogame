@@ -584,3 +584,337 @@ def add_to_set_if_in_bounds(element_set, pos, grid_size):
         return True
     return False
 
+def iterate_area(x, y, width, height, tile_size):
+    """Generate positions within a rectangular area in grid-aligned steps.
+
+    Args:
+        x, y: Starting coordinates of the area
+        width, height: Size of the area in pixels
+        tile_size: Size of a tile in pixels
+
+    Yields:
+        Tuples of (x, y) coordinates for each grid position
+    """
+    for dx in range(0, width, tile_size):
+        for dy in range(0, height, tile_size):
+            yield (x + dx, y + dy)
+
+def get_neighbors(x, y, tile_size, include_self=False):
+    """Generate 8-way neighboring positions.
+
+    Args:
+        x, y: Center coordinates
+        tile_size: Size of a tile in pixels
+        include_self: Whether to include the center position
+
+    Yields:
+        Tuples of (x, y) coordinates for neighboring positions
+    """
+    for dx in [-tile_size, 0, tile_size]:
+        for dy in [-tile_size, 0, tile_size]:
+            if dx == 0 and dy == 0 and not include_self:
+                continue
+            yield (x + dx, y + dy)
+
+def get_buffer_positions(center_x, center_y, radius, tile_size):
+    """Get all positions within a buffer radius of center.
+
+    Args:
+        center_x, center_y: Center coordinates
+        radius: Buffer radius in tile units
+        tile_size: Size of a tile in pixels
+
+    Yields:
+        Tuples of (x, y) coordinates within the buffer
+    """
+    for dx in range(-radius, radius + 1):
+        for dy in range(-radius, radius + 1):
+            yield (center_x + dx * tile_size, center_y + dy * tile_size)
+
+def filter_valid_positions(positions, grid_size, water_positions=None, path_positions=None, building_positions=None):
+    """Filter positions based on common validity criteria.
+
+    Args:
+        positions: Iterable of position tuples
+        grid_size: Size of the grid in pixels
+        water_positions: Set of water positions to avoid
+        path_positions: Set of path positions to avoid
+        building_positions: Set of building positions to avoid
+
+    Yields:
+        Valid position tuples
+    """
+    for pos in positions:
+        x, y = pos
+        if not utils.is_in_bounds(x, y, grid_size):
+            continue
+        if water_positions is not None and pos in water_positions:
+            continue
+        if path_positions is not None and pos in path_positions:
+            continue
+        if building_positions is not None and pos in building_positions:
+            continue
+        yield pos
+
+
+def is_near_water(x, y, water_positions, tile_size):
+    """Check if a position is near water."""
+    for neighbor_pos in utils.get_neighbors(x, y, tile_size):
+        if neighbor_pos in water_positions:
+            return True
+    return False
+
+def is_footprint_valid(position_x, position_y, footprint_tiles, tile_size,
+                      excluded_positions_sets, grid_size=None):
+    """Check if a building footprint is valid.
+    
+    Args:
+        position_x, position_y: Position to check
+        footprint_tiles: Size of footprint in tiles
+        tile_size: Size of a tile in pixels
+        excluded_positions_sets: List of sets of positions to avoid
+        grid_size: Optional size of the grid for bounds checking
+    
+    Returns:
+        Boolean indicating if the footprint is valid
+    """
+    # Check all tiles in the footprint
+    for pos in iterate_area(position_x, position_y, 
+                                 footprint_tiles * tile_size, 
+                                 footprint_tiles * tile_size, 
+                                 tile_size):
+        # Check if out of bounds if grid_size is provided
+        if grid_size and not is_in_bounds(pos[0], pos[1], grid_size):
+            return False
+            
+        # Check if position is in any excluded sets
+        for excluded_set in excluded_positions_sets:
+            if pos in excluded_set:
+                return False
+                
+    return True
+
+
+def generate_points_in_irregular_shape(center_x, center_y, base_radius, 
+                                     irregularity, num_points=12):
+    """Generate points forming an irregular shape.
+    
+    Args:
+        center_x, center_y: Center of the shape
+        base_radius: Base radius of the shape
+        irregularity: Amount of irregularity (0.0-1.0)
+        num_points: Number of points to generate
+        
+    Returns:
+        List of (x, y) points forming the shape
+    """
+    points = []
+    for i in range(num_points):
+        angle = i * (2 * math.pi / num_points)
+        # Vary the radius at this angle to create irregularity
+        radius_modifier = 1.0 - irregularity/2 + random.random() * irregularity
+        radius = base_radius * radius_modifier
+        
+        x, y = polar_to_cartesian(center_x, center_y, angle, radius)
+        points.append((x, y))
+    return points
+
+def generate_points_in_irregular_shape(center_x, center_y, base_radius, 
+                                     irregularity, num_points=12):
+    """Generate points forming an irregular shape.
+    
+    Args:
+        center_x, center_y: Center of the shape
+        base_radius: Base radius of the shape
+        irregularity: Amount of irregularity (0.0-1.0)
+        num_points: Number of points to generate
+        
+    Returns:
+        List of (x, y) points forming the shape
+    """
+    points = []
+    for i in range(num_points):
+        angle = i * (2 * math.pi / num_points)
+        # Vary the radius at this angle to create irregularity
+        radius_modifier = 1.0 - irregularity/2 + random.random() * irregularity
+        radius = base_radius * radius_modifier
+        
+        x, y = polar_to_cartesian(center_x, center_y, angle, radius)
+        points.append((x, y))
+    return points
+
+def is_point_in_shape(x, y, shape_points, center_x=None, center_y=None):
+    """Test if a point is inside a shape defined by points.
+    
+    Args:
+        x, y: Point to test
+        shape_points: List of (x, y) points defining the shape
+        center_x, center_y: Optional center point for radial shapes
+        
+    Returns:
+        Boolean indicating if the point is inside the shape
+    """
+    # If center is provided, use radial approach (for irregular shapes with known center)
+    if center_x is not None and center_y is not None:
+        # Calculate angle from center to point
+        angle = math.atan2(y - center_y, x - center_x)
+        if angle < 0:
+            angle += 2 * math.pi
+        
+        # Find which sector this angle falls into
+        num_points = len(shape_points)
+        sector = int(angle / (2 * math.pi) * num_points)
+        if sector >= num_points:
+            sector = 0
+        
+        p1 = shape_points[sector]
+        p2 = shape_points[(sector + 1) % num_points]
+        
+        # Calculate how far along the sector this angle is
+        sector_start_angle = sector * (2 * math.pi / num_points)
+        sector_angle_range = 2 * math.pi / num_points
+        sector_progress = (angle - sector_start_angle) / sector_angle_range
+        
+        # Interpolate between the two points
+        edge_x = p1[0] + (p2[0] - p1[0]) * sector_progress
+        edge_y = p1[1] + (p2[1] - p1[1]) * sector_progress
+        
+        # Calculate distance from center to edge and from center to point
+        edge_distance = math.sqrt((center_x - edge_x)**2 + (center_y - edge_y)**2)
+        point_distance = math.sqrt((center_x - x)**2 + (center_y - y)**2)
+        
+        # If point is closer to center than edge, it's inside the shape
+        return point_distance <= edge_distance
+    
+    # Otherwise, use ray casting algorithm for general polygons
+    else:
+        inside = False
+        j = len(shape_points) - 1
+        
+        for i in range(len(shape_points)):
+            # Check if ray from point crosses this edge
+            xi, yi = shape_points[i]
+            xj, yj = shape_points[j]
+            
+            # Point is on a vertex
+            if (xi == x and yi == y) or (xj == x and yj == y):
+                return True
+                
+            # Check if ray from point crosses this edge
+            intersect = ((yi > y) != (yj > y)) and (x < xi + ((y - yi) / (yj - yi)) * (xj - xi))
+            if intersect:
+                inside = not inside
+            j = i
+            
+        return inside
+    
+def find_path_between_points(start, end, obstacles, grid_size, tile_size, 
+                            prefer_cardinal=True):
+    """Find a path between two points avoiding obstacles.
+    
+    Args:
+        start: Start position (x, y)
+        end: End position (x, y)
+        obstacles: Set of obstacle positions to avoid
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        prefer_cardinal: Whether to prefer cardinal directions
+        
+    Returns:
+        List of positions forming a path, or empty list if no path found
+    """
+    import heapq
+    
+    # Convert positions to grid coordinates if they aren't already
+    start_grid = (start[0] // tile_size, start[1] // tile_size)
+    end_grid = (end[0] // tile_size, end[1] // tile_size)
+    
+    # If start and goal are the same, return just the start point
+    if start_grid == end_grid:
+        return [start]
+    
+    # Helper function to check if a position is valid
+    def is_valid_position(pos):
+        x, y = pos
+        
+        # Check if in bounds
+        if x < 0 or x >= grid_size // tile_size or y < 0 or y >= grid_size // tile_size:
+            return False
+            
+        # Check if position is an obstacle
+        grid_pos = (x * tile_size, y * tile_size)
+        if grid_pos in obstacles:
+            return False
+            
+        return True
+    
+    # Helper function to estimate cost to goal
+    def heuristic(a, b):
+        # Manhattan distance with slight preference for aligned moves
+        dx, dy = abs(a[0] - b[0]), abs(a[1] - b[1])
+        return dx + dy
+    
+    # Initialize A* search
+    open_set = []
+    heapq.heappush(open_set, (0, start_grid))
+    came_from = {}
+    g_score = {start_grid: 0}
+    f_score = {start_grid: heuristic(start_grid, end_grid)}
+    open_set_hash = {start_grid}
+    
+    # Define movement directions
+    if prefer_cardinal:
+        # Cardinal directions first (NESW), then diagonals
+        directions = [
+            (0, -1), (1, 0), (0, 1), (-1, 0),  # Cardinal (NESW)
+            (1, -1), (1, 1), (-1, 1), (-1, -1)  # Diagonal (NE, SE, SW, NW)
+        ]
+    else:
+        # All 8 directions
+        directions = [
+            (0, -1), (1, -1), (1, 0), (1, 1),
+            (0, 1), (-1, 1), (-1, 0), (-1, -1)
+        ]
+    
+    # A* search algorithm
+    while open_set:
+        _, current = heapq.heappop(open_set)
+        open_set_hash.remove(current)
+        
+        if current == end_grid:
+            # Goal reached, reconstruct path
+            path = []
+            while current in came_from:
+                # Convert grid coordinates back to pixel positions
+                path.append((current[0] * tile_size, current[1] * tile_size))
+                current = came_from[current]
+            
+            path.append((start_grid[0] * tile_size, start_grid[1] * tile_size))
+            path.reverse()
+            return path
+        
+        for i, (dx, dy) in enumerate(directions):
+            neighbor = (current[0] + dx, current[1] + dy)
+            
+            # Skip if not valid
+            if not is_valid_position(neighbor):
+                continue
+            
+            # Calculate movement cost (diagonal moves cost more)
+            is_diagonal = i >= 4 if prefer_cardinal else (dx != 0 and dy != 0)
+            move_cost = 1.414 if is_diagonal else 1.0
+            
+            tentative_g = g_score[current] + move_cost
+            
+            if neighbor not in g_score or tentative_g < g_score[neighbor]:
+                # This path is better
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g
+                f_score[neighbor] = tentative_g + heuristic(neighbor, end_grid)
+                
+                if neighbor not in open_set_hash:
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
+                    open_set_hash.add(neighbor)
+    
+    # No path found
+    return []

@@ -1,402 +1,133 @@
 import random
 import math
 import utils
+import landscape_generator
 
-# ================ VILLAGE GENERATION FUNCTIONS ================
+# In village_generator.py, modify the generate_village function like this:
 
 def generate_village(size, assets, tile_size=32):
-    """Generate a procedural village with a central water feature and realistic layout.
+    """Generate a procedural village with buildings, roads, and paths.
     
     Args:
         size: Base size parameter (will be scaled up)
         assets: Dictionary of game assets
-        tile_size: Size of each tile in pixels (grass tiles are this size)
+        tile_size: Size of each tile in pixels
         
     Returns:
-        Dictionary containing village data
+        Dictionary containing complete village data
     """
-    # Scale up the village size to accommodate larger buildings
-    size = size * 2  # Double the original size parameter
+    # First, generate the landscape
+    landscape = landscape_generator.generate_landscape(size, tile_size)
     
-    print(f"Generating waterfront village with expanded size {size}x{size} tiles...")
+    # Extract landscape components
+    grid_size = landscape['size']
+    terrain = landscape['terrain']
+    water = landscape['water']
+    water_positions = landscape['water_positions']
+    trees = []  # Clear any trees from initial landscape generation
     
-    # Define asset sizes
-    building_sizes = {
-        "large": 256,    # 8 tiles (256x256)
-        "medium": 192,   # 6 tiles (192x192)
-        "small": 128     # 4 tiles (128x128)
-    }
-    character_size = 48  # 1.5 tiles (48x48)
-    grass_size = tile_size  # 1 tile (32x32)
-    
-    # Create grid with grass base
-    grid_size = size * tile_size
-    terrain = {}
+    # Create additional village components
+    bridges = []
     buildings = []
-    trees = []
     paths = []
-    water = []
     
-    # Place grass everywhere as base
-    for x in range(0, grid_size, tile_size):
-        for y in range(0, grid_size, tile_size):
-            terrain[(x, y)] = {
-                'type': 'grass',
-                'variant': random.randint(1, 3)
-            }
-    
-    # Add a single large water feature (lake, river, or lake with river)
-    water_type = random.choice(["lake", "river", "lake_with_river"])
-    water_positions = create_water_feature(water, grid_size, tile_size, water_type)
+    print(f"Building village on landscape with size {grid_size}x{grid_size} pixels...")
     
     # Create a village layout based on the water feature
     # First, plan the main roads and paths around the water
-    create_village_layout(paths, water_positions, grid_size, tile_size, water_type)
+    create_village_layout(paths, water_positions, grid_size, tile_size)
     
     # Convert path positions to a set for quick checking
     path_positions = {(p['position'][0], p['position'][1]) for p in paths}
     
     # Place buildings with appropriate types based on proximity to water and village center
     target_building_count = int(size * 0.5)  # Scale with village size
+    
+    # Define building sizes for lookup
+    building_sizes = {
+        "large": 3 * tile_size,
+        "medium": 2 * tile_size,
+        "small": 1 * tile_size
+    }
+    
     place_buildings_by_zones(buildings, paths, water_positions, path_positions, 
-                             grid_size, tile_size, assets, building_sizes, target_building_count)
+                            grid_size, tile_size, assets, building_sizes, target_building_count, terrain)
     
-    # Convert building positions to a set for quick checking (include their full footprint)
-    building_positions = get_building_footprints(buildings, building_sizes, tile_size, grid_size)
+    # Connect buildings to paths with proper adjacency
+    connect_buildings_to_paths(buildings, paths, water_positions, grid_size, tile_size)
     
-    # Place trees (avoid paths, buildings, and water)
-    tree_target = int(size * size * 0.03)  # Reduced density slightly for performance
-    place_trees_improved(trees, path_positions, building_positions, water_positions, grid_size, tile_size, size, tree_target)
+    # FIX 1: Ensure path adjacency (no diagonal-only connections)
+    paths = ensure_path_adjacency(paths, grid_size, tile_size)
     
-    print(f"Village generation complete! {len(buildings)} buildings, {len(trees)} trees, {len(paths)} path tiles, {len(water)} water tiles")
+    # FIX 2: Remove isolated paths (paths with fewer than 2 adjacent path neighbors)
+    paths = remove_isolated_paths(paths, grid_size, tile_size)
+    
+    # Update path_positions after fixing paths
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    
+    # Update grass near building entrances and ensure they connect to paths
+    update_grass_near_building_entrances(terrain, buildings, building_sizes, grid_size, 
+                                        tile_size, water_positions, path_positions)
+    
+    # FIX 3: Ensure grass type 2 is properly around water
+    fix_grass_around_water(terrain, water_positions, grid_size, tile_size)
+    
+    # Add bridges where paths cross water
+    bridges = landscape_generator.add_bridges_at_path_water_intersections(terrain, water, paths, grid_size, tile_size, assets)
+    
+    # Create a set of building positions and occupied spaces to avoid when placing trees
+    building_positions = set()
+    occupied_spaces = set()
+    
+    for building in buildings:
+        # Get building properties
+        building_pos = building['position']
+        building_size_name = building['size']
+        
+        # Convert size name to pixel size
+        building_size_px = building_sizes[building_size_name]
+        
+        # Calculate footprint size in tiles
+        footprint_tiles = building_size_px // tile_size
+        
+        # Mark all tiles occupied by the building
+        for dx in range(footprint_tiles):
+            for dy in range(footprint_tiles):
+                pos = (building_pos[0] + dx * tile_size, building_pos[1] + dy * tile_size)
+                building_positions.add(pos)
+                occupied_spaces.add(pos)
+        
+        # Add a buffer zone around buildings to occupied spaces
+        buffer_size = 1  # 1 tile buffer
+        for dx in range(-buffer_size, footprint_tiles + buffer_size):
+            for dy in range(-buffer_size, footprint_tiles + buffer_size):
+                if 0 <= dx < footprint_tiles and 0 <= dy < footprint_tiles:
+                    continue  # Skip the actual building tiles (already added)
+                
+                buffer_pos = (building_pos[0] + dx * tile_size, building_pos[1] + dy * tile_size)
+                if utils.is_in_bounds(buffer_pos[0], buffer_pos[1], grid_size):
+                    occupied_spaces.add(buffer_pos)
+    
+    # Now that we have buildings and paths, place trees with proper positioning
+    tree_target = int(size * size * 0.03)  # 3% of tiles as trees
+    landscape_generator.place_trees_improved(trees, water_positions, occupied_spaces, path_positions, 
+                                           building_positions, grid_size, tile_size, size, tree_target)
+    
+    # Print some stats about the village
+    print(f"Village generation complete! {len(buildings)} buildings, {len(paths)} path tiles, {len(bridges)} bridges, {len(trees)} trees")
+
+    # Return the complete village data
     return {
         'size': grid_size,
         'terrain': terrain,
         'buildings': buildings,
         'trees': trees,
         'paths': paths,
-        'water': water
+        'water': water,
+        'bridges': bridges
     }
 
-def get_building_footprints(buildings, building_sizes, tile_size, grid_size):
-    """Get the footprint of all buildings including buffer zones.
-    
-    Args:
-        buildings: List of building dictionaries
-        building_sizes: Dictionary of building sizes
-        tile_size: Size of a tile in pixels
-        grid_size: Size of the grid in pixels
-        
-    Returns:
-        Set of positions occupied by buildings and their buffer zones
-    """
-    building_positions = set()
-    for building in buildings:
-        x, y = building['position']
-        building_size_px = building_sizes[building['size']]
-        footprint_tiles = building_size_px // tile_size
-        
-        for dx in range(footprint_tiles):
-            for dy in range(footprint_tiles):
-                bx = x + dx * tile_size
-                by = y + dy * tile_size
-                
-                # Skip if out of bounds
-                if utils.is_in_bounds(bx, by, grid_size):
-                    building_positions.add((bx, by))
-                    
-                    # Add buffer zone around buildings to prevent trees from being too close
-                    for buffer_x in range(-1, 2):
-                        for buffer_y in range(-1, 2):
-                            buffer_pos = (bx + buffer_x * tile_size, by + buffer_y * tile_size)
-                            utils.add_to_set_if_in_bounds(building_positions, buffer_pos, grid_size)
-    
-    return building_positions
-
-def create_water_feature(water, grid_size, tile_size, water_type):
-    """Create a single large water feature (lake, river, or both).
-    
-    Args:
-        water: List to add water tiles to
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        water_type: Type of water feature ("lake", "river", or "lake_with_river")
-        
-    Returns:
-        Set of water positions
-    """
-    water_positions = set()
-    center_x, center_y = grid_size // 2, grid_size // 2
-    
-    if water_type == "lake" or water_type == "lake_with_river":
-        # Create a large lake near the center
-        lake_center_x = center_x + random.randint(-grid_size//10, grid_size//10)
-        lake_center_y = center_y + random.randint(-grid_size//10, grid_size//10)
-        
-        # Larger, more irregular lake
-        lake_radius = grid_size // 8
-        irregularity = 0.3  # 0.0 = perfect circle, 1.0 = very irregular
-        
-        # Generate the lake with a jagged, natural shoreline
-        generate_natural_lake(water, lake_center_x, lake_center_y, lake_radius, irregularity, grid_size, tile_size)
-        
-        # Update water positions
-        water_positions = {(w['position'][0], w['position'][1]) for w in water}
-    
-    if water_type == "river" or water_type == "lake_with_river":
-        # Create a winding river
-        river_width = random.randint(3, 5)  # tiles
-        
-        if water_type == "river":
-            # River crossing the whole map
-            start_x = 0
-            start_y = random.randint(grid_size//4, 3*grid_size//4)
-            end_x = grid_size
-            end_y = random.randint(grid_size//4, 3*grid_size//4)
-            
-            generate_winding_river(water, water_positions, start_x, start_y, end_x, end_y, 
-                                   river_width, grid_size, tile_size)
-        else:
-            # River flowing into the lake
-            # Decide river direction (into the lake)
-            edge_options = ["top", "right", "bottom", "left"]
-            river_edge = random.choice(edge_options)
-            
-            # Set river start and end points based on edge
-            river_endpoints = get_river_endpoints(river_edge, grid_size, lake_center_x, lake_center_y, lake_radius)
-            start_x, start_y, end_x, end_y = river_endpoints
-            
-            generate_winding_river(water, water_positions, start_x, start_y, end_x, end_y, 
-                                   river_width, grid_size, tile_size)
-    
-    # Update water positions after adding all water elements
-    water_positions = {(w['position'][0], w['position'][1]) for w in water}
-    return water_positions
-
-def get_river_endpoints(river_edge, grid_size, lake_center_x, lake_center_y, lake_radius):
-    """Get the endpoints for a river based on the edge it flows from.
-    
-    Args:
-        river_edge: Edge the river flows from ("top", "right", "bottom", "left")
-        grid_size: Size of the grid in pixels
-        lake_center_x, lake_center_y: Center of the lake
-        lake_radius: Radius of the lake
-        
-    Returns:
-        Tuple of (start_x, start_y, end_x, end_y)
-    """
-    if river_edge == "top":
-        start_x = random.randint(grid_size//4, 3*grid_size//4)
-        start_y = 0
-        end_x = lake_center_x
-        end_y = lake_center_y - lake_radius
-    elif river_edge == "right":
-        start_x = grid_size
-        start_y = random.randint(grid_size//4, 3*grid_size//4)
-        end_x = lake_center_x + lake_radius
-        end_y = lake_center_y
-    elif river_edge == "bottom":
-        start_x = random.randint(grid_size//4, 3*grid_size//4)
-        start_y = grid_size
-        end_x = lake_center_x
-        end_y = lake_center_y + lake_radius
-    else:  # left
-        start_x = 0
-        start_y = random.randint(grid_size//4, 3*grid_size//4)
-        end_x = lake_center_x - lake_radius
-        end_y = lake_center_y
-        
-    return start_x, start_y, end_x, end_y
-
-def generate_natural_lake(water, center_x, center_y, base_radius, irregularity, grid_size, tile_size):
-    """Generate a natural-looking lake with an irregular shoreline."""
-    # Create multiple "wobbles" around the circle to make the lake look natural
-    num_wobbles = 12
-    wobble_points = []
-    
-    for i in range(num_wobbles):
-        angle = i * (2 * math.pi / num_wobbles)
-        # Vary the radius at this angle to create irregularity
-        radius_modifier = 1.0 - irregularity/2 + random.random() * irregularity
-        radius = base_radius * radius_modifier
-        
-        x, y = utils.polar_to_cartesian(center_x, center_y, angle, radius)
-        wobble_points.append((x, y))
-    
-    # Fill the lake
-    min_x = min(p[0] for p in wobble_points)
-    max_x = max(p[0] for p in wobble_points)
-    min_y = min(p[1] for p in wobble_points)
-    max_y = max(p[1] for p in wobble_points)
-    
-    # Create a slightly larger bounding box to ensure we fill all lake areas
-    padding = tile_size
-    for x in range(min_x - padding, max_x + padding, tile_size):
-        for y in range(min_y - padding, max_y + padding, tile_size):
-            # Skip if out of bounds
-            if not utils.is_in_bounds(x, y, grid_size):
-                continue
-                
-            # Align to grid
-            grid_x, grid_y = utils.align_to_grid(x, y, tile_size)
-            
-            # Calculate if this point is inside our irregular lake shape
-            # Use point-in-polygon algorithm with our wobble points
-            if is_point_in_lake(grid_x + tile_size//2, grid_y + tile_size//2, center_x, center_y, wobble_points):
-                water.append({
-                    'position': (grid_x, grid_y),
-                    'frame': 0
-                })
-
-def is_point_in_lake(x, y, center_x, center_y, wobble_points):
-    """Determine if a point is inside the irregular lake shape using a distance-based approach."""
-    # Calculate angle from center to point
-    angle = math.atan2(y - center_y, x - center_x)
-    if angle < 0:
-        angle += 2 * math.pi
-    
-    # Find which wobble sector this angle falls into
-    sector = int(angle / (2 * math.pi) * len(wobble_points))
-    if sector >= len(wobble_points):
-        sector = 0
-    
-    p1 = wobble_points[sector]
-    p2 = wobble_points[(sector + 1) % len(wobble_points)]
-    
-    # Calculate how far along the sector this angle is
-    sector_start_angle = sector * (2 * math.pi / len(wobble_points))
-    sector_angle_range = 2 * math.pi / len(wobble_points)
-    sector_progress = (angle - sector_start_angle) / sector_angle_range
-    
-    # Interpolate between the two wobble points
-    edge_x = p1[0] + (p2[0] - p1[0]) * sector_progress
-    edge_y = p1[1] + (p2[1] - p1[1]) * sector_progress
-    
-    # Calculate distance from center to edge and from center to point
-    edge_distance = utils.calculate_distance(center_x, center_y, edge_x, edge_y)
-    point_distance = utils.calculate_distance(center_x, center_y, x, y)
-    
-    # If point is closer to center than edge, it's inside the lake
-    return point_distance <= edge_distance
-
-def generate_winding_river(water, existing_water, start_x, start_y, end_x, end_y, width, grid_size, tile_size):
-    """Generate a winding river from start to end point.
-    
-    Args:
-        water: List to add water tiles to
-        existing_water: Set of existing water positions
-        start_x, start_y: Starting point of the river
-        end_x, end_y: Ending point of the river
-        width: Width of the river in tiles
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-    """
-    # Calculate direct path length and direction
-    distance = utils.calculate_distance(start_x, start_y, end_x, end_y)
-    
-    # Generate waypoints
-    num_waypoints = max(3, int(distance / (grid_size / 10)))
-    waypoints = [(start_x, start_y)]
-    
-    # Create waypoints with random deviation from straight line
-    for i in range(1, num_waypoints):
-        progress = i / num_waypoints
-        
-        # Base point along straight line
-        x = int(start_x + (end_x - start_x) * progress)
-        y = int(start_y + (end_y - start_y) * progress)
-        
-        # Add random deviation perpendicular to path direction
-        dx = end_x - start_x
-        dy = end_y - start_y
-        perpendicular_x = -dy
-        perpendicular_y = dx
-        
-        # Normalize perpendicular vector
-        perp_length = math.sqrt(perpendicular_x*perpendicular_x + perpendicular_y*perpendicular_y)
-        if perp_length > 0:
-            perpendicular_x /= perp_length
-            perpendicular_y /= perp_length
-        
-        # Add random deviation, larger in the middle of the river
-        deviation = random.uniform(-0.5, 0.5) * grid_size / 6
-        deviation *= math.sin(progress * math.pi)  # Maximum deviation in the middle
-        
-        x += int(perpendicular_x * deviation)
-        y += int(perpendicular_y * deviation)
-        
-        # Add waypoint
-        waypoints.append((x, y))
-    
-    # Add end point
-    waypoints.append((end_x, end_y))
-    
-    # Now draw river along waypoints with specified width
-    draw_river_segments(water, existing_water, waypoints, width, grid_size, tile_size)
-
-def draw_river_segments(water, existing_water, waypoints, width, grid_size, tile_size):
-    """Draw river segments between waypoints.
-    
-    Args:
-        water: List to add water tiles to
-        existing_water: Set of existing water positions
-        waypoints: List of waypoint coordinates
-        width: Width of the river in tiles
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-    """
-    for i in range(len(waypoints) - 1):
-        p1 = waypoints[i]
-        p2 = waypoints[i+1]
-        
-        # Draw a line of water tiles along this segment
-        segment_dx = p2[0] - p1[0]
-        segment_dy = p2[1] - p1[1]
-        segment_length = math.sqrt(segment_dx*segment_dx + segment_dy*segment_dy)
-        
-        if segment_length == 0:
-            continue
-            
-        steps = int(segment_length / (tile_size / 2))  # Use half-tile steps for smoother river
-        if steps == 0:
-            steps = 1
-            
-        for step in range(steps + 1):
-            # Position along line
-            t = step / steps
-            x = int(p1[0] + segment_dx * t)
-            y = int(p1[1] + segment_dy * t)
-            
-            # Draw water tiles perpendicular to river direction
-            if segment_length > 0:
-                perpendicular_x = -segment_dy / segment_length
-                perpendicular_y = segment_dx / segment_length
-            else:
-                perpendicular_x = 0
-                perpendicular_y = 0
-            
-            # Place water tiles across the width of the river
-            for w in range(-width//2, width//2 + 1):
-                water_x = x + int(perpendicular_x * w * tile_size)
-                water_y = y + int(perpendicular_y * w * tile_size)
-                
-                # Align to grid
-                water_x, water_y = utils.align_to_grid(water_x, water_y, tile_size)
-                
-                # Skip if out of bounds
-                if not utils.is_in_bounds(water_x, water_y, grid_size):
-                    continue
-                
-                # Add water tile if not already water
-                water_pos = (water_x, water_y)
-                if water_pos not in existing_water:
-                    water.append({
-                        'position': water_pos,
-                        'frame': 0
-                    })
-                    existing_water.add(water_pos)
-
-def create_village_layout(paths, water_positions, grid_size, tile_size, water_type):
+def create_village_layout(paths, water_positions, grid_size, tile_size):
     """Create village paths and roads based on the water feature."""
     # Map center
     center_x, center_y = grid_size // 2, grid_size // 2
@@ -420,35 +151,524 @@ def create_village_layout(paths, water_positions, grid_size, tile_size, water_ty
     path_positions = {(p['position'][0], p['position'][1]) for p in paths}
     add_connecting_paths_around_center(paths, path_positions, water_positions, 
                                        village_center_x, village_center_y, grid_size, tile_size)
-
-def create_central_plaza(paths, village_center_x, village_center_y, grid_size, tile_size, water_positions):
-    """Create a central plaza in the village.
+    
+def connect_buildings_to_paths(buildings, paths, water_positions, grid_size, tile_size):
+    """
+    Ensure that each building has a path connecting it to the existing path network.
     
     Args:
-        paths: List to add path tiles to
-        village_center_x, village_center_y: Center coordinates of the village
+        buildings: List of building dictionaries
+        paths: List of path dictionaries
+        water_positions: Set of water positions
         grid_size: Size of the grid in pixels
         tile_size: Size of a tile in pixels
-        water_positions: Set of water positions to avoid
     """
-    plaza_radius = grid_size // 16
-    for x in range(village_center_x - plaza_radius, village_center_x + plaza_radius, tile_size):
-        for y in range(village_center_y - plaza_radius, village_center_y + plaza_radius, tile_size):
-            # Skip if out of bounds or water
-            if not utils.is_in_bounds(x, y, grid_size) or (x, y) in water_positions:
-                continue
-                
-            # Create circular village center
-            dx = x - village_center_x
-            dy = y - village_center_y
-            distance = math.sqrt(dx*dx + dy*dy)
+    # Convert path positions to a set for quick checking
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    
+    # Process each building
+    for building in buildings:
+        # Get building properties
+        building_pos = building['position']
+        building_size_name = building['size']
+        
+        # Convert size name to pixel size
+        building_size_px = 256 if building_size_name == 'large' else (
+                           192 if building_size_name == 'medium' else 128)
+        
+        # Determine building footprint
+        footprint_tiles = building_size_px // tile_size
+        
+        # Calculate the center of the building
+        building_center_x = building_pos[0] + building_size_px // 2
+        building_center_y = building_pos[1] + building_size_px // 2
+        
+        # Align to grid
+        building_center_x, building_center_y = utils.align_to_grid(building_center_x, building_center_y, tile_size)
+        
+        # Generate building perimeter positions - these are possible door locations
+        perimeter_positions = []
+        
+        # FIX: Focus on cardinal sides only for door placement (no corners)
+        # Bottom side - priority for door position
+        for x in range(0, footprint_tiles):
+            perimeter_positions.append((
+                building_pos[0] + x * tile_size,
+                building_pos[1] + footprint_tiles * tile_size
+            ))
+        
+        # Right side
+        for y in range(0, footprint_tiles):
+            perimeter_positions.append((
+                building_pos[0] + footprint_tiles * tile_size,
+                building_pos[1] + y * tile_size
+            ))
+        
+        # Top side
+        for x in range(0, footprint_tiles):
+            perimeter_positions.append((
+                building_pos[0] + x * tile_size,
+                building_pos[1] - tile_size
+            ))
+        
+        # Left side
+        for y in range(0, footprint_tiles):
+            perimeter_positions.append((
+                building_pos[0] - tile_size,
+                building_pos[1] + y * tile_size
+            ))
+        
+        # Check if building already has a path adjacent to it
+        has_adjacent_path = False
+        for perimeter_pos in perimeter_positions:
+            # Check only for cardinal adjacency (not diagonal)
+            x, y = perimeter_pos
             
-            if distance < plaza_radius:
-                # Central plaza with stone path
+            if perimeter_pos in path_positions:
+                has_adjacent_path = True
+                break
+        
+        # If building already has adjacent path, skip to next building
+        if has_adjacent_path:
+            continue
+        
+        # Find closest path to this building
+        closest_path = None
+        min_distance = float('inf')
+        
+        for path in paths:
+            path_pos = path['position']
+            distance = utils.calculate_distance(
+                building_center_x, building_center_y,
+                path_pos[0], path_pos[1]
+            )
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_path = path_pos
+        
+        # If no path was found, skip this building (shouldn't happen in normal generation)
+        if not closest_path:
+            continue
+        
+        # Determine which perimeter position is closest to the path
+        door_pos = None
+        min_door_distance = float('inf')
+        
+        for perimeter_pos in perimeter_positions:
+            distance = utils.calculate_distance(
+                perimeter_pos[0], perimeter_pos[1],
+                closest_path[0], closest_path[1]
+            )
+            
+            if distance < min_door_distance:
+                min_door_distance = distance
+                door_pos = perimeter_pos
+        
+        # Create a path from the door to the closest path
+        connect_door_to_path(paths, door_pos, closest_path, water_positions, path_positions, grid_size, tile_size)
+
+
+def create_direct_path(paths, start_pos, end_pos, water_positions, path_positions, grid_size, tile_size):
+    """
+    Create a direct path from start to end, avoiding water if possible.
+    
+    Args:
+        paths: List of path dictionaries to append new paths to
+        start_pos: Starting position for the path
+        end_pos: Ending position for the path
+        water_positions: Set of water positions to avoid
+        path_positions: Set of existing path positions
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+    """
+    start_x, start_y = start_pos
+    end_x, end_y = end_pos
+    
+    # Determine if we should go horizontally or vertically first
+    dx = end_x - start_x
+    dy = end_y - start_y
+    
+    # Start with the current position
+    current_x, current_y = start_x, start_y
+    
+    # Try horizontal movement first if horizontal distance is greater, otherwise vertical
+    horizontal_first = abs(dx) > abs(dy)
+    
+    # Follow a L-shaped path: first in one direction, then in the other
+    if horizontal_first:
+        # Move horizontally first
+        step_x = tile_size if dx > 0 else -tile_size if dx < 0 else 0
+        
+        while current_x != end_x:
+            current_x += step_x
+            
+            # Ensure we don't go past the end point
+            if (step_x > 0 and current_x > end_x) or (step_x < 0 and current_x < end_x):
+                current_x = end_x
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, current_y, grid_size):
+                break
+            
+            # Skip or detour around water
+            if (current_x, current_y) in water_positions:
+                # Try to go around
+                found_detour = False
+                for detour_y in [current_y + tile_size, current_y - tile_size]:
+                    if utils.is_in_bounds(current_x, detour_y, grid_size) and (current_x, detour_y) not in water_positions:
+                        # Found a detour
+                        found_detour = True
+                        
+                        # Add path to the detour
+                        if (current_x, detour_y) not in path_positions:
+                            paths.append({
+                                'position': (current_x, detour_y),
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add((current_x, detour_y))
+                        
+                        # Update current position
+                        current_y = detour_y
+                        break
+                
+                if not found_detour:
+                    # Skip and continue from next position
+                    continue
+            
+            # Add path if not already a path
+            if (current_x, current_y) not in path_positions:
                 paths.append({
-                    'position': (x, y),
-                    'variant': 2  # Stone path
+                    'position': (current_x, current_y),
+                    'variant': 1  # Dirt path
                 })
+                path_positions.add((current_x, current_y))
+        
+        # Now move vertically to the end
+        step_y = tile_size if dy > 0 else -tile_size if dy < 0 else 0
+        
+        while current_y != end_y:
+            current_y += step_y
+            
+            # Ensure we don't go past the end point
+            if (step_y > 0 and current_y > end_y) or (step_y < 0 and current_y < end_y):
+                current_y = end_y
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, current_y, grid_size):
+                break
+            
+            # Skip or detour around water
+            if (current_x, current_y) in water_positions:
+                # Try to go around
+                found_detour = False
+                for detour_x in [current_x + tile_size, current_x - tile_size]:
+                    if utils.is_in_bounds(detour_x, current_y, grid_size) and (detour_x, current_y) not in water_positions:
+                        # Found a detour
+                        found_detour = True
+                        
+                        # Add path to the detour
+                        if (detour_x, current_y) not in path_positions:
+                            paths.append({
+                                'position': (detour_x, current_y),
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add((detour_x, current_y))
+                        
+                        # Update current position
+                        current_x = detour_x
+                        break
+                
+                if not found_detour:
+                    # Skip and continue from next position
+                    continue
+            
+            # Add path if not already a path
+            if (current_x, current_y) not in path_positions:
+                paths.append({
+                    'position': (current_x, current_y),
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add((current_x, current_y))
+    else:
+        # Move vertically first
+        step_y = tile_size if dy > 0 else -tile_size if dy < 0 else 0
+        
+        while current_y != end_y:
+            current_y += step_y
+            
+            # Ensure we don't go past the end point
+            if (step_y > 0 and current_y > end_y) or (step_y < 0 and current_y < end_y):
+                current_y = end_y
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, current_y, grid_size):
+                break
+            
+            # Skip or detour around water
+            if (current_x, current_y) in water_positions:
+                # Try to go around
+                found_detour = False
+                for detour_x in [current_x + tile_size, current_x - tile_size]:
+                    if utils.is_in_bounds(detour_x, current_y, grid_size) and (detour_x, current_y) not in water_positions:
+                        # Found a detour
+                        found_detour = True
+                        
+                        # Add path to the detour
+                        if (detour_x, current_y) not in path_positions:
+                            paths.append({
+                                'position': (detour_x, current_y),
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add((detour_x, current_y))
+                        
+                        # Update current position
+                        current_x = detour_x
+                        break
+                
+                if not found_detour:
+                    # Skip and continue from next position
+                    continue
+            
+            # Add path if not already a path
+            if (current_x, current_y) not in path_positions:
+                paths.append({
+                    'position': (current_x, current_y),
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add((current_x, current_y))
+        
+        # Now move horizontally to the end
+        step_x = tile_size if dx > 0 else -tile_size if dx < 0 else 0
+        
+        while current_x != end_x:
+            current_x += step_x
+            
+            # Ensure we don't go past the end point
+            if (step_x > 0 and current_x > end_x) or (step_x < 0 and current_x < end_x):
+                current_x = end_x
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, current_y, grid_size):
+                break
+            
+            # Skip or detour around water
+            if (current_x, current_y) in water_positions:
+                # Try to go around
+                found_detour = False
+                for detour_y in [current_y + tile_size, current_y - tile_size]:
+                    if utils.is_in_bounds(current_x, detour_y, grid_size) and (current_x, detour_y) not in water_positions:
+                        # Found a detour
+                        found_detour = True
+                        
+                        # Add path to the detour
+                        if (current_x, detour_y) not in path_positions:
+                            paths.append({
+                                'position': (current_x, detour_y),
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add((current_x, detour_y))
+                        
+                        # Update current position
+                        current_y = detour_y
+                        break
+                
+                if not found_detour:
+                    # Skip and continue from next position
+                    continue
+            
+            # Add path if not already a path
+            if (current_x, current_y) not in path_positions:
+                paths.append({
+                    'position': (current_x, current_y),
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add((current_x, current_y))
+
+def ensure_path_adjacency(paths, grid_size, tile_size):
+    """Fix disconnected paths by ensuring all path tiles have proper adjacency."""
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    fixed_paths = paths.copy()
+    new_paths = []
+    
+    # First pass: identify problematic paths (those with only diagonal connections)
+    for path in paths:
+        x, y = path['position']
+        # Check cardinal directions (N, E, S, W)
+        cardinal_neighbors = [
+            (x, y - tile_size),  # North
+            (x + tile_size, y),  # East
+            (x, y + tile_size),  # South
+            (x - tile_size, y)   # West
+        ]
+        
+        # Count adjacent paths in cardinal directions
+        cardinal_adjacent = sum(1 for pos in cardinal_neighbors if pos in path_positions)
+        
+        # If no cardinal adjacency but has diagonal neighbors, add connecting paths
+        if cardinal_adjacent == 0:
+            # Check diagonal directions
+            diagonal_neighbors = [
+                (x - tile_size, y - tile_size),  # NW
+                (x + tile_size, y - tile_size),  # NE
+                (x - tile_size, y + tile_size),  # SW
+                (x + tile_size, y + tile_size)   # SE
+            ]
+            
+            for i, diag_pos in enumerate(diagonal_neighbors):
+                if diag_pos in path_positions:
+                    # Add a connecting path in one of the cardinal directions
+                    # Based on which diagonal has a path
+                    if i == 0:  # NW diagonal
+                        # Try north first, then west
+                        if (x, y - tile_size) not in path_positions and utils.is_in_bounds(x, y - tile_size, grid_size):
+                            new_paths.append({
+                                'position': (x, y - tile_size),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x, y - tile_size))
+                        elif (x - tile_size, y) not in path_positions and utils.is_in_bounds(x - tile_size, y, grid_size):
+                            new_paths.append({
+                                'position': (x - tile_size, y),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x - tile_size, y))
+                    elif i == 1:  # NE diagonal
+                        # Try north first, then east
+                        if (x, y - tile_size) not in path_positions and utils.is_in_bounds(x, y - tile_size, grid_size):
+                            new_paths.append({
+                                'position': (x, y - tile_size),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x, y - tile_size))
+                        elif (x + tile_size, y) not in path_positions and utils.is_in_bounds(x + tile_size, y, grid_size):
+                            new_paths.append({
+                                'position': (x + tile_size, y),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x + tile_size, y))
+                    elif i == 2:  # SW diagonal
+                        # Try south first, then west
+                        if (x, y + tile_size) not in path_positions and utils.is_in_bounds(x, y + tile_size, grid_size):
+                            new_paths.append({
+                                'position': (x, y + tile_size),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x, y + tile_size))
+                        elif (x - tile_size, y) not in path_positions and utils.is_in_bounds(x - tile_size, y, grid_size):
+                            new_paths.append({
+                                'position': (x - tile_size, y),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x - tile_size, y))
+                    else:  # SE diagonal
+                        # Try south first, then east
+                        if (x, y + tile_size) not in path_positions and utils.is_in_bounds(x, y + tile_size, grid_size):
+                            new_paths.append({
+                                'position': (x, y + tile_size),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x, y + tile_size))
+                        elif (x + tile_size, y) not in path_positions and utils.is_in_bounds(x + tile_size, y, grid_size):
+                            new_paths.append({
+                                'position': (x + tile_size, y),
+                                'variant': path['variant']
+                            })
+                            path_positions.add((x + tile_size, y))
+    
+    # Add all new connecting paths
+    fixed_paths.extend(new_paths)
+    return fixed_paths
+
+def remove_isolated_paths(paths, grid_size, tile_size):
+    """Remove path tiles that have fewer than two cardinal neighbors and aren't connected to buildings."""
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    result_paths = []
+    removed_positions = set()
+    
+    # First, identify isolated path tiles (fewer than 2 cardinal neighbors)
+    for path in paths:
+        x, y = path['position']
+        # Check cardinal directions
+        cardinal_neighbors = [
+            (x, y - tile_size),  # North
+            (x + tile_size, y),  # East
+            (x, y + tile_size),  # South
+            (x - tile_size, y)   # West
+        ]
+        
+        # Count adjacent paths in cardinal directions
+        adjacent_paths = sum(1 for pos in cardinal_neighbors if pos in path_positions)
+        
+        # Keep paths with at least two adjacent paths
+        if adjacent_paths >= 2:
+            result_paths.append(path)
+        else:
+            # Mark for potential removal
+            removed_positions.add((x, y))
+    
+    # Second pass: preserve paths that are at map edges or connect to buildings
+    for path in paths:
+        x, y = path['position']
+        pos = (x, y)
+        if pos in removed_positions:
+            # Check if at map edge
+            if x == 0 or y == 0 or x == grid_size - tile_size or y == grid_size - tile_size:
+                result_paths.append(path)
+                removed_positions.discard(pos)  # Use discard instead of remove
+                continue
+            
+            # Check all 8 surrounding tiles for buildings
+            has_potential_building = False
+            for dx in [-tile_size, 0, tile_size]:
+                for dy in [-tile_size, 0, tile_size]:
+                    if dx == 0 and dy == 0:
+                        continue  # Skip self
+                        
+                    # Check if there's a building at this position
+                    # This is a simple proxy since we don't have the actual building positions here
+                    # We're checking if this position has no paths and is not at the map edge
+                    check_x = x + dx
+                    check_y = y + dy
+                    check_pos = (check_x, check_y)
+                    
+                    if (check_pos not in path_positions and
+                       utils.is_in_bounds(check_x, check_y, grid_size)):
+                        # Assume this might be a building - keep the path
+                        has_potential_building = True
+                        break
+                        
+                if has_potential_building:
+                    break
+            
+            if has_potential_building:
+                result_paths.append(path)
+                removed_positions.discard(pos)  # Use discard instead of remove
+    
+    return result_paths
+
+def fix_grass_around_water(terrain, water_positions, grid_size, tile_size):
+    """Ensure grass tiles around water are properly set to type 2."""
+    # Reset all grass variants near water
+    for water_pos in water_positions:
+        x, y = water_pos
+        
+        # Check 8 neighboring tiles
+        for dx in [-tile_size, 0, tile_size]:
+            for dy in [-tile_size, 0, tile_size]:
+                if dx == 0 and dy == 0:
+                    continue  # Skip self
+                    
+                neighbor_pos = (x + dx, y + dy)
+                
+                # Skip if out of bounds
+                if not utils.is_in_bounds(neighbor_pos[0], neighbor_pos[1], grid_size):
+                    continue
+                
+                # If neighbor is a grass tile, update to type 2
+                if neighbor_pos in terrain and terrain[neighbor_pos]['type'] == 'grass':
+                    terrain[neighbor_pos]['variant'] = 2
+
 
 def find_village_center(center_x, center_y, water_positions, grid_size, tile_size):
     """Find the best location for village center (near map center but not on water)."""
@@ -476,28 +696,40 @@ def find_village_center(center_x, center_y, water_positions, grid_size, tile_siz
     # Fallback: just use a point 1/4 of the way from top-left
     return grid_size // 4, grid_size // 4
 
+def create_central_plaza(paths, village_center_x, village_center_y, grid_size, tile_size, water_positions):
+    """Create a central plaza in the village."""
+    plaza_radius = grid_size // 16
+    
+    # Generate positions in a circular area
+    for x in range(village_center_x - plaza_radius, village_center_x + plaza_radius, tile_size):
+        for y in range(village_center_y - plaza_radius, village_center_y + plaza_radius, tile_size):
+            # Skip if out of bounds or water
+            if not utils.is_in_bounds(x, y, grid_size) or (x, y) in water_positions:
+                continue
+                
+            # Create circular village center            
+            distance = utils.calculate_distance(x, y, village_center_x, village_center_y)
+            if distance < plaza_radius:
+                # Central plaza with stone path
+                paths.append({
+                    'position': (x, y),
+                    'variant': 2  # Stone path
+                })
+
 def create_waterfront_path(paths, water_positions, grid_size, tile_size):
     """Create a path along the waterfront."""
     # Identify water edge tiles (land tiles adjacent to water)
     water_edge = set()
     for water_pos in water_positions:
-        x, y = water_pos
-        
-        # Check 8 neighboring tiles
-        for dx in [-tile_size, 0, tile_size]:
-            for dy in [-tile_size, 0, tile_size]:
-                if dx == 0 and dy == 0:
-                    continue  # Skip self
-                    
-                neighbor_pos = (x + dx, y + dy)
-                
-                # Skip if out of bounds
-                if not utils.is_in_bounds(neighbor_pos[0], neighbor_pos[1], grid_size):
-                    continue
-                
-                # If neighbor is not water, it's a potential edge tile
-                if neighbor_pos not in water_positions:
-                    water_edge.add(neighbor_pos)
+        # Check neighbors for non-water tiles
+        for neighbor_pos in utils.get_neighbors(water_pos[0], water_pos[1], tile_size):
+            # Skip if out of bounds
+            if not utils.is_in_bounds(neighbor_pos[0], neighbor_pos[1], grid_size):
+                continue
+            
+            # If neighbor is not water, it's a potential edge tile
+            if neighbor_pos not in water_positions:
+                water_edge.add(neighbor_pos)
     
     # Process edges to selectively create paths
     # Don't place paths on every edge tile - make it more natural
@@ -506,10 +738,9 @@ def create_waterfront_path(paths, water_positions, grid_size, tile_size):
     # Sort edge tiles for more consistent results
     sorted_edges = sorted(water_edge)
     
+    # Add paths to every 3rd edge tile
     for i, edge_pos in enumerate(sorted_edges):
-        # Place a path on this edge if it's not already a path
-        # Use spacing to make it look natural (not too dense)
-        if edge_pos not in path_positions and i % 3 == 0:  # Every 3rd water edge tile
+        if edge_pos not in path_positions and i % 3 == 0:
             paths.append({
                 'position': edge_pos,
                 'variant': 1  # Dirt path
@@ -574,18 +805,7 @@ def create_road_from_center(paths, water_positions, center_x, center_y, angle, g
             current_y = next_y
 
 def find_detour_around_water(current_x, current_y, angle, water_positions, grid_size, tile_size):
-    """Find a detour around water.
-    
-    Args:
-        current_x, current_y: Current position
-        angle: Original direction angle in degrees
-        water_positions: Set of water positions to avoid
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Tuple of new (x, y) coordinates, or None if no detour found
-    """
+    """Find a detour around water."""
     # Try different angles to detour around water
     for detour_angle_offset in [-30, -15, 15, 30, -45, 45, -60, 60]:
         detour_angle = angle + detour_angle_offset
@@ -622,17 +842,7 @@ def add_connecting_paths_around_center(paths, path_positions, water_positions, c
         create_ring_path(paths, path_positions, water_positions, center_x, center_y, ring_radius, grid_size, tile_size)
 
 def create_ring_path(paths, path_positions, water_positions, center_x, center_y, ring_radius, grid_size, tile_size):
-    """Create a ring of paths around the center.
-    
-    Args:
-        paths: List to add path tiles to
-        path_positions: Set of existing path positions
-        water_positions: Set of water positions to avoid
-        center_x, center_y: Center coordinates
-        ring_radius: Radius of the ring
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-    """
+    """Create a ring of paths around the center."""
     # Number of segments for this ring
     num_segments = max(8, int(ring_radius / 20))
     angle_step = 2 * math.pi / num_segments
@@ -655,7 +865,7 @@ def create_ring_path(paths, path_positions, water_positions, center_x, center_y,
             # Align to grid
             x, y = utils.align_to_grid(x, y, tile_size)
             
-            # Skip if out of bounds or on water or already a path
+            # Skip if out of bounds, on water, or already a path
             if not utils.is_in_bounds(x, y, grid_size):
                 continue
                 
@@ -670,7 +880,7 @@ def create_ring_path(paths, path_positions, water_positions, center_x, center_y,
             path_positions.add((x, y))
 
 def place_buildings_by_zones(buildings, paths, water_positions, path_positions, 
-                            grid_size, tile_size, assets, building_sizes, target_building_count):
+                            grid_size, tile_size, assets, building_sizes, target_building_count, terrain):
     """Place buildings in different zones: waterfront, center, and outskirts."""
     # Track occupied spaces for better building placement
     occupied_spaces = set()
@@ -712,18 +922,7 @@ def place_buildings_by_zones(buildings, paths, water_positions, path_positions,
                          outskirts_count, zone_type="outskirts")
 
 def create_village_zones(path_positions, water_positions, village_center_x, village_center_y, grid_size, tile_size):
-    """Create different zones in the village (waterfront, center, outskirts).
-    
-    Args:
-        path_positions: Set of path positions
-        water_positions: Set of water positions
-        village_center_x, village_center_y: Center coordinates of the village
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Tuple of (waterfront_zone, center_zone, outskirts_zone) sets
-    """
+    """Create different zones in the village (waterfront, center, outskirts)."""
     waterfront_zone = set()  # Near water
     center_zone = set()      # Near village center
     outskirts_zone = set()   # Further out
@@ -734,17 +933,15 @@ def create_village_zones(path_positions, water_positions, village_center_x, vill
     
     # Identify waterfront paths (paths adjacent to water)
     for path_pos in path_positions:
-        px, py = path_pos
-        
         # Check if this path is near water
-        is_waterfront = is_near_water(px, py, water_positions, tile_size)
+        is_waterfront = is_near_water(path_pos[0], path_pos[1], water_positions, tile_size)
         
         if is_waterfront:
             waterfront_zone.add(path_pos)
             continue
             
         # Check if path is in center zone
-        dist_to_center = utils.calculate_distance(px, py, village_center_x, village_center_y)
+        dist_to_center = utils.calculate_distance(path_pos[0], path_pos[1], village_center_x, village_center_y)
         if dist_to_center < center_radius:
             center_zone.add(path_pos)
         elif dist_to_center < outskirts_radius:
@@ -753,45 +950,16 @@ def create_village_zones(path_positions, water_positions, village_center_x, vill
     return waterfront_zone, center_zone, outskirts_zone
 
 def is_near_water(x, y, water_positions, tile_size):
-    """Check if a position is near water.
-    
-    Args:
-        x, y: Position coordinates
-        water_positions: Set of water positions
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Boolean indicating if the position is near water
-    """
-    for dx in [-tile_size, 0, tile_size]:
-        for dy in [-tile_size, 0, tile_size]:
-            if dx == 0 and dy == 0:
-                continue  # Skip self
-                
-            check_pos = (x + dx, y + dy)
-            if check_pos in water_positions:
-                return True
-                
+    """Check if a position is near water."""
+    for neighbor_pos in utils.get_neighbors(x, y, tile_size):
+        if neighbor_pos in water_positions:
+            return True
     return False
 
 def place_zone_buildings(buildings, zone_paths, water_positions, path_positions, 
                         occupied_spaces, grid_size, tile_size, assets, building_sizes, 
                         target_count, zone_type):
-    """Place buildings in a specific zone.
-    
-    Args:
-        buildings: List to add building data to
-        zone_paths: List of path positions in this zone
-        water_positions: Set of water positions
-        path_positions: Set of all path positions
-        occupied_spaces: Set of occupied positions to update
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        assets: Dictionary of game assets
-        building_sizes: Dictionary of building sizes
-        target_count: Target number of buildings for this zone
-        zone_type: Type of zone ("waterfront", "center", "outskirts")
-    """
+    """Place buildings in a specific zone."""
     # Skip if no valid paths in this zone
     if not zone_paths:
         return
@@ -816,14 +984,7 @@ def place_zone_buildings(buildings, zone_paths, water_positions, path_positions,
             zone_paths.pop(path_idx)
 
 def get_zone_building_distributions(zone_type):
-    """Get building size and type distributions for a zone.
-    
-    Args:
-        zone_type: Type of zone ("waterfront", "center", "outskirts")
-        
-    Returns:
-        Tuple of (size_weights, type_weights) dictionaries
-    """
+    """Get building size and type distributions for a zone."""
     # Building size weights by zone
     if zone_type == "waterfront":
         # Waterfront: mostly small buildings, some medium
@@ -851,27 +1012,137 @@ def get_zone_building_distributions(zone_type):
         
     return size_weights, type_weights
 
+
+def is_footprint_valid(building_x, building_y, footprint_tiles, tile_size,
+                      water_positions, path_positions, occupied_spaces):
+    """Check if a building footprint is valid."""
+    # Check all tiles in the building footprint
+    for pos in utils.iterate_area(building_x, building_y, footprint_tiles * tile_size, footprint_tiles * tile_size, tile_size):
+        if (pos in water_positions or pos in path_positions or pos in occupied_spaces):
+            return False
+                
+    return True
+
+def is_buffer_valid(building_x, building_y, footprint_tiles, buffer_tiles, tile_size,
+                   grid_size, occupied_spaces, path_positions):
+    """Check if the buffer zone around a building is valid."""
+    # Check buffer zone around the building (excluding the building itself)
+    for dx in range(-buffer_tiles, footprint_tiles + buffer_tiles):
+        for dy in range(-buffer_tiles, footprint_tiles + buffer_tiles):
+            # Skip checking the actual building footprint
+            if 0 <= dx < footprint_tiles and 0 <= dy < footprint_tiles:
+                continue
+                
+            check_x = building_x + dx * tile_size
+            check_y = building_y + dy * tile_size
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(check_x, check_y, grid_size):
+                continue
+            
+            check_pos = (check_x, check_y)
+            
+            # Allow buffer to overlap with paths (buildings can be near paths)
+            # But don't allow overlap with other buildings' occupied spaces
+            if check_pos in occupied_spaces and check_pos not in path_positions:
+                return False
+                
+    return True
+
+    """Update grass terrain near building entrances to type 3."""
+    for building in buildings:
+        # Get building properties
+        building_pos = building['position']
+        building_size_px = building_sizes[building['size']]
+        
+        # Determine likely door position - usually at the bottom center of the building
+        door_x = building_pos[0] + building_size_px // 2
+        door_y = building_pos[1] + building_size_px  # Bottom center
+        
+        # Check if the bottom of the building is near water
+        # If so, likely the door is on one of the other sides
+        bottom_water = False
+        for dx in range(-tile_size, tile_size * 2, tile_size):
+            check_pos = (door_x + dx, door_y)
+            if check_pos in water_positions:
+                bottom_water = True
+                break
+                
+        if bottom_water:
+            # Try other sides - left, right, then top
+            left_side_valid = True
+            for dy in range(-tile_size, tile_size * 2, tile_size):
+                check_pos = (building_pos[0], building_pos[1] + building_size_px // 2 + dy)
+                if check_pos in water_positions:
+                    left_side_valid = False
+                    break
+                    
+            if left_side_valid:
+                # Door likely on left side
+                door_x = building_pos[0]
+                door_y = building_pos[1] + building_size_px // 2
+            else:
+                # Check right side
+                right_side_valid = True
+                for dy in range(-tile_size, tile_size * 2, tile_size):
+                    check_pos = (building_pos[0] + building_size_px, building_pos[1] + building_size_px // 2 + dy)
+                    if check_pos in water_positions:
+                        right_side_valid = False
+                        break
+                        
+                if right_side_valid:
+                    # Door likely on right side
+                    door_x = building_pos[0] + building_size_px
+                    door_y = building_pos[1] + building_size_px // 2
+                else:
+                    # Door likely on top side
+                    door_x = building_pos[0] + building_size_px // 2
+                    door_y = building_pos[1]
+        
+        # For path-adjacent buildings, place door near path
+        door_placed = False
+        for offset_x in range(-1, 2):
+            for offset_y in range(-1, 2):
+                check_x = door_x + offset_x * tile_size
+                check_y = door_y + offset_y * tile_size
+                
+                if (check_x, check_y) in path_positions:
+                    # Update door position to be near path
+                    door_x = check_x
+                    door_y = check_y
+                    door_placed = True
+                    break
+            if door_placed:
+                break
+        
+        # Update grass tiles around the door to variant 3
+        for neighbor_pos in utils.get_neighbors(door_x, door_y, tile_size, include_self=True):
+            # Skip if out of bounds
+            if not utils.is_in_bounds(neighbor_pos[0], neighbor_pos[1], grid_size):
+                continue
+            
+            # Skip if not grass, a path, or water
+            if (neighbor_pos not in terrain or 
+                terrain[neighbor_pos]['type'] != 'grass' or 
+                neighbor_pos in path_positions or 
+                neighbor_pos in water_positions):
+                continue
+            
+            # Update grass to variant 3
+            terrain[neighbor_pos]['variant'] = 3  # Building entrance grass                    
+
+            """
+Refactored functions from village_generator.py to better utilize utils.py
+"""
+import random
+import math
+import utils
+
+
 def try_place_building(buildings, path_pos, water_positions, path_positions, 
                       occupied_spaces, grid_size, tile_size, assets, 
                       building_sizes, size_weights, type_weights):
-    """Try to place a building near a path.
-    
-    Args:
-        buildings: List to add building data to
-        path_pos: Position of the path to place near
-        water_positions: Set of water positions
-        path_positions: Set of all path positions
-        occupied_spaces: Set of occupied positions
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        assets: Dictionary of game assets
-        building_sizes: Dictionary of building sizes
-        size_weights: Dictionary of weights for building sizes
-        type_weights: Dictionary of weights for building types
-        
-    Returns:
-        Boolean indicating if building was successfully placed
-    """
+    """Try to place a building near a path."""
     # Determine building size
     sizes = list(size_weights.keys())
     weights = [size_weights[s] for s in sizes]
@@ -918,8 +1189,9 @@ def try_place_building(buildings, path_pos, water_positions, path_positions,
             continue
         
         # Check if the footprint is valid (not on water, paths, or other buildings)
-        if is_footprint_valid(building_x, building_y, footprint_tiles, tile_size, 
-                             water_positions, path_positions, occupied_spaces):
+        excluded_sets = [water_positions, path_positions, occupied_spaces]
+        if utils.is_footprint_valid(building_x, building_y, footprint_tiles, tile_size,
+                                   excluded_sets, grid_size):
             
             # Check if there's enough buffer space around the building
             buffer_tiles = 1 if building_size == "small" else 2
@@ -943,14 +1215,16 @@ def try_place_building(buildings, path_pos, water_positions, path_positions,
                 })
                 
                 # Mark the space as occupied (both the building footprint and its buffer zone)
-                for dx in range(-buffer_tiles, footprint_tiles + buffer_tiles):
-                    for dy in range(-buffer_tiles, footprint_tiles + buffer_tiles):
-                        check_x = building_x + dx * tile_size
-                        check_y = building_y + dy * tile_size
-                        
-                        # Skip if out of bounds
-                        if utils.is_in_bounds(check_x, check_y, grid_size):
-                            occupied_spaces.add((check_x, check_y))
+                for pos in utils.iterate_area(building_x, building_y, 
+                                           footprint_tiles * tile_size, 
+                                           footprint_tiles * tile_size, 
+                                           tile_size):
+                    occupied_spaces.add(pos)
+                
+                # Add buffer zone around building
+                for pos in utils.get_buffer_positions(building_x, building_y, buffer_tiles, tile_size):
+                    if utils.is_in_bounds(pos[0], pos[1], grid_size):
+                        occupied_spaces.add(pos)
                 
                 # Successfully placed a building
                 return True
@@ -958,201 +1232,1112 @@ def try_place_building(buildings, path_pos, water_positions, path_positions,
     # Could not place a building
     return False
 
-def is_footprint_valid(building_x, building_y, footprint_tiles, tile_size,
-                      water_positions, path_positions, occupied_spaces):
-    """Check if a building footprint is valid.
-    
-    Args:
-        building_x, building_y: Building position
-        footprint_tiles: Size of building footprint in tiles
-        tile_size: Size of a tile in pixels
-        water_positions: Set of water positions
-        path_positions: Set of path positions
-        occupied_spaces: Set of occupied positions
-        
-    Returns:
-        Boolean indicating if footprint is valid
-    """
-    for dx in range(footprint_tiles):
-        for dy in range(footprint_tiles):
-            check_x = building_x + dx * tile_size
-            check_y = building_y + dy * tile_size
-            check_pos = (check_x, check_y)
-            
-            if (check_pos in water_positions or 
-                check_pos in path_positions or 
-                check_pos in occupied_spaces):
-                return False
-                
-    return True
 
-def is_buffer_valid(building_x, building_y, footprint_tiles, buffer_tiles, tile_size,
-                   grid_size, occupied_spaces, path_positions):
-    """Check if the buffer zone around a building is valid.
+def update_grass_near_building_entrances(terrain, buildings, building_sizes, grid_size, 
+                                        tile_size, water_positions, path_positions):
+    """Update grass terrain near building entrances to type 3, but only if connected to paths."""
+    for building in buildings:
+        # Get building properties
+        building_pos = building['position']
+        building_size_px = building_sizes[building['size']]
+        
+        # Determine likely door position - usually at the bottom center of the building
+        door_x = building_pos[0] + building_size_px // 2
+        door_y = building_pos[1] + building_size_px  # Bottom center
+        
+        # Check if the bottom of the building is near water
+        # If so, likely the door is on one of the other sides
+        bottom_water = False
+        for dx in range(-tile_size, tile_size * 2, tile_size):
+            check_pos = (door_x + dx, door_y)
+            if check_pos in water_positions:
+                bottom_water = True
+                break
+                
+        if bottom_water:
+            # Try other sides - left, right, then top
+            left_side_valid = True
+            for dy in range(-tile_size, tile_size * 2, tile_size):
+                check_pos = (building_pos[0], building_pos[1] + building_size_px // 2 + dy)
+                if check_pos in water_positions:
+                    left_side_valid = False
+                    break
+                    
+            if left_side_valid:
+                # Door likely on left side
+                door_x = building_pos[0]
+                door_y = building_pos[1] + building_size_px // 2
+            else:
+                # Check right side
+                right_side_valid = True
+                for dy in range(-tile_size, tile_size * 2, tile_size):
+                    check_pos = (building_pos[0] + building_size_px, building_pos[1] + building_size_px // 2 + dy)
+                    if check_pos in water_positions:
+                        right_side_valid = False
+                        break
+                        
+                if right_side_valid:
+                    # Door likely on right side
+                    door_x = building_pos[0] + building_size_px
+                    door_y = building_pos[1] + building_size_px // 2
+                else:
+                    # Door likely on top side
+                    door_x = building_pos[0] + building_size_px // 2
+                    door_y = building_pos[1]
+        
+        # FIX: Look for adjacent paths to place the door near
+        door_placed = False
+        
+        # Only check cardinal directions (not diagonals)
+        for neighbor_pos in utils.get_neighbors(door_x, door_y, tile_size, include_self=False):
+            if neighbor_pos in path_positions:
+                # Update door position to be near path
+                door_x, door_y = neighbor_pos
+                door_placed = True
+                break
+        
+        # FIX: Only update grass tiles if they're connected to a path
+        has_adjacent_path = False
+        for neighbor_pos in utils.get_neighbors(door_x, door_y, tile_size, include_self=False):
+            if neighbor_pos in path_positions:
+                has_adjacent_path = True
+                break
+                
+        if not has_adjacent_path:
+            continue  # Skip this door if it doesn't connect to a path
+        
+        # Update grass tiles around the door to variant 3
+        for neighbor_pos in utils.get_neighbors(door_x, door_y, tile_size, include_self=True):
+            # Skip if out of bounds
+            if not utils.is_in_bounds(neighbor_pos[0], neighbor_pos[1], grid_size):
+                continue
+            
+            # Skip if not grass, a path, or water
+            if (neighbor_pos not in terrain or 
+                terrain[neighbor_pos]['type'] != 'grass' or 
+                neighbor_pos in path_positions or 
+                neighbor_pos in water_positions):
+                continue
+            
+            # Update grass to variant 3
+            terrain[neighbor_pos]['variant'] = 3  # Building entrance grass
+
+
+def connect_door_to_path(paths, door_pos, closest_path, water_positions, path_positions, grid_size, tile_size):
+    """
+    Create a path connecting a building door to the nearest existing path.
+    Ensures all path connections have proper adjacency (no diagonal-only connections).
     
     Args:
-        building_x, building_y: Building position
-        footprint_tiles: Size of building footprint in tiles
-        buffer_tiles: Size of buffer in tiles
-        tile_size: Size of a tile in pixels
+        paths: List of path dictionaries to append new paths to
+        door_pos: Position of the building door/entrance
+        closest_path: Position of the nearest existing path
+        water_positions: Set of water positions to avoid
+        path_positions: Set of existing path positions
         grid_size: Size of the grid in pixels
-        occupied_spaces: Set of occupied positions
-        path_positions: Set of path positions
-        
-    Returns:
-        Boolean indicating if buffer is valid
+        tile_size: Size of a tile in pixels
     """
-    for dx in range(-buffer_tiles, footprint_tiles + buffer_tiles):
-        for dy in range(-buffer_tiles, footprint_tiles + buffer_tiles):
-            # Skip checking the actual building footprint
-            if 0 <= dx < footprint_tiles and 0 <= dy < footprint_tiles:
-                continue
+    # Queue for breadth-first search - prioritize cardinal directions first
+    # Each item is (position, path_so_far, is_diagonal_move)
+    queue = [(door_pos, [], False)]
+    visited = {door_pos}
+    
+    # Define directions - CARDINAL FIRST for more natural-looking paths
+    # This ordering is important to prioritize non-diagonal connections
+    directions = [
+        (0, -tile_size),  # North
+        (tile_size, 0),   # East
+        (0, tile_size),   # South
+        (-tile_size, 0),  # West
+        # Only consider diagonals if no cardinal direction works
+        (tile_size, -tile_size),  # Northeast
+        (tile_size, tile_size),   # Southeast
+        (-tile_size, tile_size),  # Southwest
+        (-tile_size, -tile_size)  # Northwest
+    ]
+    
+    while queue:
+        (x, y), path_so_far, is_diagonal = queue.pop(0)
+        current_pos = (x, y)
+        
+        # Check if we reached an existing path that's not the door
+        if current_pos in path_positions and current_pos != door_pos:
+            # If we made a diagonal move in the last step and this is not a cardinal connection
+            # to the existing path, add an extra path tile to ensure proper adjacency
+            if is_diagonal:
+                # Check if we need to add an extra path to ensure cardinal adjacency
+                needs_adjacency_fix = True
                 
-            check_x = building_x + dx * tile_size
-            check_y = building_y + dy * tile_size
+                # Check if current position has cardinal adjacency to the previous position
+                prev_pos = path_so_far[-1] if path_so_far else door_pos
+                
+                # If previous position is cardinally adjacent, no fix needed
+                if (prev_pos[0] == x and abs(prev_pos[1] - y) == tile_size) or \
+                   (prev_pos[1] == y and abs(prev_pos[0] - x) == tile_size):
+                    needs_adjacency_fix = False
+                
+                if needs_adjacency_fix and path_so_far:
+                    # Insert an additional path to ensure cardinal adjacency
+                    # We have two options: either go horizontal first, then vertical,
+                    # or vertical first, then horizontal
+                    prev_pos = path_so_far[-1]
+                    
+                    # Try horizontal first
+                    horizontal_pos = (x, prev_pos[1])
+                    if horizontal_pos not in water_positions and horizontal_pos not in visited:
+                        path_so_far.append(horizontal_pos)
+                    else:
+                        # Try vertical first
+                        vertical_pos = (prev_pos[0], y)
+                        if vertical_pos not in water_positions and vertical_pos not in visited:
+                            path_so_far.append(vertical_pos)
+            
+            # Add all positions along the path to the path list
+            for pos in path_so_far:
+                if pos not in path_positions:
+                    paths.append({
+                        'position': pos,
+                        'variant': 1  # Dirt path
+                    })
+                    path_positions.add(pos)
+            return True
+        
+        # Try each direction - cardinal directions first
+        for i, (dx, dy) in enumerate(directions):
+            next_x, next_y = x + dx, y + dy
+            next_pos = (next_x, next_y)
             
             # Skip if out of bounds
-            if not utils.is_in_bounds(check_x, check_y, grid_size):
+            if not utils.is_in_bounds(next_x, next_y, grid_size):
                 continue
             
-            check_pos = (check_x, check_y)
+            # Skip if it's water
+            if next_pos in water_positions:
+                continue
             
-            # Allow buffer to overlap with paths (buildings can be near paths)
-            # But don't allow overlap with other buildings' occupied spaces
-            if check_pos in occupied_spaces and check_pos not in path_positions:
-                return False
+            # Skip if already visited in this search
+            if next_pos in visited:
+                continue
+            
+            # Mark as diagonal if using diagonal directions (last 4 in our list)
+            is_diagonal_move = i >= 4
+            
+            # Add to queue
+            visited.add(next_pos)
+            new_path = path_so_far + [next_pos]
+            queue.append((next_pos, new_path, is_diagonal_move))
+    
+    # If BFS failed, fall back to a simple L-shaped path
+    create_direct_path_with_cardinal_adjacency(paths, door_pos, closest_path, water_positions, path_positions, grid_size, tile_size)
+    return False
+
+
+# 2. New helper function for creating L-shaped paths with guaranteed cardinal adjacency
+
+def create_direct_path_with_cardinal_adjacency(paths, start_pos, end_pos, water_positions, path_positions, grid_size, tile_size):
+    """
+    Create a direct L-shaped path from start to end, avoiding water and ensuring cardinal adjacency.
+    
+    Args:
+        paths: List of path dictionaries to append new paths to
+        start_pos: Starting position for the path
+        end_pos: Ending position for the path
+        water_positions: Set of water positions to avoid
+        path_positions: Set of existing path positions
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+    """
+    start_x, start_y = start_pos
+    end_x, end_y = end_pos
+    
+    # Determine if we should go horizontally or vertically first
+    # This is a design choice - you could implement different strategies
+    horizontal_first = random.choice([True, False])
+    
+    # Add current position to the path if not already a path
+    if start_pos not in path_positions:
+        paths.append({
+            'position': start_pos,
+            'variant': 1  # Dirt path
+        })
+        path_positions.add(start_pos)
+    
+    # Create path using L-shape (always with cardinal connections)
+    current_x, current_y = start_x, start_y
+    
+    if horizontal_first:
+        # Move horizontally first
+        dx = tile_size if end_x > current_x else -tile_size if end_x < current_x else 0
+        
+        while current_x != end_x and dx != 0:
+            next_x = current_x + dx
+            next_pos = (next_x, current_y)
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(next_x, current_y, grid_size):
+                break
+            
+            # Skip water or find detour
+            if next_pos in water_positions:
+                # Try to find a detour around water
+                detour_found = False
+                for detour_offset in [tile_size, -tile_size]:
+                    detour_y = current_y + detour_offset
+                    detour_pos = (current_x, detour_y)
+                    next_detour_pos = (next_x, detour_y)
+                    
+                    # Check if detour is valid
+                    if (utils.is_in_bounds(current_x, detour_y, grid_size) and 
+                        utils.is_in_bounds(next_x, detour_y, grid_size) and
+                        detour_pos not in water_positions and 
+                        next_detour_pos not in water_positions):
+                        
+                        # Add detour path
+                        if detour_pos not in path_positions:
+                            paths.append({
+                                'position': detour_pos,
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add(detour_pos)
+                        
+                        # Move to detour position
+                        current_y = detour_y
+                        detour_found = True
+                        break
                 
+                if not detour_found:
+                    # Can't continue - stop horizontal movement and try vertical
+                    break
+            
+            # Move to next position
+            current_x = next_x
+            
+            # Add path
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add(next_pos)
+        
+        # Then move vertically
+        dy = tile_size if end_y > current_y else -tile_size if end_y < current_y else 0
+        
+        while current_y != end_y and dy != 0:
+            next_y = current_y + dy
+            next_pos = (current_x, next_y)
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, next_y, grid_size):
+                break
+            
+            # Skip water or find detour
+            if next_pos in water_positions:
+                # Try to find a detour around water
+                detour_found = False
+                for detour_offset in [tile_size, -tile_size]:
+                    detour_x = current_x + detour_offset
+                    detour_pos = (detour_x, current_y)
+                    next_detour_pos = (detour_x, next_y)
+                    
+                    # Check if detour is valid
+                    if (utils.is_in_bounds(detour_x, current_y, grid_size) and 
+                        utils.is_in_bounds(detour_x, next_y, grid_size) and
+                        detour_pos not in water_positions and 
+                        next_detour_pos not in water_positions):
+                        
+                        # Add detour path
+                        if detour_pos not in path_positions:
+                            paths.append({
+                                'position': detour_pos,
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add(detour_pos)
+                        
+                        # Move to detour position
+                        current_x = detour_x
+                        detour_found = True
+                        break
+                
+                if not detour_found:
+                    # Can't continue - stop movement
+                    break
+            
+            # Move to next position
+            current_y = next_y
+            
+            # Add path
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add(next_pos)
+    else:
+        # Move vertically first, then horizontally
+        # (Implementation similar to above but with directions reversed)
+        dy = tile_size if end_y > current_y else -tile_size if end_y < current_y else 0
+        
+        while current_y != end_y and dy != 0:
+            next_y = current_y + dy
+            next_pos = (current_x, next_y)
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(current_x, next_y, grid_size):
+                break
+            
+            # Skip water or find detour
+            if next_pos in water_positions:
+                # Try to find a detour around water
+                detour_found = False
+                for detour_offset in [tile_size, -tile_size]:
+                    detour_x = current_x + detour_offset
+                    detour_pos = (detour_x, current_y)
+                    next_detour_pos = (detour_x, next_y)
+                    
+                    # Check if detour is valid
+                    if (utils.is_in_bounds(detour_x, current_y, grid_size) and 
+                        utils.is_in_bounds(detour_x, next_y, grid_size) and
+                        detour_pos not in water_positions and 
+                        next_detour_pos not in water_positions):
+                        
+                        # Add detour path
+                        if detour_pos not in path_positions:
+                            paths.append({
+                                'position': detour_pos,
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add(detour_pos)
+                        
+                        # Move to detour position
+                        current_x = detour_x
+                        detour_found = True
+                        break
+                
+                if not detour_found:
+                    # Can't continue - stop vertical movement and try horizontal
+                    break
+            
+            # Move to next position
+            current_y = next_y
+            
+            # Add path
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add(next_pos)
+        
+        # Then move horizontally
+        dx = tile_size if end_x > current_x else -tile_size if end_x < current_x else 0
+        
+        while current_x != end_x and dx != 0:
+            next_x = current_x + dx
+            next_pos = (next_x, current_y)
+            
+            # Skip if out of bounds
+            if not utils.is_in_bounds(next_x, current_y, grid_size):
+                break
+            
+            # Skip water or find detour
+            if next_pos in water_positions:
+                # Try to find a detour around water
+                detour_found = False
+                for detour_offset in [tile_size, -tile_size]:
+                    detour_y = current_y + detour_offset
+                    detour_pos = (current_x, detour_y)
+                    next_detour_pos = (next_x, detour_y)
+                    
+                    # Check if detour is valid
+                    if (utils.is_in_bounds(current_x, detour_y, grid_size) and 
+                        utils.is_in_bounds(next_x, detour_y, grid_size) and
+                        detour_pos not in water_positions and 
+                        next_detour_pos not in water_positions):
+                        
+                        # Add detour path
+                        if detour_pos not in path_positions:
+                            paths.append({
+                                'position': detour_pos,
+                                'variant': 1  # Dirt path
+                            })
+                            path_positions.add(detour_pos)
+                        
+                        # Move to detour position
+                        current_y = detour_y
+                        detour_found = True
+                        break
+                
+                if not detour_found:
+                    # Can't continue - stop movement
+                    break
+            
+            # Move to next position
+            current_x = next_x
+            
+            # Add path
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1  # Dirt path
+                })
+                path_positions.add(next_pos)
+
+
+# 3. Improved path validation function to enforce cardinal adjacency
+
+def validate_path_adjacency(paths, grid_size, tile_size):
+    """
+    Validate and fix path adjacency, ensuring all paths have proper cardinal connections.
+    
+    Args:
+        paths: List of path dictionaries
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        
+    Returns:
+        List of validated paths
+    """
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    result_paths = list(paths)  # Make a copy to avoid modifying during iteration
+    new_paths = []
+    
+    # First pass: identify any paths with only diagonal connections
+    for path in paths:
+        x, y = path['position']
+        
+        # Check cardinal directions (N, E, S, W)
+        cardinal_neighbors = [
+            (x, y - tile_size),  # North
+            (x + tile_size, y),  # East
+            (x, y + tile_size),  # South
+            (x - tile_size, y)   # West
+        ]
+        
+        # Count adjacent paths in cardinal directions
+        cardinal_adjacent = sum(1 for pos in cardinal_neighbors if pos in path_positions)
+        
+        # If no cardinal connections but has diagonal neighbors, add connecting paths
+        if cardinal_adjacent == 0:
+            # Check diagonal directions
+            diagonal_neighbors = [
+                (x - tile_size, y - tile_size),  # NW
+                (x + tile_size, y - tile_size),  # NE
+                (x - tile_size, y + tile_size),  # SW
+                (x + tile_size, y + tile_size)   # SE
+            ]
+            
+            diagonal_connections = []
+            for i, diag_pos in enumerate(diagonal_neighbors):
+                if diag_pos in path_positions:
+                    diagonal_connections.append((i, diag_pos))
+            
+            # Fix each diagonal connection by adding a cardinal connection
+            for i, diag_pos in diagonal_connections:
+                if i == 0:  # NW diagonal
+                    # Try north first, then west
+                    if (x, y - tile_size) not in path_positions and utils.is_in_bounds(x, y - tile_size, grid_size):
+                        new_paths.append({
+                            'position': (x, y - tile_size),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x, y - tile_size))
+                    elif (x - tile_size, y) not in path_positions and utils.is_in_bounds(x - tile_size, y, grid_size):
+                        new_paths.append({
+                            'position': (x - tile_size, y),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x - tile_size, y))
+                elif i == 1:  # NE diagonal
+                    # Try north first, then east
+                    if (x, y - tile_size) not in path_positions and utils.is_in_bounds(x, y - tile_size, grid_size):
+                        new_paths.append({
+                            'position': (x, y - tile_size),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x, y - tile_size))
+                    elif (x + tile_size, y) not in path_positions and utils.is_in_bounds(x + tile_size, y, grid_size):
+                        new_paths.append({
+                            'position': (x + tile_size, y),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x + tile_size, y))
+                elif i == 2:  # SW diagonal
+                    # Try south first, then west
+                    if (x, y + tile_size) not in path_positions and utils.is_in_bounds(x, y + tile_size, grid_size):
+                        new_paths.append({
+                            'position': (x, y + tile_size),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x, y + tile_size))
+                    elif (x - tile_size, y) not in path_positions and utils.is_in_bounds(x - tile_size, y, grid_size):
+                        new_paths.append({
+                            'position': (x - tile_size, y),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x - tile_size, y))
+                else:  # SE diagonal
+                    # Try south first, then east
+                    if (x, y + tile_size) not in path_positions and utils.is_in_bounds(x, y + tile_size, grid_size):
+                        new_paths.append({
+                            'position': (x, y + tile_size),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x, y + tile_size))
+                    elif (x + tile_size, y) not in path_positions and utils.is_in_bounds(x + tile_size, y, grid_size):
+                        new_paths.append({
+                            'position': (x + tile_size, y),
+                            'variant': path['variant']
+                        })
+                        path_positions.add((x + tile_size, y))
+    
+    # Add all new connecting paths
+    result_paths.extend(new_paths)
+    
+    # Second pass: verify all paths now have proper adjacency
+    # Optionally, add checks to ensure the final path network looks good
+    
+    return result_paths
+
+
+# 4. Modified generate_village function to use the improved path validation
+
+def generate_village(size, assets, tile_size=32):
+    """Generate a procedural village with buildings, roads, and paths.
+    
+    Args:
+        size: Base size parameter (will be scaled up)
+        assets: Dictionary of game assets
+        tile_size: Size of each tile in pixels
+        
+    Returns:
+        Dictionary containing complete village data
+    """
+    # First, generate the landscape
+    landscape = landscape_generator.generate_landscape(size, tile_size)
+    
+    # Extract landscape components
+    grid_size = landscape['size']
+    terrain = landscape['terrain']
+    water = landscape['water']
+    water_positions = landscape['water_positions']
+    trees = landscape['trees']
+    
+    # Create additional village components
+    bridges = []
+    buildings = []
+    paths = []
+    
+    print(f"Building village on landscape with size {grid_size}x{grid_size} pixels...")
+    
+    # Create a village layout based on the water feature
+    # First, plan the main roads and paths around the water
+    create_village_layout(paths, water_positions, grid_size, tile_size)
+    
+    # Convert path positions to a set for quick checking
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    
+    # Place buildings with appropriate types based on proximity to water and village center
+    target_building_count = int(size * 0.5)  # Scale with village size
+    
+    # Define building sizes for lookup
+    building_sizes = {
+        "large": 3 * tile_size,  # 3 tiles
+        "medium": 2 * tile_size, # 2 tiles
+        "small": 1 * tile_size   # 1 tile
+    }
+    
+    place_buildings_by_zones(buildings, paths, water_positions, path_positions, 
+                            grid_size, tile_size, assets, building_sizes, target_building_count, terrain)
+    
+    # Connect buildings to paths with proper adjacency
+    connect_buildings_to_paths(buildings, paths, water_positions, grid_size, tile_size)
+    
+    # NEW: Validate all paths to ensure proper adjacency
+    paths = validate_path_adjacency(paths, grid_size, tile_size)
+    
+    # FIX 1: Ensure path adjacency (no diagonal-only connections)
+    paths = ensure_path_adjacency(paths, grid_size, tile_size)
+    
+    # FIX 2: Remove isolated paths (paths with fewer than 2 adjacent path neighbors)
+    paths = remove_isolated_paths(paths, grid_size, tile_size)
+    
+    # Update path_positions after fixing paths
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    
+    # Update grass near building entrances and ensure they connect to paths
+    update_grass_near_building_entrances(terrain, buildings, building_sizes, grid_size, 
+                                        tile_size, water_positions, path_positions)
+    
+    # FIX 3: Ensure grass type 2 is properly around water
+    fix_grass_around_water(terrain, water_positions, grid_size, tile_size)
+    
+    # Add bridges where paths cross water
+    bridges = landscape_generator.add_bridges_at_path_water_intersections(terrain, water, paths, grid_size, tile_size, assets)
+    
+    # Print some stats about the village
+    print(f"Village generation complete! {len(buildings)} buildings, {len(paths)} path tiles, {len(bridges)} bridges")
+    
+    paths = fix_path_issues(paths, buildings, grid_size, tile_size, water_positions)
+    # Return the complete village data
+    return {
+        'size': grid_size,
+        'terrain': terrain,
+        'buildings': buildings,
+        'trees': trees,
+        'paths': paths,
+        'water': water,
+        'bridges': bridges
+    }            
+
+def scanmap(grid_size, tile_size, pattern_check_fn, fix_fn):
+    """
+    Scan the entire map for a specific 2x2 pattern and apply a fix function when found.
+    
+    Args:
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        pattern_check_fn: Function that checks if a 2x2 pattern matches. 
+                         Takes (x, y, items) where items is a dict with keys 'tl', 'tr', 'bl', 'br'
+        fix_fn: Function to call when pattern is found. Takes (x, y, items) and returns any modifications.
+    
+    Returns:
+        Number of fixes applied
+    """
+    fixes_applied = 0
+    
+    # Scan the entire map in tile-sized steps
+    for y in range(0, grid_size - tile_size, tile_size):
+        for x in range(0, grid_size - tile_size, tile_size):
+            # Extract the 2x2 grid at this position
+            items = {
+                'tl': (x, y),                    # Top-left
+                'tr': (x + tile_size, y),        # Top-right
+                'bl': (x, y + tile_size),        # Bottom-left
+                'br': (x + tile_size, y + tile_size)  # Bottom-right
+            }
+            
+            # Check if this pattern matches
+            if pattern_check_fn(x, y, items):
+                # Apply fix if pattern matches
+                if fix_fn(x, y, items):
+                    fixes_applied += 1
+    
+    return fixes_applied
+
+
+def replace_diagonal(paths, path_positions, new_position, variant=1):
+    """
+    Replace a diagonal path connection with a proper cardinal connection.
+    
+    Args:
+        paths: List of path dictionaries to modify
+        path_positions: Set of existing path positions
+        new_position: Position to add a new path tile
+        variant: Path variant to use (default: 1)
+        
+    Returns:
+        Boolean indicating if a path was added
+    """
+    # Check if position already has a path
+    if new_position in path_positions:
+        return False
+    
+    # Add the new path
+    paths.append({
+        'position': new_position,
+        'variant': variant
+    })
+    path_positions.add(new_position)
     return True
 
-def place_trees_improved(trees, path_positions, building_positions, water_positions, grid_size, tile_size, size, target_tree_count):
-    """Place trees with improved spacing logic to avoid buildings and roads."""
-    # Track occupied tree positions
-    tree_positions = set()
+
+def fix_diagonal_paths(paths, grid_size, tile_size, water_positions=None):
+    """
+    Fix all diagonal path connections in the map by ensuring they have proper cardinal adjacency.
     
-    # Different tree distribution zones
-    forest_zones = create_forest_zones(grid_size, tile_size, size)
+    Args:
+        paths: List of path dictionaries to modify
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        water_positions: Set of water positions to avoid (optional)
     
-    # Track attempts to avoid infinite loops
-    attempts = 0
-    max_attempts = target_tree_count * 3
+    Returns:
+        Updated paths list
+    """
+    # Create a set of path positions for quick lookup
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
     
-    # Place trees
-    while len(trees) < target_tree_count and attempts < max_attempts:
-        attempts += 1
+    # Keep track of total fixes
+    total_fixes = 0
+    
+    # Run multiple scans for different diagonal patterns
+    # We'll do this in multiple passes until no more fixes are needed or max passes reached
+    max_passes = 3  # Limit to prevent infinite loop
+    current_pass = 0
+    fixes_in_pass = 1  # Initialize to enter the loop
+    
+    while fixes_in_pass > 0 and current_pass < max_passes:
+        current_pass += 1
+        fixes_in_pass = 0
         
-        # Decide where to try placing a tree
-        if random.random() < 0.7:  # 70% in forest zones
-            tree_pos = place_tree_in_forest(forest_zones, grid_size, tile_size)
-        else:
-            # Random position anywhere
-            tree_pos = place_tree_randomly(grid_size, tile_size)
+        # Pattern 1: Path in top-left and bottom-right, but not top-right or bottom-left
+        # [P][_]
+        # [_][P]
+        def pattern1_check(x, y, items):
+            tl, tr, bl, br = items['tl'], items['tr'], items['bl'], items['br']
+            return (tl in path_positions and br in path_positions and 
+                   tr not in path_positions and bl not in path_positions)
         
-        x, y = tree_pos
+        def pattern1_fix(x, y, items):
+            # Choose which cardinal connection to add based on water
+            tl, tr, bl, br = items['tl'], items['tr'], items['bl'], items['br']
+            
+            # Prefer top-right if not water, otherwise bottom-left
+            if water_positions is None or tr not in water_positions:
+                return replace_diagonal(paths, path_positions, tr)
+            elif bl not in water_positions:
+                return replace_diagonal(paths, path_positions, bl)
+            # If both are water, don't add a path
+            return False
+        
+        # Pattern 2: Path in top-right and bottom-left, but not top-left or bottom-right
+        # [_][P]
+        # [P][_]
+        def pattern2_check(x, y, items):
+            tl, tr, bl, br = items['tl'], items['tr'], items['bl'], items['br']
+            return (tr in path_positions and bl in path_positions and 
+                   tl not in path_positions and br not in path_positions)
+        
+        def pattern2_fix(x, y, items):
+            # Choose which cardinal connection to add based on water
+            tl, tr, bl, br = items['tl'], items['tr'], items['bl'], items['br']
+            
+            # Prefer top-left if not water, otherwise bottom-right
+            if water_positions is None or tl not in water_positions:
+                return replace_diagonal(paths, path_positions, tl)
+            elif br not in water_positions:
+                return replace_diagonal(paths, path_positions, br)
+            # If both are water, don't add a path
+            return False
+        
+        # Scan for both patterns
+        fixes_in_pattern1 = scanmap(grid_size, tile_size, pattern1_check, pattern1_fix)
+        fixes_in_pattern2 = scanmap(grid_size, tile_size, pattern2_check, pattern2_fix)
+        
+        fixes_in_pass = fixes_in_pattern1 + fixes_in_pattern2
+        
+        # Update total fixes
+        total_fixes += fixes_in_pass
+        
+        print(f"Pass {current_pass}: Fixed {fixes_in_pass} diagonal path connections")
+    
+    print(f"Total diagonal path fixes: {total_fixes}")
+    return paths
+
+
+def ensure_building_path_connections(buildings, paths, grid_size, tile_size, water_positions=None):
+    """
+    Ensure all buildings have at least one cardinal path connection.
+    
+    Args:
+        buildings: List of building dictionaries
+        paths: List of path dictionaries
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        water_positions: Set of water positions to avoid (optional)
+    
+    Returns:
+        Updated paths list
+    """
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    buildings_connected = 0
+    
+    for building in buildings:
+        building_pos = building['position']
+        building_size_name = building['size']
+        
+        # Convert size name to pixel size
+        building_size_px = 3 * tile_size if building_size_name == 'large' else (
+                          2 * tile_size if building_size_name == 'medium' else tile_size)
+        
+        # Calculate footprint size in tiles
+        footprint_tiles = building_size_px // tile_size
+        
+        # Check if building already has a cardinal path connection
+        has_cardinal_connection = False
+        
+        # Check all sides of the building
+        for x in range(footprint_tiles):
+            # Check top edge
+            if (building_pos[0] + x * tile_size, building_pos[1] - tile_size) in path_positions:
+                has_cardinal_connection = True
+                break
+                
+            # Check bottom edge
+            if (building_pos[0] + x * tile_size, building_pos[1] + footprint_tiles * tile_size) in path_positions:
+                has_cardinal_connection = True
+                break
+        
+        for y in range(footprint_tiles):
+            # Check left edge
+            if (building_pos[0] - tile_size, building_pos[1] + y * tile_size) in path_positions:
+                has_cardinal_connection = True
+                break
+                
+            # Check right edge
+            if (building_pos[0] + footprint_tiles * tile_size, building_pos[1] + y * tile_size) in path_positions:
+                has_cardinal_connection = True
+                break
+        
+        # If no cardinal connection, add one
+        if not has_cardinal_connection:
+            # Find the nearest path
+            nearest_path = None
+            min_distance = float('inf')
+            
+            for path in paths:
+                path_pos = path['position']
+                dx = path_pos[0] - (building_pos[0] + building_size_px // 2)
+                dy = path_pos[1] - (building_pos[1] + building_size_px // 2)
+                distance = dx*dx + dy*dy  # Use square distance to avoid sqrt
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    nearest_path = path_pos
+            
+            if nearest_path:
+                # Determine which side of the building to connect from
+                center_x = building_pos[0] + building_size_px // 2
+                center_y = building_pos[1] + building_size_px // 2
+                
+                # Calculate which side is closest to the nearest path
+                distances = [
+                    (abs(center_y - (building_pos[1] + building_size_px) - nearest_path[1]), 'bottom'),
+                    (abs(center_x - (building_pos[0] + building_size_px) - nearest_path[0]), 'right'),
+                    (abs(center_y - building_pos[1] - nearest_path[1]), 'top'),
+                    (abs(center_x - building_pos[0] - nearest_path[0]), 'left')
+                ]
+                
+                # Sort by distance (closest first)
+                distances.sort()
+                
+                # Try sides in order of closest to nearest path
+                for _, side in distances:
+                    if side == 'bottom':
+                        door_pos = (center_x, building_pos[1] + building_size_px)
+                    elif side == 'right':
+                        door_pos = (building_pos[0] + building_size_px, center_y)
+                    elif side == 'top':
+                        door_pos = (center_x, building_pos[1] - tile_size)
+                    else:  # left
+                        door_pos = (building_pos[0] - tile_size, center_y)
+                    
+                    # Skip if door position is in water
+                    if water_positions and door_pos in water_positions:
+                        continue
+                    
+                    # Create a cardinal path from door to nearest path
+                    create_cardinal_path(paths, path_positions, door_pos, nearest_path, grid_size, tile_size, water_positions)
+                    buildings_connected += 1
+                    break
+    
+    print(f"Connected {buildings_connected} buildings to path network")
+    return paths
+
+
+def create_cardinal_path(paths, path_positions, start_pos, end_pos, grid_size, tile_size, water_positions=None):
+    """
+    Create a path between two points using strictly cardinal connections.
+    
+    Args:
+        paths: List of path dictionaries to modify
+        path_positions: Set of existing path positions
+        start_pos: Starting position of the path
+        end_pos: Ending position of the path
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        water_positions: Set of water positions to avoid (optional)
+    """
+    # Add starting position if it's not already a path
+    if start_pos not in path_positions:
+        paths.append({
+            'position': start_pos,
+            'variant': 1
+        })
+        path_positions.add(start_pos)
+    
+    # If end_pos is already connected to start_pos (through other paths),
+    # no need to create a new path
+    if start_pos == end_pos:
+        return
+    
+    # Get starting and ending coordinates
+    start_x, start_y = start_pos
+    end_x, end_y = end_pos
+    
+    # Current position
+    current_x, current_y = start_x, start_y
+    
+    # Use a hybrid L-shaped approach: go horizontally first, then vertically
+    # We'll limit the maximum number of steps to prevent infinite loops
+    max_steps = int((grid_size / tile_size) * 2)  # Should be more than enough
+    steps_taken = 0
+    
+    # Step horizontally until we're aligned with the target on x-axis
+    while current_x != end_x and steps_taken < max_steps:
+        steps_taken += 1
+        step_x = tile_size if end_x > current_x else -tile_size
+        next_x = current_x + step_x
+        next_pos = (next_x, current_y)
         
         # Skip if out of bounds
-        if not utils.is_in_bounds(x, y, grid_size):
-            continue
+        if not (0 <= next_x < grid_size):
+            break
+        
+        # Skip if water and we care about water
+        if water_positions and next_pos in water_positions:
+            # Try going around vertically
+            detour_found = False
             
-        # Check if position is valid
-        if (tree_pos in path_positions or
-            tree_pos in building_positions or
-            tree_pos in water_positions or
-            tree_pos in tree_positions):
-            continue
-            
-        # Check for minimum spacing between trees
-        if is_too_close_to_other_trees(tree_pos, tree_positions, tile_size):
-            continue
-            
-        # Add the tree
-        tree_variant = random.randint(1, 5)  # 5 tree variants
-        trees.append({
-            'position': (x, y),
-            'variant': tree_variant
-        })
-        
-        # Mark position as occupied
-        tree_positions.add(tree_pos)
-
-def create_forest_zones(grid_size, tile_size, size):
-    """Create forest zones for tree placement.
-    
-    Args:
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        size: Size parameter
-        
-    Returns:
-        List of (x, y, radius) tuples defining forest zones
-    """
-    forest_zones = []
-    
-    # Create 4-6 forest zones randomly placed around the map
-    num_forests = random.randint(4, 6)
-    for _ in range(num_forests):
-        forest_x = random.randint(tile_size * 5, grid_size - tile_size * 5)
-        forest_y = random.randint(tile_size * 5, grid_size - tile_size * 5)
-        forest_radius = random.randint(grid_size // 12, grid_size // 8)
-        forest_zones.append((forest_x, forest_y, forest_radius))
-        
-    return forest_zones
-
-def place_tree_in_forest(forest_zones, grid_size, tile_size):
-    """Place a tree within a forest zone.
-    
-    Args:
-        forest_zones: List of (x, y, radius) tuples defining forest zones
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Tuple of (x, y) coordinates
-    """
-    # Select a random forest zone
-    forest_x, forest_y, forest_radius = random.choice(forest_zones)
-    
-    # Place within this forest with random distribution
-    angle = random.uniform(0, 2 * math.pi)
-    distance = random.uniform(0, forest_radius)
-    
-    x, y = utils.polar_to_cartesian(forest_x, forest_y, angle, distance)
-    
-    # Align to grid
-    return utils.align_to_grid(x, y, tile_size)
-
-def place_tree_randomly(grid_size, tile_size):
-    """Place a tree at a random position.
-    
-    Args:
-        grid_size: Size of the grid in pixels
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Tuple of (x, y) coordinates
-    """
-    x = random.randint(0, grid_size - tile_size)
-    y = random.randint(0, grid_size - tile_size)
-    
-    # Align to grid
-    return utils.align_to_grid(x, y, tile_size)
-
-def is_too_close_to_other_trees(tree_pos, tree_positions, tile_size):
-    """Check if a position is too close to existing trees.
-    
-    Args:
-        tree_pos: Position to check (x, y)
-        tree_positions: Set of existing tree positions
-        tile_size: Size of a tile in pixels
-        
-    Returns:
-        Boolean indicating if position is too close
-    """
-    x, y = tree_pos
-    
-    for dx in range(-1, 2):
-        for dy in range(-1, 2):
-            near_pos = (x + dx * tile_size, y + dy * tile_size)
-            if near_pos in tree_positions:
-                return True
+            # Try up and down
+            for detour_offset in [tile_size, -tile_size]:
+                detour_y = current_y + detour_offset
+                detour_pos = (current_x, detour_y)
                 
-    return False
+                if (0 <= detour_y < grid_size and 
+                    (water_positions is None or detour_pos not in water_positions)):
+                    
+                    # Add detour path if needed
+                    if detour_pos not in path_positions:
+                        paths.append({
+                            'position': detour_pos,
+                            'variant': 1
+                        })
+                        path_positions.add(detour_pos)
+                    
+                    # Update current position
+                    current_y = detour_y
+                    detour_found = True
+                    break
+            
+            # If both detours fail, give up on horizontal movement
+            if not detour_found:
+                break
+        else:
+            # Add path at next position if needed
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1
+                })
+                path_positions.add(next_pos)
+            
+            # Update current position
+            current_x = next_x
+    
+    # Now move vertically until we reach the target y-axis
+    while current_y != end_y and steps_taken < max_steps:
+        steps_taken += 1
+        step_y = tile_size if end_y > current_y else -tile_size
+        next_y = current_y + step_y
+        next_pos = (current_x, next_y)
+        
+        # Skip if out of bounds
+        if not (0 <= next_y < grid_size):
+            break
+        
+        # Skip if water and we care about water
+        if water_positions and next_pos in water_positions:
+            # Try going around horizontally
+            detour_found = False
+            
+            # Try left and right
+            for detour_offset in [tile_size, -tile_size]:
+                detour_x = current_x + detour_offset
+                detour_pos = (detour_x, current_y)
+                
+                if (0 <= detour_x < grid_size and 
+                    (water_positions is None or detour_pos not in water_positions)):
+                    
+                    # Add detour path if needed
+                    if detour_pos not in path_positions:
+                        paths.append({
+                            'position': detour_pos,
+                            'variant': 1
+                        })
+                        path_positions.add(detour_pos)
+                    
+                    # Update current position
+                    current_x = detour_x
+                    detour_found = True
+                    break
+            
+            # If both detours fail, give up on vertical movement
+            if not detour_found:
+                break
+        else:
+            # Add path at next position if needed
+            if next_pos not in path_positions:
+                paths.append({
+                    'position': next_pos,
+                    'variant': 1
+                })
+                path_positions.add(next_pos)
+            
+            # Update current position
+            current_y = next_y
+
+
+def fix_path_issues(paths, buildings, grid_size, tile_size, water_positions=None):
+    """
+    Fix all path issues in one go - diagonal paths and disconnected buildings.
+    
+    Args:
+        paths: List of path dictionaries
+        buildings: List of building dictionaries
+        grid_size: Size of the grid in pixels
+        tile_size: Size of a tile in pixels
+        water_positions: Set of water positions to avoid (optional)
+        
+    Returns:
+        Updated paths with all issues fixed
+    """
+    print("Fixing path issues...")
+    
+    # First, ensure all buildings have path connections
+    paths = ensure_building_path_connections(buildings, paths, grid_size, tile_size, water_positions)
+    
+    # Then, fix any diagonal-only path connections
+    paths = fix_diagonal_paths(paths, grid_size, tile_size, water_positions)
+    
+    # Finally, do a final verification pass to make sure we haven't introduced any new issues
+    path_positions = {(p['position'][0], p['position'][1]) for p in paths}
+    
+    # Verify all paths have at least one cardinal neighbor
+    isolated_paths = []
+    
+    for path in paths:
+        x, y = path['position']
+        cardinal_neighbors = [
+            (x, y - tile_size),      # North
+            (x + tile_size, y),      # East
+            (x, y + tile_size),      # South
+            (x - tile_size, y)       # West
+        ]
+        
+        # Count cardinal neighbors that are paths
+        cardinal_count = sum(1 for pos in cardinal_neighbors if pos in path_positions)
+        
+        # If no cardinal neighbors, mark for removal
+        if cardinal_count == 0:
+            isolated_paths.append(path)
+    
+    # Remove truly isolated paths
+    for path in isolated_paths:
+        paths.remove(path)
+    
+    if isolated_paths:
+        print(f"Removed {len(isolated_paths)} isolated paths")
+    
+    return paths
