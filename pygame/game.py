@@ -16,18 +16,19 @@ from ui_manager import UIManager
 from renderer import Renderer
 from console_manager import ConsoleManager
 from time_manager import TimeManager
-# Add these imports for housing functionality
 from villager_housing import assign_housing_and_jobs, load_assignments, update_game_with_assignments
 from housing_ui import HousingUI
-from renderer_enhancement import enhance_renderer_for_interiors
-
 
 # Initialize pygame
 pygame.init()
 pygame.mixer.init()
 
 # Screen setup
-SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 960
+infoObject = pygame.display.Info()
+#screen = pygame.display.set_mode((infoObject.current_w, infoObject.current_h))
+SCREEN_WIDTH = infoObject.current_w
+SCREEN_HEIGHT = infoObject.current_h - 40
+#SCREEN_WIDTH, SCREEN_HEIGHT = 1280, 960
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Village Simulation with Console")
 
@@ -63,9 +64,6 @@ class VillageGame:
         self.time_manager.set_time(6.0) #6 am
         # Generate a larger village
         self.village_data = generate_village(60, self.assets, TILE_SIZE)  # 60x60 tiles
-    
-        # Enhance renderer for interiors AFTER village data is generated
-        enhance_renderer_for_interiors(Renderer)
         self.renderer.initialize_interiors(self.village_data)
 
         # Add commands to console

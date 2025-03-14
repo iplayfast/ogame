@@ -1,6 +1,55 @@
 import random
 import math
+import heapq
 import utils
+
+# Define terrain types as constants
+EMPTY = 0
+GRASS_1 = 1
+GRASS_2 = 2
+GRASS_3 = 3
+WATER = 10
+PATH_1 = 20
+PATH_2 = 21
+TREE_1 = 30
+TREE_2 = 31
+TREE_3 = 32
+TREE_4 = 33
+TREE_5 = 34
+BUILDING = 40  # Base value - building_id gets added to this
+
+# Helper functions for terrain types
+def is_grass(token):
+    return 1 <= token <= 9
+    
+def is_water(token):
+    return token == WATER
+    
+def is_path(token):
+    return 20 <= token <= 29
+    
+def is_tree(token):
+    return 30 <= token <= 39
+    
+def is_building(token):
+    return token >= BUILDING
+    
+def get_building_id(token):
+    return token - BUILDING if is_building(token) else -1
+
+def is_passable(token):
+    return (is_grass(token) or 
+            is_path(token) or 
+            token == EMPTY)
+
+def get_variant(token):
+    if is_grass(token):
+        return token
+    elif is_path(token):
+        return token - PATH_1 + 1
+    elif is_tree(token):
+        return token - TREE_1 + 1
+    return 1
 
 class Village:
     """A class representing a procedurally generated village with buildings, roads, and natural features.
@@ -24,20 +73,26 @@ class Village:
         self.tile_size = tile_size
         self.assets = assets
         
-        # Village components with optimized data structures
-        self.terrain = {}
-        self.water = []
+        # Grid dimensions
+        self.grid_width = self.grid_size // tile_size
+        self.grid_height = self.grid_size // tile_size
+        
+        # New terrain grid with default grass
+        self.terrain_grid = [[GRASS_1 for x in range(self.grid_width)] 
+                            for y in range(self.grid_height)]
+        
+        # Position sets for fast iteration (these are now just views into the grid)
         self.water_positions = set()
-        self.paths = []
         self.path_positions = set()
-        self.buildings = []
+        self.tree_positions = set()
         self.building_positions = set()
-        self.trees = []
+        
+        # Store building objects separately since they span multiple cells
+        self.buildings = []
         self.bridges = []
         self.interaction_points = []
         
         # For optimization
-        self.village_grid = None
         self.path_cache = {}
         
         # Village center - will be computed during generation
@@ -45,6 +100,12 @@ class Village:
         self.village_center_y = None
         
         # For compatibility with existing code
+        self.terrain = {}  # Legacy terrain dictionary
+        self.water = []    # Legacy water list
+        self.paths = []    # Legacy paths list
+        self.trees = []    # Legacy trees list
+        
+        # Village data dictionary for legacy compatibility
         self.village_data = {
             'size': self.grid_size,
             'terrain': self.terrain,
@@ -68,11 +129,11 @@ class Village:
         # Step 1: Generate landscape (terrain and water)
         self._generate_landscape()
         
-        # Step 2: Place trees densely throughout all grassy areas
-        self._place_trees()
-        
-        # Step 3: Create village layout (paths and roads)
+        # Step 2: Create village layout (paths and roads)
         self._create_village_layout()
+        
+        # Step 3: Place trees densely throughout all grassy areas
+        self._place_trees()
         
         # Step 4: Remove trees from paths (buildings handle their own tree removal)
         self._remove_trees_from_paths()
@@ -89,8 +150,8 @@ class Village:
         # Step 8: Add bridges at water crossings
         self._add_bridges()
         
-        # Step 9: Initialize village grid for pathfinding
-        self._initialize_grid()
+        # Step 9: Update legacy data structures for compatibility
+        self._update_legacy_structures()
         
         # Step 10: Analyze interaction points
         self._analyze_interaction_points()
@@ -108,221 +169,196 @@ class Village:
             'water_positions': self.water_positions,
             'path_positions': self.path_positions
         })
-
-    def _remove_trees_from_paths(self):
-        """Remove trees that are directly on paths."""
-        original_count = len(self.trees)
+    
+    def set_terrain(self, x, y, token):
+        """Set terrain at pixel coordinates.
         
-        # Keep only trees not on paths
-        self.trees = [tree for tree in self.trees if tree['position'] not in self.path_positions]
+        Args:
+            x, y: Pixel coordinates
+            token: Terrain token to set
+        """
+        grid_x, grid_y = x // self.tile_size, y // self.tile_size
         
-        removed_count = original_count - len(self.trees)
-        print(f"Removed {removed_count} trees that were directly on paths")
+        # Check bounds
+        if 0 <= grid_x < self.grid_width and 0 <= grid_y < self.grid_height:
+            # Remove from old sets if necessary
+            old_token = self.terrain_grid[grid_y][grid_x]
+            self._remove_from_position_sets(grid_x, grid_y, old_token)
+            
+            # Set new terrain
+            self.terrain_grid[grid_y][grid_x] = token
+            
+            # Add to appropriate position set
+            self._add_to_position_sets(grid_x, grid_y, token)
+    
+    def get_terrain(self, x, y):
+        """Get terrain at pixel coordinates.
         
-        return removed_count
-    def _remove_trees_under_buildings(self):
-        """Remove trees that overlap with buildings or paths.
-        
+        Args:
+            x, y: Pixel coordinates
+            
         Returns:
-            Number of trees removed
+            Terrain token at the specified location
         """
-        original_count = len(self.trees)
-        trees_to_keep = []
-        trees_removed = []
+        grid_x, grid_y = x // self.tile_size, y // self.tile_size
         
-        # Debug info
-        print(f"Before removal: {original_count} trees, {len(self.building_positions)} building positions, {len(self.path_positions)} path positions")
+        # Check bounds
+        if 0 <= grid_x < self.grid_width and 0 <= grid_y < self.grid_height:
+            return self.terrain_grid[grid_y][grid_x]
+        return EMPTY
+    
+    def is_passable(self, x, y):
+        """Check if a position is passable for pathfinding.
         
-        for tree in self.trees:
-            tree_pos = tree['position']
-            tree_x, tree_y = tree_pos
+        Args:
+            x, y: Pixel coordinates
             
-            # Check ONLY the exact tree position against paths
-            on_path = tree_pos in self.path_positions
-            
-            # For buildings, check the entire building footprint
-            in_building = False
-            for building in self.buildings:
-                bx, by = building['position']
-                size = building['size']
+        Returns:
+            Boolean indicating if the position is passable
+        """
+        token = self.get_terrain(x, y)
+        return is_passable(token)
+    
+    def _remove_from_position_sets(self, grid_x, grid_y, token):
+        """Remove a position from the appropriate set based on its token.
+        
+        Args:
+            grid_x, grid_y: Grid coordinates
+            token: The terrain token being removed
+        """
+        pos = (grid_x * self.tile_size, grid_y * self.tile_size)
+        
+        if is_water(token):
+            self.water_positions.discard(pos)
+        elif is_path(token):
+            self.path_positions.discard(pos)
+        elif is_tree(token):
+            self.tree_positions.discard(pos)
+        elif is_building(token):
+            self.building_positions.discard(pos)
+    
+    def _add_to_position_sets(self, grid_x, grid_y, token):
+        """Add a position to the appropriate set based on its token.
+        
+        Args:
+            grid_x, grid_y: Grid coordinates
+            token: The terrain token being added
+        """
+        pos = (grid_x * self.tile_size, grid_y * self.tile_size)
+        
+        if is_water(token):
+            self.water_positions.add(pos)
+        elif is_path(token):
+            self.path_positions.add(pos)
+        elif is_tree(token):
+            self.tree_positions.add(pos)
+        elif is_building(token):
+            self.building_positions.add(pos)
+    
+    def _rebuild_position_sets(self):
+        """Rebuild all position sets from the terrain grid."""
+        self.water_positions.clear()
+        self.path_positions.clear()
+        self.tree_positions.clear()
+        self.building_positions.clear()
+        
+        for y in range(self.grid_height):
+            for x in range(self.grid_width):
+                token = self.terrain_grid[y][x]
+                pos = (x * self.tile_size, y * self.tile_size)
                 
-                # Calculate building dimensions
-                b_width = b_height = self.tile_size
-                if size == 'medium':
-                    b_width = b_height = self.tile_size * 2
-                elif size == 'large':
-                    b_width = b_height = self.tile_size * 3
+                if is_water(token):
+                    self.water_positions.add(pos)
+                elif is_path(token):
+                    self.path_positions.add(pos)
+                elif is_tree(token):
+                    self.tree_positions.add(pos)
+                elif is_building(token):
+                    self.building_positions.add(pos)
+    
+    def _remove_trees_from_paths(self):
+        """Update terrain grid to remove trees that overlap with paths."""
+        count = 0
+        for y in range(self.grid_height):
+            for x in range(self.grid_width):
+                token = self.terrain_grid[y][x]
+                
+                # If this is a tree and there's a path nearby, remove the tree
+                if is_tree(token):
+                    # Check surrounding positions for paths
+                    has_adjacent_path = False
+                    for dx in range(-1, 2):
+                        for dy in range(-1, 2):
+                            nx, ny = x + dx, y + dy
+                            
+                            # Skip if out of bounds
+                            if not (0 <= nx < self.grid_width and 0 <= ny < self.grid_height):
+                                continue
+                                
+                            if is_path(self.terrain_grid[ny][nx]):
+                                has_adjacent_path = True
+                                break
+                        
+                        if has_adjacent_path:
+                            break
                     
-                # Check if tree is inside this building
-                if (bx <= tree_x < bx + b_width and
-                    by <= tree_y < by + b_height):
-                    in_building = True
-                    break
-            
-            # Only remove if the tree is directly on a path or inside a building
-            if on_path or in_building:
-                trees_removed.append(tree)
-            else:
-                trees_to_keep.append(tree)
+                    # If there's a path nearby, replace the tree with grass
+                    if has_adjacent_path:
+                        self.terrain_grid[y][x] = GRASS_1
+                        pos = (x * self.tile_size, y * self.tile_size)
+                        self.tree_positions.discard(pos)
+                        count += 1
         
-        # Update the trees list
-        self.trees = trees_to_keep
-        removed_count = original_count - len(self.trees)
+        print(f"Removed {count} trees that were directly on paths")
+        return count
+    
+    def _update_legacy_structures(self):
+        """Update legacy data structures for backwards compatibility."""
+        # Clear old structures
+        self.terrain = {}
+        self.water = []
+        self.paths = []
+        self.trees = []
         
-        # More detailed output
-        print(f"Removed {removed_count} trees that were directly on paths or inside buildings")
-        print(f"Kept {len(trees_to_keep)} trees")
-        
-        return removed_count
-    def _initialize_grid(self):
-        """
-        Creates a unified 2D grid representation of the village for efficient pathfinding.
-        This should be called once during village generation.
-        """
-        # Helper function for safe grid access
-        def safe_grid_access(grid, y, x, value=None):
-            grid_y, grid_x = int(y), int(x)
-            grid_height = len(grid)
-            grid_width = len(grid[0]) if grid_height > 0 else 0
-            
-            if 0 <= grid_y < grid_height and 0 <= grid_x < grid_width:
-                if value is not None:
-                    grid[grid_y][grid_x] = value
-                    return True
-                return grid[grid_y][grid_x]
-            return False if value is not None else None
-
-        grid_size = self.grid_size // self.tile_size
-        grid = [[{'type': 'empty', 'passable': True} for _ in range(grid_size)] for _ in range(grid_size)]
-        
-        # Add terrain (grass types)
-        for pos, terrain in self.terrain.items():
-            x, y = pos
-            grid_x, grid_y = x // self.tile_size, y // self.tile_size
-            
-            safe_grid_access(grid, grid_y, grid_x, {
-                'type': 'terrain',
-                'terrain_type': terrain['type'],
-                'variant': terrain.get('variant', 1),
-                'passable': True
-            })
-        
-        # Add water (impassable)
-        for water_pos in self.water_positions:
-            x, y = water_pos
-            grid_x, grid_y = x // self.tile_size, y // self.tile_size
-            
-            safe_grid_access(grid, grid_y, grid_x, {
-                'type': 'water',
-                'passable': False
-            })
-        
-        # Add bridges (passable)
-        for bridge in self.bridges:
-            x, y = bridge['position']
-            grid_x, grid_y = x // self.tile_size, y // self.tile_size
-            
-            safe_grid_access(grid, grid_y, grid_x, {
-                'type': 'bridge',
-                'bridge_type': bridge.get('type', 'bridge'),
-                'passable': True,
-                'preferred': True
-            })
-        
-        # Add paths (passable, preferred)
-        for path in self.paths:
-            x, y = path['position']
-            grid_x, grid_y = x // self.tile_size, y // self.tile_size
-            
-            safe_grid_access(grid, grid_y, grid_x, {
-                'type': 'path',
-                'variant': path.get('variant', 1),
-                'passable': True,
-                'preferred': True
-            })
-        
-        # Add buildings
-        for i, building in enumerate(self.buildings):
-            pos = building['position']
-            size_name = building['size']
-            
-            # Determine building size in tiles
-            size_multiplier = 3 if size_name == 'large' else (
-                            2 if size_name == 'medium' else 1)
-            size_tiles = size_multiplier
-            
-            # Add building footprint to grid
-            for dx in range(size_tiles):
-                for dy in range(size_tiles):
-                    pos_x, pos_y = pos
-                    grid_x = (pos_x // self.tile_size) + dx
-                    grid_y = (pos_y // self.tile_size) + dy
-                    
-                    safe_grid_access(grid, grid_y, grid_x, {
-                        'type': 'building',
-                        'building_id': i,
-                        'building_type': building.get('building_type', 'Unknown'),
-                        'passable': False,
-                        'preferred': False
+        # Rebuild from terrain grid
+        for y in range(self.grid_height):
+            for x in range(self.grid_width):
+                token = self.terrain_grid[y][x]
+                pos = (x * self.tile_size, y * self.tile_size)
+                
+                # Update terrain dictionary
+                if is_grass(token):
+                    variant = get_variant(token)
+                    self.terrain[pos] = {
+                        'type': 'grass',
+                        'variant': variant
+                    }
+                
+                # Update water list
+                if is_water(token):
+                    self.water.append({
+                        'position': pos,
+                        'frame': 0
+                    })
+                
+                # Update paths list
+                if is_path(token):
+                    variant = get_variant(token)
+                    self.paths.append({
+                        'position': pos,
+                        'variant': variant
+                    })
+                
+                # Update trees list
+                if is_tree(token):
+                    variant = get_variant(token)
+                    self.trees.append({
+                        'position': pos,
+                        'variant': variant
                     })
         
-        # Store the grid in village_data
-        self.village_grid = grid
-        self.village_data['village_grid'] = grid
-        print(f"Village grid initialized: {grid_size}x{grid_size}")
-        
-        # Create utility method for grid access that uses our safe access function
-        def get_cell_at(x, y):
-            """Get the grid cell at the given pixel coordinates."""
-            grid_x = x // self.tile_size
-            grid_y = y // self.tile_size
-            return safe_grid_access(grid, grid_y, grid_x)
-        
-        self.village_data['get_cell_at'] = get_cell_at
-
-    def _generate_landscape(self):
-        """Import and call the landscape generation method."""
-        from village_landscape import generate_landscape
-        landscape_data = generate_landscape(self)
-        self.__dict__.update(landscape_data)
+        print("Updated legacy data structures for compatibility")
     
-    def _create_village_layout(self):
-        """Import and call the path creation method."""
-        from village_paths import create_village_layout
-        paths_data = create_village_layout(self)
-        self.__dict__.update(paths_data)
-    
-    def _place_buildings(self):
-        """Import and call the building placement method."""
-        from village_buildings import place_buildings
-        buildings_data = place_buildings(self)
-        self.__dict__.update(buildings_data)
-    
-    def _connect_buildings_to_paths(self):
-        """Import and call the building-path connection method."""
-        from village_buildings import connect_buildings_to_paths
-        connect_buildings_to_paths(self)
-    
-    def _fix_path_issues(self):
-        """Import and call the path fixing method."""
-        from village_paths import fix_path_issues
-        fix_path_issues(self)
-    
-    def _place_trees(self):
-        """Import and call the tree placement method."""
-        from village_landscape import place_trees
-        place_trees(self)
-    
-    def _add_bridges(self):
-        """Import and call the bridge addition method."""
-        from village_paths import add_bridges
-        add_bridges(self)
-    
-    def _analyze_interaction_points(self):
-        """Import and call the interaction point analysis method."""
-        from village_interaction import analyze_interaction_points
-        analyze_interaction_points(self)
-
     def find_path(self, start, goal, heuristic=None):
         """Find a path between two points using A* pathfinding.
         
@@ -338,10 +374,6 @@ class Village:
         cache_key = (start, goal)
         if cache_key in self.path_cache:
             return self.path_cache[cache_key]
-            
-        # If no grid, we can't pathfind
-        if not self.village_grid:
-            return []
             
         # Convert positions to grid coordinates
         if isinstance(start, tuple):
@@ -376,7 +408,8 @@ class Village:
         path = self._a_star_pathfind(start_grid, goal_grid, heuristic)
         
         # Convert grid indices back to pixel coordinates
-        pixel_path = [(x * self.tile_size, y * self.tile_size) for x, y in path]
+        pixel_path = [(x * self.tile_size + self.tile_size // 2, 
+                       y * self.tile_size + self.tile_size // 2) for x, y in path]
         
         # Cache the result
         self.path_cache[cache_key] = pixel_path
@@ -394,10 +427,6 @@ class Village:
         Returns:
             List of grid positions from start to goal, or empty list if no path found
         """
-        import heapq
-        
-        grid_size = len(self.village_grid[0])
-        
         # Ensure start and goal are tuples of integers
         start = (int(start[0]), int(start[1]))
         goal = (int(goal[0]), int(goal[1]))
@@ -407,19 +436,30 @@ class Village:
             x, y = int(pos[0]), int(pos[1])
             
             # Check if in bounds
-            if x < 0 or x >= grid_size or y < 0 or y >= grid_size:
+            if not (0 <= x < self.grid_width and 0 <= y < self.grid_height):
                 return False
                 
             # Check if position is passable
-            cell = self.village_grid[y][x]
-            return cell['passable'] if 'passable' in cell else True
+            token = self.terrain_grid[y][x]
+            return is_passable(token)
         
         # Helper function to get movement cost between positions
         def movement_cost(current, neighbor):
+            curr_x, curr_y = current
+            next_x, next_y = neighbor
+            
             # If moving diagonally, cost is higher
-            if current[0] != neighbor[0] and current[1] != neighbor[1]:
-                return 1.414  # sqrt(2)
-            return 1.0
+            if curr_x != next_x and curr_y != next_y:
+                cost = 1.414  # sqrt(2)
+            else:
+                cost = 1.0
+                
+            # Reduce cost for paths (prefer them)
+            token = self.terrain_grid[next_y][next_x]
+            if is_path(token):
+                cost *= 0.8
+                
+            return cost
             
         # Initialize
         open_set = []
@@ -448,11 +488,8 @@ class Village:
                 path.reverse()
                 return path
             
-            current_x, current_y = int(current[0]), int(current[1])
-            
             for dx, dy in directions:
-                # Make sure all coordinates are integers
-                neighbor = (int(current_x + dx), int(current_y + dy))
+                neighbor = (current[0] + dx, current[1] + dy)
                 
                 # Skip if not valid
                 if not is_valid_position(neighbor):
@@ -460,13 +497,6 @@ class Village:
                 
                 # Calculate cost
                 tentative_g = g_score[current] + movement_cost(current, neighbor)
-                
-                # Prefer paths if available
-                neighbor_x, neighbor_y = neighbor
-                if 0 <= neighbor_x < grid_size and 0 <= neighbor_y < grid_size:
-                    cell = self.village_grid[neighbor_y][neighbor_x]
-                    if 'preferred' in cell and cell['preferred']:
-                        tentative_g *= 0.8  # Reduce cost for preferred paths (paths, bridges)
                 
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
                     # This path is better
@@ -480,3 +510,50 @@ class Village:
         
         # No path found
         return []
+    
+    # Methods for importing generators from separate modules
+    def _generate_landscape(self):
+        """Generate the terrain and water features."""
+        # Import and call the landscape generation method
+        # This will be implemented to use the new terrain system
+        from village_landscape import generate_landscape
+        landscape_data = generate_landscape(self)
+        self.__dict__.update(landscape_data)
+    
+    def _create_village_layout(self):
+        """Create the paths and road layout."""
+        from village_paths import create_village_layout
+        paths_data = create_village_layout(self)
+        self.__dict__.update(paths_data)
+    
+    def _place_buildings(self):
+        """Place buildings throughout the village."""
+        from village_buildings import place_buildings
+        buildings_data = place_buildings(self)
+        if buildings_data:  # Only update dict if buildings_data is not None
+            self.__dict__.update(buildings_data)
+    
+    def _connect_buildings_to_paths(self):
+        """Ensure all buildings are connected to the path network."""
+        from village_buildings import connect_buildings_to_paths
+        connect_buildings_to_paths(self)
+    
+    def _fix_path_issues(self):
+        """Fix issues with paths like diagonal-only connections."""
+        from village_paths import fix_path_issues
+        fix_path_issues(self)
+    
+    def _place_trees(self):
+        """Place trees throughout the village."""
+        from village_landscape import place_trees
+        place_trees(self)
+    
+    def _add_bridges(self):
+        """Add bridges at points where paths cross water."""
+        from village_paths import add_bridges
+        add_bridges(self)
+    
+    def _analyze_interaction_points(self):
+        """Identify interaction points throughout the village."""
+        from village_interaction import analyze_interaction_points
+        analyze_interaction_points(self)

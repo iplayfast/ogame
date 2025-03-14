@@ -23,6 +23,19 @@ class Renderer:
         self.BLACK = (0, 0, 0)
         self.GREEN = (100, 200, 100)
         self.BLUE = (100, 100, 200)
+        
+        # Initialize interior-related attributes safely
+        self.interior_manager = None
+        self.show_interiors = False
+        
+        # Try to import and initialize the interior manager if available
+        try:
+            from building_interiors import BuildingInteriors
+            self.interior_manager = BuildingInteriors(tile_size)
+            self.show_interiors = True
+            print("BuildingInteriors module loaded successfully")
+        except ImportError:
+            print("BuildingInteriors module not found, interior functionality disabled")
     
     def render_village(self, village_data, villagers, camera_x, camera_y, ui_manager, selected_villager, 
                       hovered_building, show_debug, clock, water_frame, 
@@ -64,6 +77,7 @@ class Renderer:
         self._render_paths(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
         self._render_water(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, water_frame)
         self._render_bridges(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
+
         # Get current shadow length from time manager if available
         shadow_length = 0
         if time_manager:
@@ -73,8 +87,16 @@ class Renderer:
         if shadow_length > 0:
             self._render_shadows(village_data, villagers, visible_left, visible_right, visible_top, visible_bottom, 
                                 camera_x, camera_y, shadow_length)
-            
-        self._render_buildings(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager)
+        
+        # Always render interiors first if enabled and available
+        if self.show_interiors and self.interior_manager is not None:
+            self.interior_manager.render_interiors(
+                self.screen, village_data['buildings'], camera_x, camera_y)
+        
+        # Then render building exteriors
+        self._render_buildings(village_data, visible_left, visible_right, visible_top, visible_bottom, 
+                               camera_x, camera_y, ui_manager, selected_villager)
+                               
         self._render_trees(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
         self._render_villagers(villagers, camera_x, camera_y)
         
@@ -123,20 +145,53 @@ class Renderer:
     
     def _render_terrain(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
         """Render terrain (grass)."""
-        for y in range(visible_top, visible_bottom):
-            for x in range(visible_left, visible_right):
-                pos = (x * self.tile_size, y * self.tile_size)
-                if pos in village_data['terrain']:
-                    terrain_tile = village_data['terrain'][pos]
-                    if terrain_tile['type'] == 'grass':
-                        variant = terrain_tile['variant']
+        # Initialize terrain_grid if not available
+        terrain_grid = None
+        if hasattr(village_data, 'terrain_grid'):
+            terrain_grid = village_data.terrain_grid
+        
+        # Fall back to terrain dictionary if grid not available
+        if terrain_grid is None:
+            for pos, terrain in village_data['terrain'].items():
+                x, y = pos
+                if (visible_left * self.tile_size <= x <= visible_right * self.tile_size and
+                    visible_top * self.tile_size <= y <= visible_bottom * self.tile_size):
+                    terrain_type = terrain['type']
+                    variant = terrain.get('variant', 1)
+                    
+                    if terrain_type == 'grass':
                         try:
                             grass_img = self.assets['environment'][f'grass_{variant}']
-                            self.screen.blit(grass_img, (pos[0] - camera_x, pos[1] - camera_y))
+                            self.screen.blit(grass_img, (x - camera_x, y - camera_y))
                         except KeyError:
-                            # Fallback if grass texture is missing
+                            # Fallback
                             pygame.draw.rect(self.screen, self.GREEN, 
-                                           (pos[0] - camera_x, pos[1] - camera_y, 
+                                          (x - camera_x, y - camera_y, 
+                                          self.tile_size, self.tile_size))
+        else:
+            # Render from terrain grid
+            for y in range(visible_top, visible_bottom):
+                for x in range(visible_left, visible_right):
+                    # Skip if out of bounds
+                    if not (0 <= x < len(terrain_grid[0]) and 0 <= y < len(terrain_grid)):
+                        continue
+                    
+                    # Get terrain token - assume we're using the constants from village_base.py
+                    token = terrain_grid[y][x]
+                    
+                    # Render grass terrain only
+                    if 1 <= token <= 9:  # is_grass check
+                        variant = token  # For grass, the token itself is the variant
+                        pos = (x * self.tile_size, y * self.tile_size)
+                        pos_screen = (pos[0] - camera_x, pos[1] - camera_y)
+                        
+                        try:
+                            grass_img = self.assets['environment'][f'grass_{variant}']
+                            self.screen.blit(grass_img, pos_screen)
+                        except KeyError:
+                            # Fallback
+                            pygame.draw.rect(self.screen, self.GREEN, 
+                                           (pos_screen[0], pos_screen[1], 
                                             self.tile_size, self.tile_size))
     
     def _render_paths(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
@@ -169,7 +224,7 @@ class Renderer:
                     pygame.draw.rect(self.screen, self.BLUE, 
                                    (x - camera_x, y - camera_y, 
                                     self.tile_size, self.tile_size))
-                                    
+    
     def _render_shadows(self, village_data, villagers, visible_left, visible_right, visible_top, visible_bottom, 
                        camera_x, camera_y, shadow_length):
         """Render shadows for trees, buildings, and villagers."""
@@ -325,9 +380,9 @@ class Renderer:
                         glow_size = 4
                         glow_color = (0, 255, 0) if highlight_id == home_id else (255, 100, 0)
                         pygame.draw.rect(self.screen, glow_color, 
-                                    (x - camera_x - glow_size, y - camera_y - glow_size, 
+                                      (x - camera_x - glow_size, y - camera_y - glow_size, 
                                         building_size + glow_size * 2, building_size + glow_size * 2), 
-                                    glow_size)
+                                      glow_size)
                         
                         # Draw building type indicator
                         ui_manager.draw_building_type_indicator(
@@ -353,7 +408,6 @@ class Renderer:
                         
                         # Draw label
                         self.screen.blit(label_text, (label_x, label_y))
-
 
     def _find_and_render_building_texture(self, building, x, y, camera_x, camera_y):
         """Helper method to find and render the appropriate building texture.
@@ -395,11 +449,10 @@ class Renderer:
                         self.tile_size * 2 if building_size_str == 'medium' else self.tile_size)
             
             pygame.draw.rect(self.screen, (200, 200, 200), 
-                        (x - camera_x, y - camera_y, 
+                          (x - camera_x, y - camera_y, 
                             building_size, building_size))
         
         return found
-
 
     def _render_bridges(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
         """Render bridges that go over water."""
@@ -417,7 +470,7 @@ class Renderer:
                 except (KeyError, AttributeError):
                     # Fallback if bridge texture is missing
                     pygame.draw.rect(self.screen, (150, 100, 50), 
-                                (x - camera_x, y - camera_y, 
+                                  (x - camera_x, y - camera_y, 
                                     self.tile_size, self.tile_size))
 
     def _render_trees(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
@@ -432,9 +485,9 @@ class Renderer:
                 except KeyError:
                     # Fallback if tree texture is missing
                     pygame.draw.circle(self.screen, (0, 100, 0), 
-                                      (x - camera_x + self.tile_size//2, 
-                                       y - camera_y + self.tile_size//2), 
-                                      self.tile_size//2)
+                                     (x - camera_x + self.tile_size//2, 
+                                      y - camera_y + self.tile_size//2), 
+                                     self.tile_size//2)
     
     def _render_villagers(self, villagers, camera_x, camera_y):
         """Render villagers and their selection indicators."""
@@ -443,11 +496,35 @@ class Renderer:
             if (camera_x - self.tile_size <= villager.rect.x <= camera_x + self.screen_width and
                 camera_y - self.tile_size <= villager.rect.y <= camera_y + self.screen_height):
                 self.screen.blit(villager.image, 
-                               (villager.rect.x - camera_x, 
-                                villager.rect.y - camera_y))
+                              (villager.rect.x - camera_x, 
+                               villager.rect.y - camera_y))
                 
                 # Draw selection indicator if selected
                 if villager.is_selected:
                     villager.draw_selection_indicator(self.screen, camera_x, camera_y)
                 if hasattr(villager, 'is_sleeping') and villager.is_sleeping and hasattr(villager, 'draw_sleep_indicator'):
                     villager.draw_sleep_indicator(self.screen, camera_x, camera_y)
+
+    def initialize_interiors(self, village_data):
+        """Initialize building interiors.
+        
+        Args:
+            village_data: Village data dictionary
+        """
+        if self.interior_manager is not None:
+            self.interior_manager.generate_interiors(village_data['buildings'])
+        else:
+            print("Building interiors not available - initialization skipped")
+
+    def toggle_interiors(self):
+        """Toggle the visibility of building interiors.
+        
+        Returns:
+            New state of interior visibility
+        """
+        if self.interior_manager is not None:
+            self.show_interiors = not self.show_interiors
+            return self.show_interiors
+        else:
+            print("Building interiors not available - toggle ignored")
+            return False

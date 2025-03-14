@@ -163,61 +163,33 @@ def place_zone_buildings_scan(village, zone, target_count, zone_type, building_s
     print(f"  Placed {total_buildings_placed}/{target_count} buildings in {zone_type} zone")
 
 def place_buildings(village):
-    """Place buildings in the village in different zones.
+    """Place buildings in the village."""
+    # Buildings are still stored as objects since they span multiple cells
+    # but mark their grid positions with building tokens
     
-    Args:
-        village: Village instance
+    for building in village.buildings:
+        building_id = village.buildings.index(building)
+        position = building['position']
+        size_name = building['size']
         
-    Returns:
-        Dictionary with updated village properties
-    """
-    print("Placing buildings...")
-    
-    # Define building sizes in pixels
-    building_sizes = {
-        "small": village.tile_size,
-        "medium": village.tile_size * 2,
-        "large": village.tile_size * 3
-    }
-    
-    # Create a set to track occupied positions
-    occupied_spaces = set()
-    
-    # Add water and path positions to occupied spaces
-    occupied_spaces.update(village.water_positions)
-    
-    # Create village zones
-    waterfront_zone, center_zone, outskirts_zone = create_village_zones(village)
-    
-    # Number of buildings to place in each zone
-    # Scale building count with village size
-    scale_factor = (village.grid_size / 1000) ** 2
-    buildings_in_center = int(8 * scale_factor)
-    buildings_in_waterfront = int(6 * scale_factor)
-    buildings_in_outskirts = int(12 * scale_factor)
-    
-    print(f"Building targets: {buildings_in_center} center, {buildings_in_waterfront} waterfront, {buildings_in_outskirts} outskirts")
-    
-    # Place buildings in each zone
-    place_zone_buildings_scan(village, center_zone, buildings_in_center, "center", building_sizes, occupied_spaces)
-    place_zone_buildings_scan(village, waterfront_zone, buildings_in_waterfront, "waterfront", building_sizes, occupied_spaces)
-    place_zone_buildings_scan(village, outskirts_zone, buildings_in_outskirts, "outskirts", building_sizes, occupied_spaces)
-    
-    # Ensure all buildings have a type
-    assign_building_types(village)
-    
-    # Update building positions for quick lookup
-    update_building_positions(village, building_sizes)
-    
-    # Remove trees that overlap with buildings
-    village._remove_trees_under_buildings()
-    
-    print(f"Placed {len(village.buildings)} buildings")
-    
-    return {
-        'buildings': village.buildings,
-        'building_positions': village.building_positions
-    }
+        # Convert to grid coordinates
+        grid_x = position[0] // village.tile_size
+        grid_y = position[1] // village.tile_size
+        
+        # Determine building footprint size
+        size_multiplier = 3 if size_name == 'large' else (
+                          2 if size_name == 'medium' else 1)
+        
+        # Mark all cells in this building's footprint
+        for dx in range(size_multiplier):
+            for dy in range(size_multiplier):
+                if 0 <= grid_x + dx < village.grid_width and 0 <= grid_y + dy < village.grid_height:
+                    village.terrain_grid[grid_y + dy][grid_x + dx] = BUILDING + building_id
+                    
+                    # Add to building positions set
+                    pos = ((grid_x + dx) * village.tile_size, (grid_y + dy) * village.tile_size)
+                    village.building_positions.add(pos)
+
 def create_village_zones(village):
     """Create different zones in the village (waterfront, center, outskirts).
     

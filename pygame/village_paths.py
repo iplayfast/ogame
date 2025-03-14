@@ -1,7 +1,12 @@
 import random
 import math
 import utils
-
+# Add this import at the top of village_paths.py
+from village_base import (
+    EMPTY, GRASS_1, GRASS_2, GRASS_3, WATER, 
+    PATH_1, PATH_2, TREE_1, TREE_2, TREE_3, TREE_4, TREE_5,
+    BUILDING, is_water, is_path, is_tree, is_grass, is_building
+)
 def create_village_layout(village):
     """Create village paths and roads based on the water feature.
     
@@ -79,31 +84,28 @@ def find_village_center(village, center_x, center_y):
     
     # Fallback: just use a point 1/4 of the way from top-left
     return village.grid_size // 4, village.grid_size // 4
-
 def create_central_plaza(village):
-    """Create a central plaza in the village.
-    
-    Args:
-        village: Village instance
-    """
+    """Create a central plaza in the village."""
     plaza_radius = village.grid_size // 16
     
     # Generate positions in a circular area
-    for x in range(int(village.village_center_x - plaza_radius), int(village.village_center_x + plaza_radius) + 1, village.tile_size):
-        for y in range(int(village.village_center_y - plaza_radius), int(village.village_center_y + plaza_radius) + 1, village.tile_size):
+    for x in range(village.grid_width):
+        for y in range(village.grid_height):
+            pixel_x = x * village.tile_size
+            pixel_y = y * village.tile_size
+            
             # Skip if out of bounds or water
-            if not utils.is_in_bounds(x, y, village.grid_size) or (x, y) in village.water_positions:
+            if not utils.is_in_bounds(pixel_x, pixel_y, village.grid_size) or is_water(village.terrain_grid[y][x]):
                 continue
                 
             # Create circular village center            
-            distance = utils.calculate_distance(x, y, village.village_center_x, village.village_center_y)
+            distance = utils.calculate_distance(
+                pixel_x, pixel_y, 
+                village.village_center_x, village.village_center_y
+            )
             if distance < plaza_radius:
                 # Central plaza with stone path (variant 2)
-                village.paths.append({
-                    'position': (x, y),
-                    'variant': 2
-                })
-                village.path_positions.add((x, y))
+                village.set_terrain(pixel_x, pixel_y, PATH_2)
 
 def create_waterfront_path(village):
     """Create a path along the waterfront.
