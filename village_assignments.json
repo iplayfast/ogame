@@ -1,0 +1,692 @@
+{
+    "villagers": [
+        {
+            "name": "Kai Wood",
+            "job": "Carpenter",
+            "home": {
+                "id": 13,
+                "type": "House",
+                "position": [
+                    1536,
+                    1728
+                ],
+                "roommates": [
+                    "Kai Wood",
+                    "Hilda Smith"
+                ],
+                "name": "Kai Wood and Hilda Smith's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Build furniture",
+                "Cut lumber",
+                "Make repairs around village",
+                "Select wood",
+                "Finish projects",
+                "Chat with neighbors",
+                "Eat at the Inn",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Julia Reed",
+            "job": "Miner",
+            "home": {
+                "id": 1,
+                "type": "House",
+                "position": [
+                    1600,
+                    1824
+                ],
+                "roommates": [
+                    "Julia Reed",
+                    "Ivan Brown"
+                ],
+                "name": "Julia Reed and Ivan Brown's House"
+            },
+            "daily_activities": [
+                "Dig for ore",
+                "Sell findings",
+                "Repair tools",
+                "Sort materials",
+                "Eat at the Inn",
+                "Go for a walk",
+                "Collect water from well",
+                "Travel to mines",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Hilda Smith",
+            "job": "Tailor",
+            "home": {
+                "id": 13,
+                "type": "House",
+                "position": [
+                    1536,
+                    1728
+                ],
+                "roommates": [
+                    "Kai Wood",
+                    "Hilda Smith"
+                ],
+                "name": "Kai Wood and Hilda Smith's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Cut fabric",
+                "Make alterations",
+                "Go for a walk",
+                "Meet with clients",
+                "Chat with neighbors",
+                "Sew garments",
+                "Design new styles",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Finn Wood",
+            "job": "Carpenter",
+            "home": {
+                "id": 185,
+                "type": "House",
+                "position": [
+                    1472,
+                    1408
+                ],
+                "roommates": [
+                    "Finn Wood",
+                    "Eliza Fisher"
+                ],
+                "name": "Finn Wood and Eliza Fisher's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Finish projects",
+                "Select wood",
+                "Build furniture",
+                "Attend town gathering",
+                "Make repairs around village",
+                "Cut lumber",
+                "Eat at the Inn",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Xander Brown",
+            "job": "Merchant",
+            "home": {
+                "id": 100,
+                "type": "Cottage",
+                "position": [
+                    576,
+                    1280
+                ],
+                "roommates": [
+                    "Xander Brown",
+                    "Zeke Miller"
+                ],
+                "name": "Xander Brown and Zeke Miller's House"
+            },
+            "workplace": {
+                "id": 111,
+                "type": "Store",
+                "position": [
+                    448,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Collect water from well",
+                "Arrange merchandise",
+                "Open shop",
+                "Bargain with customers",
+                "Close shop",
+                "Restock inventory",
+                "Count earnings",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Eliza Fisher",
+            "job": "Carpenter",
+            "home": {
+                "id": 185,
+                "type": "House",
+                "position": [
+                    1472,
+                    1408
+                ],
+                "roommates": [
+                    "Finn Wood",
+                    "Eliza Fisher"
+                ],
+                "name": "Finn Wood and Eliza Fisher's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Make repairs around village",
+                "Build furniture",
+                "Go for a walk",
+                "Select wood",
+                "Attend town gathering",
+                "Finish projects",
+                "Visit the market",
+                "Cut lumber",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Tilly Cooper",
+            "job": "Blacksmith",
+            "home": {
+                "id": 0,
+                "type": "Cottage",
+                "position": [
+                    1536,
+                    2240
+                ],
+                "roommates": [
+                    "Tilly Cooper"
+                ],
+                "name": "Tilly Cooper's House"
+            },
+            "workplace": {
+                "id": 15,
+                "type": "Smithy",
+                "position": [
+                    1472,
+                    2368
+                ]
+            },
+            "daily_activities": [
+                "Go for a walk",
+                "Attend town gathering",
+                "Sell wares",
+                "Get materials ready",
+                "Repair items",
+                "Forge tools and weapons",
+                "Work on special orders",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Greta Hill",
+            "job": "Innkeeper",
+            "home": {
+                "id": 198,
+                "type": "Cottage",
+                "position": [
+                    1280,
+                    1600
+                ],
+                "roommates": [
+                    "Greta Hill",
+                    "Greta River"
+                ],
+                "name": "Greta Hill and Greta River's House"
+            },
+            "workplace": {
+                "id": 5,
+                "type": "Inn",
+                "position": [
+                    1344,
+                    1728
+                ]
+            },
+            "daily_activities": [
+                "Prepare breakfast for guests",
+                "Clean rooms",
+                "Visit the market",
+                "Manage staff",
+                "Go for a walk",
+                "Close up for the night",
+                "Welcome new travelers",
+                "Serve food and drinks"
+            ]
+        },
+        {
+            "name": "Ivan Brown",
+            "job": "Baker",
+            "home": {
+                "id": 1,
+                "type": "House",
+                "position": [
+                    1600,
+                    1824
+                ],
+                "roommates": [
+                    "Julia Reed",
+                    "Ivan Brown"
+                ],
+                "name": "Julia Reed and Ivan Brown's House"
+            },
+            "daily_activities": [
+                "Go for a walk",
+                "Chat with neighbors",
+                "Wake up early",
+                "Bake bread",
+                "Sell goods to customers",
+                "Clean bakery",
+                "Chat with customers",
+                "Prepare dough",
+                "Eat at the Inn",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Zeke Miller",
+            "job": "Merchant",
+            "home": {
+                "id": 100,
+                "type": "Cottage",
+                "position": [
+                    576,
+                    1280
+                ],
+                "roommates": [
+                    "Xander Brown",
+                    "Zeke Miller"
+                ],
+                "name": "Xander Brown and Zeke Miller's House"
+            },
+            "workplace": {
+                "id": 111,
+                "type": "Store",
+                "position": [
+                    448,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Arrange merchandise",
+                "Restock inventory",
+                "Bargain with customers",
+                "Count earnings",
+                "Open shop",
+                "Eat at the Inn",
+                "Close shop",
+                "Go for a walk",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Greta River",
+            "job": "Tailor",
+            "home": {
+                "id": 198,
+                "type": "Cottage",
+                "position": [
+                    1280,
+                    1600
+                ],
+                "roommates": [
+                    "Greta Hill",
+                    "Greta River"
+                ],
+                "name": "Greta Hill and Greta River's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Sew garments",
+                "Design new styles",
+                "Cut fabric",
+                "Attend town gathering",
+                "Make alterations",
+                "Visit the market",
+                "Collect water from well",
+                "Meet with clients",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ulric Reed",
+            "job": "Baker",
+            "home": {
+                "id": 9,
+                "type": "House",
+                "position": [
+                    1408,
+                    1888
+                ],
+                "roommates": [
+                    "Ulric Reed",
+                    "Hilda Gray"
+                ],
+                "name": "Ulric Reed and Hilda Gray's House"
+            },
+            "daily_activities": [
+                "Eat at the Inn",
+                "Chat with customers",
+                "Wake up early",
+                "Prepare dough",
+                "Clean bakery",
+                "Sell goods to customers",
+                "Bake bread",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Nina White",
+            "job": "Carpenter",
+            "home": {
+                "id": 32,
+                "type": "House",
+                "position": [
+                    1728,
+                    1536
+                ],
+                "roommates": [
+                    "Nina White",
+                    "Clara Green"
+                ],
+                "name": "Nina White and Clara Green's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Finish projects",
+                "Attend town gathering",
+                "Select wood",
+                "Build furniture",
+                "Cut lumber",
+                "Make repairs around village",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Clara Green",
+            "job": "Tailor",
+            "home": {
+                "id": 32,
+                "type": "House",
+                "position": [
+                    1728,
+                    1536
+                ],
+                "roommates": [
+                    "Nina White",
+                    "Clara Green"
+                ],
+                "name": "Nina White and Clara Green's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Sew garments",
+                "Meet with clients",
+                "Cut fabric",
+                "Chat with neighbors",
+                "Make alterations",
+                "Design new styles",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Rosa Wood",
+            "job": "Merchant",
+            "home": {
+                "id": 80,
+                "type": "Cottage",
+                "position": [
+                    896,
+                    1792
+                ],
+                "roommates": [
+                    "Rosa Wood"
+                ],
+                "name": "Rosa Wood's House"
+            },
+            "workplace": {
+                "id": 111,
+                "type": "Store",
+                "position": [
+                    448,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Bargain with customers",
+                "Open shop",
+                "Arrange merchandise",
+                "Close shop",
+                "Chat with neighbors",
+                "Visit the market",
+                "Attend town gathering",
+                "Count earnings",
+                "Restock inventory",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Wren Fletcher",
+            "job": "Blacksmith",
+            "home": {
+                "id": 129,
+                "type": "House",
+                "position": [
+                    1216,
+                    1312
+                ],
+                "roommates": [
+                    "Wren Fletcher"
+                ],
+                "name": "Wren Fletcher's House"
+            },
+            "workplace": {
+                "id": 89,
+                "type": "Smithy",
+                "position": [
+                    1472,
+                    1184
+                ]
+            },
+            "daily_activities": [
+                "Repair items",
+                "Chat with neighbors",
+                "Visit the market",
+                "Sell wares",
+                "Eat at the Inn",
+                "Get materials ready",
+                "Work on special orders",
+                "Forge tools and weapons",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Hilda Gray",
+            "job": "Tailor",
+            "home": {
+                "id": 9,
+                "type": "House",
+                "position": [
+                    1408,
+                    1888
+                ],
+                "roommates": [
+                    "Ulric Reed",
+                    "Hilda Gray"
+                ],
+                "name": "Ulric Reed and Hilda Gray's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Cut fabric",
+                "Make alterations",
+                "Sew garments",
+                "Meet with clients",
+                "Eat at the Inn",
+                "Design new styles",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Rosa Miller",
+            "job": "Carpenter",
+            "home": {
+                "id": 168,
+                "type": "House",
+                "position": [
+                    1216,
+                    1408
+                ],
+                "roommates": [
+                    "Rosa Miller",
+                    "Julia Hill"
+                ],
+                "name": "Rosa Miller and Julia Hill's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Make repairs around village",
+                "Go for a walk",
+                "Select wood",
+                "Build furniture",
+                "Cut lumber",
+                "Eat at the Inn",
+                "Collect water from well",
+                "Finish projects",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Kai Reed",
+            "job": "Miner",
+            "home": {
+                "id": 10,
+                "type": "House",
+                "position": [
+                    1472,
+                    2048
+                ],
+                "roommates": [
+                    "Kai Reed"
+                ],
+                "name": "Kai Reed's House"
+            },
+            "daily_activities": [
+                "Sell findings",
+                "Sort materials",
+                "Repair tools",
+                "Go for a walk",
+                "Dig for ore",
+                "Visit the market",
+                "Travel to mines",
+                "Eat at the Inn",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Julia Hill",
+            "job": "Tailor",
+            "home": {
+                "id": 168,
+                "type": "House",
+                "position": [
+                    1216,
+                    1408
+                ],
+                "roommates": [
+                    "Rosa Miller",
+                    "Julia Hill"
+                ],
+                "name": "Rosa Miller and Julia Hill's House"
+            },
+            "workplace": {
+                "id": 7,
+                "type": "Workshop",
+                "position": [
+                    1504,
+                    1600
+                ]
+            },
+            "daily_activities": [
+                "Visit the market",
+                "Meet with clients",
+                "Attend town gathering",
+                "Sew garments",
+                "Make alterations",
+                "Cut fabric",
+                "Design new styles",
+                "Return home"
+            ]
+        }
+    ],
+    "house_names": {
+        "13": "Kai Wood and Hilda Smith's House",
+        "1": "Julia Reed and Ivan Brown's House",
+        "185": "Finn Wood and Eliza Fisher's House",
+        "100": "Xander Brown and Zeke Miller's House",
+        "0": "Tilly Cooper's House",
+        "198": "Greta Hill and Greta River's House",
+        "9": "Ulric Reed and Hilda Gray's House",
+        "32": "Nina White and Clara Green's House",
+        "80": "Rosa Wood's House",
+        "129": "Wren Fletcher's House",
+        "168": "Rosa Miller and Julia Hill's House",
+        "10": "Kai Reed's House"
+    }
+}
