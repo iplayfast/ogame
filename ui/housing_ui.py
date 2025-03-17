@@ -1,6 +1,6 @@
 import pygame
 import math
-import Interface
+from ui import Interface
 
 class HousingUI:
     """Handles UI elements related to villager housing and jobs."""

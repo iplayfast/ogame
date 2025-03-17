@@ -1,7 +1,7 @@
 import pygame
 import random
 import re
-import Interface
+from ui import Interface
 
 class ConsoleManager:
     def __init__(self, screen, assets, screen_width, screen_height):

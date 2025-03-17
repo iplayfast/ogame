@@ -1,6 +1,15 @@
 import random
 import math
 import utils
+from village.village_buildings import connect_buildings_to_paths
+from village.village_landscape import generate_landscape
+from village.village_buildings import place_buildings
+from village.village_paths import fix_path_issues
+from village.village_landscape import place_trees
+from village.village_paths import add_bridges
+from village.village_interaction import analyze_interaction_points
+from village.village_paths import create_village_layout
+
 
 class Village:
     """A class representing a procedurally generated village with buildings, roads, and natural features.
@@ -282,45 +291,45 @@ class Village:
 
     def _generate_landscape(self):
         """Import and call the landscape generation method."""
-        from village_landscape import generate_landscape
+        #from village_landscape import generate_landscape
         landscape_data = generate_landscape(self)
         self.__dict__.update(landscape_data)
     
     def _create_village_layout(self):
         """Import and call the path creation method."""
-        from village_paths import create_village_layout
+        #from village_paths import create_village_layout
         paths_data = create_village_layout(self)
         self.__dict__.update(paths_data)
     
     def _place_buildings(self):
         """Import and call the building placement method."""
-        from village_buildings import place_buildings
+        #from village.village_buildings import place_buildings
         buildings_data = place_buildings(self)
         self.__dict__.update(buildings_data)
     
     def _connect_buildings_to_paths(self):
         """Import and call the building-path connection method."""
-        from village_buildings import connect_buildings_to_paths
+        #from village_buildings import connect_buildings_to_paths
         connect_buildings_to_paths(self)
     
     def _fix_path_issues(self):
         """Import and call the path fixing method."""
-        from village_paths import fix_path_issues
+        #from village_paths import fix_path_issues
         fix_path_issues(self)
     
     def _place_trees(self):
         """Import and call the tree placement method."""
-        from village_landscape import place_trees
+        #from village_landscape import place_trees
         place_trees(self)
     
     def _add_bridges(self):
         """Import and call the bridge addition method."""
-        from village_paths import add_bridges
+        #from village_paths import add_bridges
         add_bridges(self)
     
     def _analyze_interaction_points(self):
         """Import and call the interaction point analysis method."""
-        from village_interaction import analyze_interaction_points
+        #from village_interaction import analyze_interaction_points
         analyze_interaction_points(self)
 
     def find_path(self, start, goal, heuristic=None):

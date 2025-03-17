@@ -1,7 +1,7 @@
 import json
 import random
 import os
-
+from ui import Interface
             
 def assign_housing_and_jobs(villagers, village_data):
     """

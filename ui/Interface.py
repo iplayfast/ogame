@@ -27,6 +27,8 @@ _building_callbacks = {}       # Callbacks for building events
 _environment_callbacks = {}    # Callbacks for environment events
 _game_event_callbacks = {}     # General game event callbacks
 _ui_callbacks = {}             # UI event callbacks
+_proximity_callbacks = {}      # Proximity-based event callbacks
+_unusual_event_callbacks = {}  # Unusual event callbacks
 
 # Frequency settings for time-based callbacks (in milliseconds)
 DEFAULT_UPDATE_FREQUENCY = 1000  # 1 second
@@ -155,6 +157,22 @@ def register_villager_interaction_callback(callback):
     _register_callback('villager_interaction', callback)
     return callback
 
+def register_villager_decision_callback(callback):
+    """Register a callback for when a villager needs to decide its next action."""
+    if not _check_callback_signature(callback, ['villager', 'current_state', 'possible_actions']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (villager, current_state, possible_actions)")
+    
+    _register_callback('villager_decision', callback)
+    return callback
+
+def register_villager_discussion_callback(callback):
+    """Register a callback for when two or more villagers are in a discussion."""
+    if not _check_callback_signature(callback, ['villagers', 'location', 'discussion_type']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (villagers, location, discussion_type)")
+    
+    _register_callback('villager_discussion', callback)
+    return callback
+
 # ----- BUILDING CALLBACKS -----
 
 def register_building_created_callback(callback):
@@ -205,6 +223,14 @@ def register_time_changed_callback(callback):
         print(f"Warning: Callback {callback.__name__} missing required parameters (hour, time_name)")
     
     _register_callback('time_changed', callback)
+    return callback
+
+def register_environment_changed_callback(callback):
+    """Register a callback for when the environment changes (morning, noon, night, etc.)."""
+    if not _check_callback_signature(callback, ['time_period', 'previous_period', 'game_time']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (time_period, previous_period, game_time)")
+    
+    _register_callback('environment_changed', callback)
     return callback
 
 def register_path_created_callback(callback):
@@ -299,16 +325,55 @@ def register_ui_panel_toggled_callback(callback):
     _register_callback('ui_panel_toggled', callback)
     return callback
 
+# ----- NEW PROXIMITY CALLBACKS -----
+
+def register_mouse_proximity_callback(callback):
+    """Register a callback for when the mouse moves close to a character."""
+    if not _check_callback_signature(callback, ['villager', 'mouse_position', 'distance']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (villager, mouse_position, distance)")
+    
+    _register_callback('mouse_proximity', callback, registry=_proximity_callbacks)
+    return callback
+
+def register_villager_proximity_callback(callback):
+    """Register a callback for when villagers come in proximity to each other."""
+    if not _check_callback_signature(callback, ['villager1', 'villager2', 'distance']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (villager1, villager2, distance)")
+    
+    _register_callback('villager_proximity', callback, registry=_proximity_callbacks)
+    return callback
+
+def register_building_proximity_callback(callback):
+    """Register a callback for when a villager comes in proximity to a building."""
+    if not _check_callback_signature(callback, ['villager', 'building', 'distance']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (villager, building, distance)")
+    
+    _register_callback('building_proximity', callback, registry=_proximity_callbacks)
+    return callback
+
+# ----- UNUSUAL EVENT CALLBACKS -----
+
+def register_unusual_event_callback(callback):
+    """Register a callback for when anything unusual happens."""
+    if not _check_callback_signature(callback, ['event_type', 'details', 'severity']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (event_type, details, severity)")
+    
+    _register_callback('unusual_event', callback, registry=_unusual_event_callbacks)
+    return callback
+
 # ----- HELPER METHODS FOR REGISTRATION AND DISPATCH -----
 
-def _register_callback(event_name, callback):
-    """Register a callback for a specific event."""
-    # Determine which registry to use based on event name
-    if event_name.startswith('villager_'):
+def _register_callback(event_name, callback, registry=None):
+    """Register a callback for a specific event in the appropriate registry."""
+    # Determine which registry to use based on event name or explicit registry parameter
+    if registry is not None:
+        # Use explicitly specified registry
+        pass
+    elif event_name.startswith('villager_'):
         registry = _villager_callbacks
     elif event_name.startswith('building_'):
         registry = _building_callbacks
-    elif event_name in ['time_changed', 'path_created', 'tree_created', 'bridge_created']:
+    elif event_name in ['time_changed', 'environment_changed', 'path_created', 'tree_created', 'bridge_created']:
         registry = _environment_callbacks
     elif event_name.startswith('game_') or event_name == 'console_command' or event_name == 'village_generated':
         registry = _game_event_callbacks
@@ -355,6 +420,14 @@ def dispatch_ui_event(event_name, **kwargs):
     """Dispatch a UI-related event."""
     _dispatch_event(event_name, _ui_callbacks, **kwargs)
 
+def dispatch_proximity_event(event_name, **kwargs):
+    """Dispatch a proximity-related event."""
+    _dispatch_event(event_name, _proximity_callbacks, **kwargs)
+
+def dispatch_unusual_event(event_name, **kwargs):
+    """Dispatch an unusual event."""
+    _dispatch_event(event_name, _unusual_event_callbacks, **kwargs)
+
 # ----- SPECIFIC EVENT DISPATCHERS -----
 # These are convenience methods that dispatch specific events
 
@@ -383,6 +456,32 @@ def on_villager_interaction(villager1, villager2, interaction_type):
     """Notify when villagers interact with each other."""
     dispatch_villager_event('villager_interaction', villager1=villager1, villager2=villager2, interaction_type=interaction_type)
 
+def on_villager_decision(villager, current_state, possible_actions):
+    """Notify when a villager needs to decide its next action.
+    
+    Args:
+        villager: The villager object making a decision
+        current_state: Dictionary containing current state information like:
+                      - location: Current coordinates
+                      - activity: Current activity name
+                      - energy: Current energy level
+                      - time: Current game time
+        possible_actions: List of possible actions the villager could take
+    """
+    dispatch_villager_event('villager_decision', villager=villager, 
+                           current_state=current_state, possible_actions=possible_actions)
+
+def on_villager_discussion(villagers, location, discussion_type):
+    """Notify when two or more villagers are in a discussion.
+    
+    Args:
+        villagers: List of villager objects in the discussion
+        location: Coordinates where the discussion is taking place
+        discussion_type: Type of discussion (e.g., "casual", "work", "gossip")
+    """
+    dispatch_villager_event('villager_discussion', villagers=villagers, 
+                           location=location, discussion_type=discussion_type)
+
 # Building events
 def on_building_created(building):
     """Notify when a new building is created."""
@@ -408,6 +507,17 @@ def on_building_housing_assigned(villager, building, assignment_type):
 def on_time_changed(hour, time_name):
     """Notify when the game time changes."""
     dispatch_environment_event('time_changed', hour=hour, time_name=time_name)
+
+def on_environment_changed(time_period, previous_period, game_time):
+    """Notify when the environment changes (morning, noon, night, etc.)
+    
+    Args:
+        time_period: Current time period name (e.g., "morning", "noon", "night")
+        previous_period: Previous time period name
+        game_time: Current game time as a float (hours)
+    """
+    dispatch_environment_event('environment_changed', time_period=time_period, 
+                             previous_period=previous_period, game_time=game_time)
 
 def on_path_created(path_position, path_type):
     """Notify when a new path is created."""
@@ -455,6 +565,51 @@ def on_ui_panel_toggled(panel_name, is_visible):
     """Notify when a UI panel is shown/hidden."""
     dispatch_ui_event('ui_panel_toggled', panel_name=panel_name, is_visible=is_visible)
 
+# Proximity events
+def on_mouse_proximity(villager, mouse_position, distance):
+    """Notify when the mouse moves close to a character.
+    
+    Args:
+        villager: The villager object that the mouse is near
+        mouse_position: Mouse position in world coordinates
+        distance: Distance between mouse and villager center
+    """
+    dispatch_proximity_event('mouse_proximity', villager=villager, 
+                            mouse_position=mouse_position, distance=distance)
+
+def on_villager_proximity(villager1, villager2, distance):
+    """Notify when villagers come in proximity to each other.
+    
+    Args:
+        villager1: First villager object
+        villager2: Second villager object
+        distance: Distance between the villagers
+    """
+    dispatch_proximity_event('villager_proximity', villager1=villager1, 
+                            villager2=villager2, distance=distance)
+
+def on_building_proximity(villager, building, distance):
+    """Notify when a villager comes in proximity to a building.
+    
+    Args:
+        villager: Villager object
+        building: Building object
+        distance: Distance between villager and building
+    """
+    dispatch_proximity_event('building_proximity', villager=villager, 
+                            building=building, distance=distance)
+
+# Unusual events
+def on_unusual_event(event_type, details, severity):
+    """Notify when anything unusual happens.
+    
+    Args:
+        event_type: Type of unusual event (e.g., "sleep_outside", "missed_work")
+        details: Dictionary with event details
+        severity: Severity level (1-5, where 5 is most severe)
+    """
+    dispatch_unusual_event('unusual_event', event_type=event_type, 
+                          details=details, severity=severity)
 
 # ----- BUILT-IN CALLBACK IMPLEMENTATIONS -----
 # These can be used directly or as examples for custom implementations
@@ -496,6 +651,31 @@ def default_on_villager_sleep_state_changed(villager, is_sleeping):
     else:
         print(f"{villager.name} has woken up")
 
+def default_on_villager_decision(villager, current_state, possible_actions):
+    """Default handler when a villager needs to decide its next action."""
+    print(f"{villager.name} is deciding next action: {possible_actions}")
+    # Here you could implement custom decision logic
+    
+def default_on_villager_discussion(villagers, location, discussion_type):
+    """Default handler when villagers are in a discussion."""
+    villager_names = [v.name for v in villagers]
+    print(f"Discussion between {', '.join(villager_names)} ({discussion_type}) at {location}")
+
+def default_on_environment_changed(time_period, previous_period, game_time):
+    """Default handler when the environment changes."""
+    print(f"Environment changed from {previous_period} to {time_period} at {game_time:.2f} hours")
+
+def default_on_mouse_proximity(villager, mouse_position, distance):
+    """Default handler when mouse is near a villager."""
+    if distance < 50:  # Only show tooltip for very close proximity
+        print(f"Mouse hovering near {villager.name} (distance: {distance:.1f})")
+
+def default_on_unusual_event(event_type, details, severity):
+    """Default handler for unusual events."""
+    print(f"UNUSUAL EVENT: {event_type} (Severity: {severity})")
+    for key, value in details.items():
+        print(f"  {key}: {value}")
+
 def default_on_building_selected(building):
     """Default handler when a building is selected."""
     building_type = building.get('building_type', 'Building')
@@ -533,12 +713,270 @@ def setup_default_callbacks(enable_debug=False):
     register_villager_moved_callback(default_on_villager_moved)
     register_villager_activity_changed_callback(default_on_villager_activity_changed)
     register_villager_sleep_state_changed_callback(default_on_villager_sleep_state_changed)
+    register_villager_decision_callback(default_on_villager_decision)
+    register_villager_discussion_callback(default_on_villager_discussion)
     
     # Register building callbacks
     register_building_selected_callback(default_on_building_selected)
     
-    # Register time callbacks
+    # Register time and environment callbacks
     register_time_changed_callback(default_on_time_changed)
+    register_environment_changed_callback(default_on_environment_changed)
+    
+    # Register proximity callbacks
+    register_mouse_proximity_callback(default_on_mouse_proximity)
+    
+    # Register unusual event callbacks
+    register_unusual_event_callback(default_on_unusual_event)
     
     # Register a periodic status update (every 10 seconds)
     register_time_callback(default_periodic_status_update, 10000)
+
+# ----- INTEGRATION HELPERS -----
+# Helper functions to easily integrate Interface with specific game components
+
+def setup_mouse_proximity_detection(game_state, threshold=50):
+    """
+    Set up mouse proximity detection for all villagers.
+    
+    Args:
+        game_state: Game state object containing villagers and mouse position
+        threshold: Distance threshold for proximity detection (in pixels)
+    
+    Usage:
+        # Call this once during game initialization
+        Interface.setup_mouse_proximity_detection(game_state)
+        
+        # Make sure to update mouse_position in game_state during your event handling
+        game_state.mouse_position = pygame.mouse.get_pos()
+    """
+    def check_mouse_proximity(current_time, delta_time):
+        if not hasattr(game_state, 'mouse_position') or not hasattr(game_state, 'villagers'):
+            return
+            
+        mouse_x, mouse_y = game_state.mouse_position
+        # Add camera offset to get world coordinates
+        if hasattr(game_state, 'camera_x') and hasattr(game_state, 'camera_y'):
+            mouse_world_x = mouse_x + game_state.camera_x
+            mouse_world_y = mouse_y + game_state.camera_y
+        else:
+            mouse_world_x, mouse_world_y = mouse_x, mouse_y
+            
+        for villager in game_state.villagers:
+            villager_x, villager_y = villager.position.x, villager.position.y
+            distance = ((villager_x - mouse_world_x)**2 + (villager_y - mouse_world_y)**2)**0.5
+            
+            if distance <= threshold:
+                on_mouse_proximity(villager, (mouse_world_x, mouse_world_y), distance)
+    
+    # Register a high-frequency callback to check mouse proximity
+    register_time_callback(check_mouse_proximity, 100)  # Check every 100ms
+
+def setup_villager_discussion_detection(game_state, distance_threshold=50, talk_required=True):
+    """
+    Set up detection for discussions between two or more villagers.
+    
+    Args:
+        game_state: Game state object containing villagers
+        distance_threshold: Distance threshold for discussions (in pixels)
+        talk_required: If True, both villagers must be in a 'talking' state
+    
+    Usage:
+        # Call this once during game initialization
+        Interface.setup_villager_discussion_detection(game_state)
+    """
+    def check_villager_discussions(current_time, delta_time):
+        if not hasattr(game_state, 'villagers'):
+            return
+            
+        # Track groups of villagers in discussions
+        discussion_groups = []
+        processed_villagers = set()
+        
+        for v1 in game_state.villagers:
+            if v1 in processed_villagers:
+                continue
+                
+            # Skip villagers that aren't talking if talk_required is True
+            if talk_required and hasattr(v1, 'is_talking') and not v1.is_talking:
+                continue
+                
+            # Find all villagers near this one
+            group = [v1]
+            for v2 in game_state.villagers:
+                if v1 == v2 or v2 in processed_villagers:
+                    continue
+                    
+                # Skip villagers that aren't talking if talk_required is True
+                if talk_required and hasattr(v2, 'is_talking') and not v2.is_talking:
+                    continue
+                    
+                # Calculate distance
+                v1_pos = (v1.position.x, v1.position.y)
+                v2_pos = (v2.position.x, v2.position.y)
+                distance = ((v1_pos[0] - v2_pos[0])**2 + (v1_pos[1] - v2_pos[1])**2)**0.5
+                
+                # If in range, add to group
+                if distance <= distance_threshold:
+                    group.append(v2)
+            
+            # If we found a group of 2+ villagers
+            if len(group) >= 2:
+                discussion_groups.append(group)
+                processed_villagers.update(group)
+        
+        # Notify about each discussion group
+        for group in discussion_groups:
+            # Calculate average position
+            avg_x = sum(v.position.x for v in group) / len(group)
+            avg_y = sum(v.position.y for v in group) / len(group)
+            location = (avg_x, avg_y)
+            
+            # Determine discussion type based on jobs or activities
+            if all(hasattr(v, 'job') for v in group):
+                if len(set(v.job for v in group)) == 1:
+                    discussion_type = "work"  # Same job
+                else:
+                    discussion_type = "casual"  # Different jobs
+            else:
+                discussion_type = "casual"
+                
+            on_villager_discussion(group, location, discussion_type)
+    
+    # Register a low-frequency callback to check for discussions
+    register_time_callback(check_villager_discussions, 2000)  # Check every 2 seconds
+
+def setup_environment_change_detection(game_state):
+    """
+    Set up detection for environment changes (time period transitions).
+    
+    Args:
+        game_state: Game state object containing time_manager
+    
+    Usage:
+        # Call this once during game initialization
+        Interface.setup_environment_change_detection(game_state)
+    """
+    # Keep track of the previous time period
+    previous_period = None
+    
+    def check_environment_changes(current_time, delta_time):
+        nonlocal previous_period
+        
+        if not hasattr(game_state, 'time_manager'):
+            return
+            
+        # Get current time period
+        current_hour = game_state.time_manager.current_hour
+        current_period = game_state.time_manager.get_time_name()
+        
+        # If this is the first check or period has changed
+        if previous_period is None or current_period != previous_period:
+            if previous_period is not None:  # Skip the initial setup
+                on_environment_changed(current_period, previous_period, current_hour)
+            previous_period = current_period
+    
+    # Register a medium-frequency callback to check for environment changes
+    register_time_callback(check_environment_changes, 1000)  # Check every second
+
+def setup_decision_making_integration(game_state):
+    """
+    Integrate with villager decision-making process.
+    
+    Args:
+        game_state: Game state object containing villagers
+    
+    Usage:
+        # Call this once during game initialization
+        Interface.setup_decision_making_integration(game_state)
+        
+        # In your villager's update method or activity system:
+        def decide_next_activity(self):
+            # Current state info
+            current_state = {
+                'location': (self.position.x, self.position.y),
+                'activity': self.current_activity,
+                'time': game_state.time_manager.current_hour,
+                'energy': self.energy
+            }
+            
+            # Possible actions based on current state
+            possible_actions = ["work", "rest", "eat", "socialize"]
+            
+            # Call Interface to allow external systems to influence decision
+            Interface.on_villager_decision(self, current_state, possible_actions)
+            
+            # Now make the decision (could be influenced by event handlers)
+            chosen_activity = choose_best_activity(possible_actions)
+            return chosen_activity
+    """
+    # This function just provides documentation and patterns
+    # The actual integration happens in the villager's decision-making code
+    print("Decision making integration ready. Add calls to on_villager_decision() in your villager update logic.")
+
+def setup_unusual_event_detection(game_state):
+    """
+    Set up detection for unusual events in the village.
+    
+    Args:
+        game_state: Game state object
+    
+    Usage:
+        # Call this once during game initialization
+        Interface.setup_unusual_event_detection(game_state)
+    """
+    def check_for_unusual_events(current_time, delta_time):
+        if not hasattr(game_state, 'villagers'):
+            return
+            
+        # Example: Check for villagers sleeping outside
+        for villager in game_state.villagers:
+            if hasattr(villager, 'is_sleeping') and villager.is_sleeping:
+                # Check if villager is far from their bed or home
+                if hasattr(villager, 'home') and villager.home and 'position' in villager.home:
+                    home_pos = villager.home['position']
+                    v_pos = (villager.position.x, villager.position.y)
+                    distance_from_home = ((v_pos[0] - home_pos[0])**2 + (v_pos[1] - home_pos[1])**2)**0.5
+                    
+                    if distance_from_home > 100:  # Arbitrary threshold
+                        # Report unusual sleeping location
+                        details = {
+                            'villager': villager.name,
+                            'sleep_position': v_pos,
+                            'home_position': home_pos,
+                            'distance': distance_from_home
+                        }
+                        on_unusual_event("sleeping_outside", details, severity=2)
+        
+        # Example: Check for missed work
+        if hasattr(game_state, 'time_manager'):
+            current_hour = game_state.time_manager.current_hour
+            
+            # Work hours check (9 AM to 5 PM)
+            if 9 <= current_hour < 17:
+                for villager in game_state.villagers:
+                    if (hasattr(villager, 'workplace') and villager.workplace and
+                        hasattr(villager, 'current_activity')):
+                        
+                        workplace_pos = villager.workplace.get('position')
+                        if workplace_pos:
+                            v_pos = (villager.position.x, villager.position.y)
+                            distance_from_work = ((v_pos[0] - workplace_pos[0])**2 + 
+                                                 (v_pos[1] - workplace_pos[1])**2)**0.5
+                            
+                            # If far from work during work hours and not engaged in work activity
+                            if (distance_from_work > 200 and  # Arbitrary threshold
+                                not "work" in villager.current_activity.lower()):
+                                
+                                details = {
+                                    'villager': villager.name,
+                                    'job': villager.job,
+                                    'current_activity': villager.current_activity,
+                                    'current_position': v_pos,
+                                    'workplace_position': workplace_pos,
+                                    'time': current_hour
+                                }
+                                on_unusual_event("missed_work", details, severity=3)
+    
+    # Register a low-frequency callback to check for unusual events
+    register_time_callback(check_for_unusual_events, 5000)  # Check every 5 seconds

@@ -2,8 +2,9 @@ import pygame
 import random
 import math
 import utils
-import Interface
-
+from ui import Interface
+from systems.activity_system import ActivitySystem
+from village.village_generator import initialize_village_grid
 class Villager(pygame.sprite.Sprite):
     def __init__(self, x, y, assets, tile_size=32):
         super().__init__()
@@ -48,7 +49,6 @@ class Villager(pygame.sprite.Sprite):
             pygame.draw.circle(self.image, (255, 0, 0), (12, 12), 12)
             self.rect = self.image.get_rect(center=(x, y))
             self.base_image = self.image.copy()
-        from activity_system import ActivitySystem
         self.activity_system = ActivitySystem()
         if hasattr(self, 'daily_activities') and self.daily_activities:
             self.current_activity.add_custom_activity(self.daily_activities)
@@ -846,7 +846,6 @@ class Villager(pygame.sprite.Sprite):
         if 'village_grid' not in village_data:
             # If grid doesn't exist yet, request initialization
             print("Village grid not found. Initializing grid for pathfinding...")
-            from village_generator import initialize_village_grid
             initialize_village_grid(village_data, self.TILE_SIZE)
         
         # Update furniture information in the grid

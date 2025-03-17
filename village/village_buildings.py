@@ -1,7 +1,7 @@
 import random
 import math
 import utils
-
+from .village_paths import create_direct_path_with_cardinal_adjacency
 
 def place_zone_buildings_scan(village, zone, target_count, zone_type, building_sizes, occupied_spaces):
     """Place buildings in a specific zone using the scan_terrain function.
@@ -509,5 +509,4 @@ def connect_buildings_to_paths(village):
                 door_pos = perimeter_pos
         
         # Create a path from the door to the closest path
-        from village_paths import create_direct_path_with_cardinal_adjacency
         create_direct_path_with_cardinal_adjacency(village, door_pos, closest_path)
