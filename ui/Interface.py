@@ -3,11 +3,13 @@ Interface module for Village Simulation.
 
 This module provides a flexible system of hooks and callbacks that can be registered
 to respond to various game events without modifying the core game code.
+All events are printed to the console when they occur.
 
 Usage:
     1. Register callback functions using register_* methods
     2. The game will automatically call these functions when events occur
-    3. Periodic updates will be called based on the game timer
+    3. All events will be printed to the console
+    4. Periodic updates will be called based on the game timer
 
 Example:
     # Register a callback for villager movement
@@ -19,6 +21,7 @@ Example:
 
 import time
 import inspect
+from datetime import datetime
 
 # Global callback registries
 _time_callbacks = []           # Periodic time-based callbacks
@@ -35,7 +38,44 @@ DEFAULT_UPDATE_FREQUENCY = 1000  # 1 second
 _last_update_time = 0
 
 # Settings
-_debug_mode = False  # When True, log all event dispatches
+_debug_mode = True  # Always enabled by default
+_event_log_file = None  # Optional file logging
+_log_to_console = True  # Whether to print to console
+
+# Configure text colors for console output
+class Colors:
+    RESET = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    
+    BLACK = '\033[30m'
+    RED = '\033[31m'
+    GREEN = '\033[32m'
+    YELLOW = '\033[33m'
+    BLUE = '\033[34m'
+    MAGENTA = '\033[35m'
+    CYAN = '\033[36m'
+    WHITE = '\033[37m'
+    
+    BG_BLACK = '\033[40m'
+    BG_RED = '\033[41m'
+    BG_GREEN = '\033[42m'
+    BG_YELLOW = '\033[43m'
+    BG_BLUE = '\033[44m'
+    BG_MAGENTA = '\033[45m'
+    BG_CYAN = '\033[46m'
+    BG_WHITE = '\033[47m'
+
+# Map event categories to colors
+EVENT_COLORS = {
+    'villager': Colors.GREEN,
+    'building': Colors.YELLOW,
+    'environment': Colors.BLUE,
+    'game': Colors.MAGENTA,
+    'ui': Colors.CYAN,
+    'proximity': Colors.RED,
+    'unusual': Colors.BG_RED + Colors.WHITE
+}
 
 def set_debug(mode=True):
     """Enable or disable debug logging for event dispatches."""
@@ -46,11 +86,78 @@ def set_debug(mode=True):
     else:
         print("Interface debug mode DISABLED")
 
+def enable_file_logging(filename="event_log.txt"):
+    """Enable logging events to a file."""
+    global _event_log_file
+    _event_log_file = open(filename, "a")
+    _event_log_file.write(f"\n--- Event Log Started at {datetime.now()} ---\n\n")
+    print(f"Event logging to {filename} enabled")
+
+def disable_file_logging():
+    """Disable logging events to a file."""
+    global _event_log_file
+    if _event_log_file:
+        _event_log_file.write(f"\n--- Event Log Ended at {datetime.now()} ---\n\n")
+        _event_log_file.close()
+        _event_log_file = None
+        print("Event file logging disabled")
+
+def set_console_logging(enabled=True):
+    """Enable or disable logging to console."""
+    global _log_to_console
+    _log_to_console = enabled
+    print(f"Console logging {'enabled' if enabled else 'disabled'}")
+
+def _get_event_category(event_name):
+    """Get the category of an event based on its name."""
+    if event_name.startswith('villager_'):
+        return 'villager'
+    elif event_name.startswith('building_'):
+        return 'building'
+    elif event_name in ['time_changed', 'environment_changed', 'path_created', 'tree_created', 'bridge_created']:
+        return 'environment'
+    elif event_name.startswith('game_') or event_name == 'console_command' or event_name == 'village_generated':
+        return 'game'
+    elif event_name.startswith('mouse_') or event_name.startswith('villager_proximity'):
+        return 'proximity'
+    elif event_name.startswith('unusual_'):
+        return 'unusual'
+    else:
+        return 'ui'
+
 def _log_event(event_name, **kwargs):
     """Log event details if debug mode is enabled."""
-    if _debug_mode:
-        args_str = ", ".join(f"{k}={v}" for k, v in kwargs.items())
-        print(f"[INTERFACE EVENT] {event_name}({args_str})")
+    timestamp = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    category = _get_event_category(event_name)
+    color = EVENT_COLORS.get(category, '')
+    
+    # Format the event arguments
+    args_str = ", ".join(f"{k}={v}" for k, v in kwargs.items() if k != 'details')
+    
+    # Create the event message
+    event_message = f"[{timestamp}] {color}{category.upper()}: {event_name}{Colors.RESET} - {args_str}"
+    
+    # Print special handling for events with detailed information
+    if 'details' in kwargs and isinstance(kwargs['details'], dict):
+        details = kwargs['details']
+        event_message += "\n  Details:"
+        for k, v in details.items():
+            event_message += f"\n    {k}: {v}"
+    
+    # Log to console
+    if _log_to_console:
+        print(event_message)
+    
+    # Log to file if enabled
+    if _event_log_file:
+        # Strip ANSI color codes for file output
+        clean_message = event_message
+        for color_code in vars(Colors).values():
+            if isinstance(color_code, str) and color_code.startswith('\033'):
+                clean_message = clean_message.replace(color_code, '')
+        
+        _event_log_file.write(clean_message + "\n")
+        _event_log_file.flush()
 
 def _check_callback_signature(callback, required_params):
     """Verify that a callback function has the required parameters."""
@@ -389,8 +496,11 @@ def _register_callback(event_name, callback, registry=None):
 
 def _dispatch_event(event_name, registry, **kwargs):
     """Dispatch an event to all registered callbacks."""
+    # Always log the event regardless of debug mode
+    _log_event(event_name, **kwargs)
+    
+    # Call registered callbacks
     if event_name in registry:
-        _log_event(event_name, **kwargs)
         for callback in registry[event_name]:
             try:
                 callback(**kwargs)
@@ -434,7 +544,7 @@ def dispatch_unusual_event(event_name, **kwargs):
 # Villager events
 def on_villager_moved(villager, old_position, new_position):
     """Notify when a villager moves."""
-    dispatch_villager_event('villager_moved', villager=villager, old_position=old_position, new_position=new_position)
+    #dispatch_villager_event('villager_moved', villager=villager, old_position=old_position, new_position=new_position)
 
 def on_villager_activity_changed(villager, old_activity, new_activity):
     """Notify when a villager changes activity."""
@@ -692,15 +802,14 @@ def default_periodic_status_update(current_time, delta_time):
     print(f"\n--- STATUS UPDATE @ {current_time/1000:.1f}s ---")
     print("--------------------------------\n")
 
-
-def setup_default_callbacks(enable_debug=False):
+def setup_default_callbacks(enable_debug=True):
     """
     Set up and register all default Interface callbacks.
     
     Args:
         enable_debug: If True, enables debug logging for all events
     """
-    # Enable/disable debug mode
+    # Enable debug mode by default for this enhanced version
     set_debug(enable_debug)
     
     # Register game event callbacks
@@ -731,6 +840,8 @@ def setup_default_callbacks(enable_debug=False):
     
     # Register a periodic status update (every 10 seconds)
     register_time_callback(default_periodic_status_update, 10000)
+    
+    print("Enhanced Interface with event logging initialized!")
 
 # ----- INTEGRATION HELPERS -----
 # Helper functions to easily integrate Interface with specific game components
@@ -878,41 +989,6 @@ def setup_environment_change_detection(game_state):
     
     # Register a medium-frequency callback to check for environment changes
     register_time_callback(check_environment_changes, 1000)  # Check every second
-
-def setup_decision_making_integration(game_state):
-    """
-    Integrate with villager decision-making process.
-    
-    Args:
-        game_state: Game state object containing villagers
-    
-    Usage:
-        # Call this once during game initialization
-        Interface.setup_decision_making_integration(game_state)
-        
-        # In your villager's update method or activity system:
-        def decide_next_activity(self):
-            # Current state info
-            current_state = {
-                'location': (self.position.x, self.position.y),
-                'activity': self.current_activity,
-                'time': game_state.time_manager.current_hour,
-                'energy': self.energy
-            }
-            
-            # Possible actions based on current state
-            possible_actions = ["work", "rest", "eat", "socialize"]
-            
-            # Call Interface to allow external systems to influence decision
-            Interface.on_villager_decision(self, current_state, possible_actions)
-            
-            # Now make the decision (could be influenced by event handlers)
-            chosen_activity = choose_best_activity(possible_actions)
-            return chosen_activity
-    """
-    # This function just provides documentation and patterns
-    # The actual integration happens in the villager's decision-making code
-    print("Decision making integration ready. Add calls to on_villager_decision() in your villager update logic.")
 
 def setup_unusual_event_detection(game_state):
     """
