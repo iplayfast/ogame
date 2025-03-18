@@ -1,655 +1,340 @@
 {
     "villagers": [
         {
-            "name": "Xander Hill",
-            "job": "Guard",
-            "home": {
-                "id": 3,
-                "type": "Cottage",
-                "position": [
-                    2304,
-                    1536
-                ],
-                "roommates": [
-                    "Xander Hill",
-                    "Yara Fisher"
-                ],
-                "name": "Xander Hill and Yara Fisher's House"
-            },
-            "workplace": {
-                "id": 9,
-                "type": "Town Hall",
-                "position": [
-                    2432,
-                    1568
-                ]
-            },
-            "daily_activities": [
-                "Patrol village",
-                "Collect water from well",
-                "Go for a walk",
-                "Check on merchants",
-                "Eat at the Inn",
-                "Report to captain",
-                "Stand watch at gate",
-                "Train with weapons",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Wren Strong",
+            "name": "Kai Dale",
             "job": "Innkeeper",
             "home": {
-                "id": 8,
-                "type": "Cottage",
+                "id": 7,
+                "type": "House",
                 "position": [
-                    1984,
-                    1600
+                    1504,
+                    2176
                 ],
                 "roommates": [
-                    "Wren Strong",
-                    "Greta Hill"
+                    "Kai Dale",
+                    "Otto Black"
                 ],
-                "name": "Wren Strong and Greta Hill's House"
+                "name": "Kai Dale and Otto Black's House"
             },
             "workplace": {
                 "id": 1,
                 "type": "Inn",
                 "position": [
-                    2144,
-                    1632
+                    1696,
+                    2080
                 ]
             },
             "daily_activities": [
                 "Clean rooms",
                 "Serve food and drinks",
-                "Welcome new travelers",
-                "Collect water from well",
-                "Visit the market",
-                "Prepare breakfast for guests",
-                "Manage staff",
-                "Close up for the night"
-            ]
-        },
-        {
-            "name": "Ivan Hill",
-            "job": "Miner",
-            "home": {
-                "id": 21,
-                "type": "House",
-                "position": [
-                    1504,
-                    1632
-                ],
-                "roommates": [
-                    "Ivan Hill",
-                    "Yara Strong"
-                ],
-                "name": "Ivan Hill and Yara Strong's House"
-            },
-            "daily_activities": [
-                "Sell findings",
-                "Sort materials",
-                "Go for a walk",
-                "Visit the market",
-                "Repair tools",
-                "Dig for ore",
-                "Travel to mines",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara Strong",
-            "job": "Farmer",
-            "home": {
-                "id": 21,
-                "type": "House",
-                "position": [
-                    1504,
-                    1632
-                ],
-                "roommates": [
-                    "Ivan Hill",
-                    "Yara Strong"
-                ],
-                "name": "Ivan Hill and Yara Strong's House"
-            },
-            "daily_activities": [
-                "Repair fences",
-                "Plant new seeds",
-                "Take produce to market",
-                "Go for a walk",
-                "Eat at the Inn",
-                "Tend to crops",
-                "Feed animals",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Finn Ford",
-            "job": "Blacksmith",
-            "home": {
-                "id": 16,
-                "type": "Cottage",
-                "position": [
-                    1728,
-                    1312
-                ],
-                "roommates": [
-                    "Finn Ford"
-                ],
-                "name": "Finn Ford's House"
-            },
-            "workplace": {
-                "id": 0,
-                "type": "Smithy",
-                "position": [
-                    1856,
-                    1408
-                ]
-            },
-            "daily_activities": [
-                "Get materials ready",
-                "Forge tools and weapons",
-                "Collect water from well",
-                "Repair items",
-                "Work on special orders",
-                "Sell wares",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Black",
-            "job": "Carpenter",
-            "home": {
-                "id": 27,
-                "type": "House",
-                "position": [
-                    2272,
-                    1376
-                ],
-                "roommates": [
-                    "Otto Black",
-                    "Sven White"
-                ],
-                "name": "Otto Black and Sven White's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    2208,
-                    1440
-                ]
-            },
-            "daily_activities": [
-                "Attend town gathering",
-                "Select wood",
-                "Go for a walk",
-                "Finish projects",
-                "Make repairs around village",
-                "Cut lumber",
-                "Build furniture",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Sven White",
-            "job": "Miner",
-            "home": {
-                "id": 27,
-                "type": "House",
-                "position": [
-                    2272,
-                    1376
-                ],
-                "roommates": [
-                    "Otto Black",
-                    "Sven White"
-                ],
-                "name": "Otto Black and Sven White's House"
-            },
-            "daily_activities": [
-                "Sell findings",
-                "Travel to mines",
-                "Dig for ore",
-                "Chat with neighbors",
-                "Repair tools",
-                "Sort materials",
-                "Eat at the Inn",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara Fisher",
-            "job": "Carpenter",
-            "home": {
-                "id": 3,
-                "type": "Cottage",
-                "position": [
-                    2304,
-                    1536
-                ],
-                "roommates": [
-                    "Xander Hill",
-                    "Yara Fisher"
-                ],
-                "name": "Xander Hill and Yara Fisher's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Workshop",
-                "position": [
-                    2208,
-                    1440
-                ]
-            },
-            "daily_activities": [
-                "Make repairs around village",
-                "Finish projects",
-                "Select wood",
-                "Attend town gathering",
-                "Build furniture",
-                "Cut lumber",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Brown",
-            "job": "Baker",
-            "home": {
-                "id": 108,
-                "type": "Cottage",
-                "position": [
-                    1280,
-                    1056
-                ],
-                "roommates": [
-                    "Otto Brown"
-                ],
-                "name": "Otto Brown's House"
-            },
-            "workplace": {
-                "id": 84,
-                "type": "Bakery",
-                "position": [
-                    1280,
-                    1216
-                ]
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Sell goods to customers",
-                "Wake up early",
-                "Chat with customers",
-                "Visit the market",
-                "Bake bread",
-                "Prepare dough",
-                "Clean bakery",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Petra Hill",
-            "job": "Innkeeper",
-            "home": {
-                "id": 103,
-                "type": "House",
-                "position": [
-                    2752,
-                    2016
-                ],
-                "roommates": [
-                    "Petra Hill"
-                ],
-                "name": "Petra Hill's House"
-            },
-            "workplace": {
-                "id": 94,
-                "type": "Inn",
-                "position": [
-                    2592,
-                    2048
-                ]
-            },
-            "daily_activities": [
-                "Serve food and drinks",
-                "Collect water from well",
-                "Go for a walk",
-                "Prepare breakfast for guests",
                 "Close up for the night",
-                "Manage staff",
+                "Go for a walk",
                 "Welcome new travelers",
-                "Clean rooms"
-            ]
-        },
-        {
-            "name": "Wren Smith",
-            "job": "Blacksmith",
-            "home": {
-                "id": 91,
-                "type": "Cottage",
-                "position": [
-                    1920,
-                    800
-                ],
-                "roommates": [
-                    "Wren Smith"
-                ],
-                "name": "Wren Smith's House"
-            },
-            "workplace": {
-                "id": 79,
-                "type": "Smithy",
-                "position": [
-                    1920,
-                    640
-                ]
-            },
-            "daily_activities": [
-                "Visit the market",
-                "Repair items",
-                "Get materials ready",
-                "Go for a walk",
-                "Forge tools and weapons",
-                "Work on special orders",
-                "Sell wares",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Wren Black",
-            "job": "Guard",
-            "home": {
-                "id": 7,
-                "type": "Cottage",
-                "position": [
-                    2400,
-                    1440
-                ],
-                "roommates": [
-                    "Wren Black",
-                    "Lily Brown"
-                ],
-                "name": "Wren Black and Lily Brown's House"
-            },
-            "workplace": {
-                "id": 9,
-                "type": "Town Hall",
-                "position": [
-                    2432,
-                    1568
-                ]
-            },
-            "daily_activities": [
-                "Stand watch at gate",
-                "Train with weapons",
-                "Check on merchants",
-                "Patrol village",
-                "Report to captain",
-                "Go for a walk",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Sven Reed",
-            "job": "Baker",
-            "home": {
-                "id": 29,
-                "type": "House",
-                "position": [
-                    2400,
-                    3168
-                ],
-                "roommates": [
-                    "Sven Reed",
-                    "Petra Strong"
-                ],
-                "name": "Sven Reed and Petra Strong's House"
-            },
-            "daily_activities": [
-                "Eat at the Inn",
-                "Clean bakery",
-                "Collect water from well",
-                "Wake up early",
-                "Prepare dough",
-                "Chat with customers",
-                "Sell goods to customers",
-                "Bake bread",
+                "Manage staff",
+                "Prepare breakfast for guests",
                 "Relax at home"
             ]
         },
         {
-            "name": "Petra Strong",
-            "job": "Hunter",
-            "home": {
-                "id": 29,
-                "type": "House",
-                "position": [
-                    2400,
-                    3168
-                ],
-                "roommates": [
-                    "Sven Reed",
-                    "Petra Strong"
-                ],
-                "name": "Sven Reed and Petra Strong's House"
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Prepare hides",
-                "Chat with neighbors",
-                "Check traps",
-                "Hunt for game",
-                "Track animals",
-                "Sell meat at market",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Greta Hill",
-            "job": "Merchant",
-            "home": {
-                "id": 8,
-                "type": "Cottage",
-                "position": [
-                    1984,
-                    1600
-                ],
-                "roommates": [
-                    "Wren Strong",
-                    "Greta Hill"
-                ],
-                "name": "Wren Strong and Greta Hill's House"
-            },
-            "workplace": {
-                "id": 2,
-                "type": "Store",
-                "position": [
-                    2048,
-                    1440
-                ]
-            },
-            "daily_activities": [
-                "Arrange merchandise",
-                "Bargain with customers",
-                "Visit the market",
-                "Close shop",
-                "Open shop",
-                "Restock inventory",
-                "Eat at the Inn",
-                "Count earnings",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Lily Brown",
-            "job": "Carpenter",
+            "name": "Otto Black",
+            "job": "Baker",
             "home": {
                 "id": 7,
-                "type": "Cottage",
+                "type": "House",
                 "position": [
-                    2400,
-                    1440
+                    1504,
+                    2176
                 ],
                 "roommates": [
-                    "Wren Black",
-                    "Lily Brown"
+                    "Kai Dale",
+                    "Otto Black"
                 ],
-                "name": "Wren Black and Lily Brown's House"
+                "name": "Kai Dale and Otto Black's House"
             },
             "workplace": {
                 "id": 5,
-                "type": "Workshop",
+                "type": "Bakery",
                 "position": [
-                    2208,
-                    1440
+                    1472,
+                    1984
                 ]
             },
             "daily_activities": [
-                "Collect water from well",
-                "Select wood",
-                "Cut lumber",
-                "Eat at the Inn",
-                "Build furniture",
-                "Finish projects",
-                "Make repairs around village",
+                "Wake up early",
+                "Bake bread",
+                "Attend town gathering",
+                "Go for a walk",
+                "Clean bakery",
+                "Sell goods to customers",
+                "Chat with customers",
+                "Prepare dough",
                 "Return home"
             ]
         },
         {
-            "name": "Sven Swift",
+            "name": "Yara Brown",
             "job": "Miner",
             "home": {
-                "id": 32,
+                "id": 28,
                 "type": "House",
                 "position": [
-                    1440,
-                    2432
+                    1824,
+                    2816
                 ],
                 "roommates": [
-                    "Sven Swift",
-                    "Xander Cooper"
+                    "Yara Brown",
+                    "Vera Hill"
                 ],
-                "name": "Sven Swift and Xander Cooper's House"
+                "name": "Yara Brown and Vera Hill's House"
             },
             "daily_activities": [
-                "Travel to mines",
-                "Sell findings",
-                "Attend town gathering",
                 "Sort materials",
-                "Visit the market",
-                "Eat at the Inn",
-                "Dig for ore",
+                "Sell findings",
+                "Chat with neighbors",
+                "Travel to mines",
+                "Go for a walk",
                 "Repair tools",
+                "Dig for ore",
                 "Return home"
             ]
         },
         {
-            "name": "Doran Reed",
-            "job": "Innkeeper",
+            "name": "Hilda Green",
+            "job": "Guard",
             "home": {
-                "id": 178,
+                "id": 183,
                 "type": "House",
                 "position": [
-                    3104,
-                    1184
+                    1312,
+                    1792
                 ],
                 "roommates": [
-                    "Doran Reed"
+                    "Hilda Green"
                 ],
-                "name": "Doran Reed's House"
+                "name": "Hilda Green's House"
             },
             "workplace": {
-                "id": 236,
-                "type": "Inn",
+                "id": 3,
+                "type": "Town Hall",
                 "position": [
-                    3168,
-                    1024
+                    1568,
+                    2048
                 ]
             },
             "daily_activities": [
-                "Clean rooms",
-                "Go for a walk",
-                "Manage staff",
+                "Patrol village",
+                "Train with weapons",
+                "Check on merchants",
+                "Report to captain",
+                "Stand watch at gate",
+                "Eat at the Inn",
                 "Visit the market",
-                "Close up for the night",
-                "Prepare breakfast for guests",
-                "Serve food and drinks",
-                "Welcome new travelers",
-                "Collect water from well"
-            ]
-        },
-        {
-            "name": "Xander Cooper",
-            "job": "Baker",
-            "home": {
-                "id": 32,
-                "type": "House",
-                "position": [
-                    1440,
-                    2432
-                ],
-                "roommates": [
-                    "Sven Swift",
-                    "Xander Cooper"
-                ],
-                "name": "Sven Swift and Xander Cooper's House"
-            },
-            "daily_activities": [
-                "Prepare dough",
-                "Sell goods to customers",
-                "Clean bakery",
-                "Bake bread",
-                "Chat with customers",
-                "Wake up early",
-                "Go for a walk",
-                "Attend town gathering",
                 "Return home"
             ]
         },
         {
-            "name": "Petra Field",
-            "job": "Baker",
+            "name": "Wren Strong",
+            "job": "Blacksmith",
+            "home": {
+                "id": 51,
+                "type": "House",
+                "position": [
+                    1600,
+                    2560
+                ],
+                "roommates": [
+                    "Wren Strong",
+                    "Doran Fisher"
+                ],
+                "name": "Wren Strong and Doran Fisher's House"
+            },
+            "workplace": {
+                "id": 17,
+                "type": "Smithy",
+                "position": [
+                    1568,
+                    2336
+                ]
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Repair items",
+                "Eat at the Inn",
+                "Forge tools and weapons",
+                "Sell wares",
+                "Work on special orders",
+                "Visit the market",
+                "Get materials ready",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Doran Fisher",
+            "job": "Tailor",
+            "home": {
+                "id": 51,
+                "type": "House",
+                "position": [
+                    1600,
+                    2560
+                ],
+                "roommates": [
+                    "Wren Strong",
+                    "Doran Fisher"
+                ],
+                "name": "Wren Strong and Doran Fisher's House"
+            },
+            "workplace": {
+                "id": 4,
+                "type": "Workshop",
+                "position": [
+                    1632,
+                    2176
+                ]
+            },
+            "daily_activities": [
+                "Make alterations",
+                "Visit the market",
+                "Collect water from well",
+                "Meet with clients",
+                "Cut fabric",
+                "Sew garments",
+                "Design new styles",
+                "Eat at the Inn",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Milo Gray",
+            "job": "Carpenter",
+            "home": {
+                "id": 162,
+                "type": "Cottage",
+                "position": [
+                    1408,
+                    2496
+                ],
+                "roommates": [
+                    "Milo Gray",
+                    "Tilly Gray"
+                ],
+                "name": "The Gray House"
+            },
+            "workplace": {
+                "id": 4,
+                "type": "Workshop",
+                "position": [
+                    1632,
+                    2176
+                ]
+            },
+            "daily_activities": [
+                "Make repairs around village",
+                "Select wood",
+                "Visit the market",
+                "Cut lumber",
+                "Build furniture",
+                "Attend town gathering",
+                "Finish projects",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Vera Hill",
+            "job": "Miner",
+            "home": {
+                "id": 28,
+                "type": "House",
+                "position": [
+                    1824,
+                    2816
+                ],
+                "roommates": [
+                    "Yara Brown",
+                    "Vera Hill"
+                ],
+                "name": "Yara Brown and Vera Hill's House"
+            },
+            "daily_activities": [
+                "Sell findings",
+                "Repair tools",
+                "Travel to mines",
+                "Dig for ore",
+                "Eat at the Inn",
+                "Sort materials",
+                "Attend town gathering",
+                "Go for a walk",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Clara Cooper",
+            "job": "Miner",
             "home": {
                 "id": 33,
                 "type": "House",
                 "position": [
-                    2400,
-                    2240
+                    2272,
+                    1184
                 ],
                 "roommates": [
-                    "Petra Field"
+                    "Clara Cooper"
                 ],
-                "name": "Petra Field's House"
+                "name": "Clara Cooper's House"
             },
             "daily_activities": [
-                "Bake bread",
-                "Wake up early",
-                "Clean bakery",
+                "Repair tools",
+                "Travel to mines",
+                "Sell findings",
+                "Sort materials",
                 "Eat at the Inn",
-                "Prepare dough",
-                "Chat with customers",
-                "Sell goods to customers",
-                "Visit the market",
+                "Dig for ore",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Tilly Gray",
+            "job": "Tailor",
+            "home": {
+                "id": 162,
+                "type": "Cottage",
+                "position": [
+                    1408,
+                    2496
+                ],
+                "roommates": [
+                    "Milo Gray",
+                    "Tilly Gray"
+                ],
+                "name": "The Gray House"
+            },
+            "workplace": {
+                "id": 4,
+                "type": "Workshop",
+                "position": [
+                    1632,
+                    2176
+                ]
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Make alterations",
+                "Chat with neighbors",
+                "Cut fabric",
+                "Sew garments",
+                "Meet with clients",
+                "Design new styles",
+                "Collect water from well",
                 "Return home"
             ]
         }
     ],
     "house_names": {
-        "3": "Xander Hill and Yara Fisher's House",
-        "8": "Wren Strong and Greta Hill's House",
-        "21": "Ivan Hill and Yara Strong's House",
-        "16": "Finn Ford's House",
-        "27": "Otto Black and Sven White's House",
-        "108": "Otto Brown's House",
-        "103": "Petra Hill's House",
-        "91": "Wren Smith's House",
-        "7": "Wren Black and Lily Brown's House",
-        "29": "Sven Reed and Petra Strong's House",
-        "32": "Sven Swift and Xander Cooper's House",
-        "178": "Doran Reed's House",
-        "33": "Petra Field's House"
+        "7": "Kai Dale and Otto Black's House",
+        "28": "Yara Brown and Vera Hill's House",
+        "183": "Hilda Green's House",
+        "51": "Wren Strong and Doran Fisher's House",
+        "162": "The Gray House",
+        "33": "Clara Cooper's House"
     }
 }

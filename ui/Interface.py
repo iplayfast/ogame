@@ -171,6 +171,17 @@ def _check_callback_signature(callback, required_params):
     return True
 
 # ----- TIME & UPDATE CALLBACKS -----
+def register_screen_resized_callback(callback):
+    """Register a callback for when the screen is resized.
+    
+    Args:
+        callback: Function to call when the screen is resized
+    """
+    if not _check_callback_signature(callback, ['old_size', 'new_size']):
+        print(f"Warning: Callback {callback.__name__} missing required parameters (old_size, new_size)")
+    
+    _register_callback('screen_resized', callback)
+    return callback
 
 def register_time_callback(callback, frequency_ms=DEFAULT_UPDATE_FREQUENCY):
     """
@@ -641,6 +652,15 @@ def on_bridge_created(bridge_position, bridge_type):
     """Notify when a new bridge is created."""
     dispatch_environment_event('bridge_created', bridge_position=bridge_position, bridge_type=bridge_type)
 
+def on_screen_resized(old_size, new_size):
+    """Notify when the screen is resized.
+    
+    Args:
+        old_size: Previous screen size (width, height)
+        new_size: New screen size (width, height)
+    """
+    dispatch_ui_event('screen_resized', old_size=old_size, new_size=new_size)
+
 # Game events
 def on_game_started(game_state):
     """Notify when the game starts."""
@@ -652,7 +672,7 @@ def on_game_paused(is_paused):
 
 def on_village_generated(village_data):
     """Notify when the village is generated."""
-    dispatch_game_event('village_generated', village_data=village_data)
+    #dispatch_game_event('village_generated', village_data=village_data)
 
 def on_console_command(command, args, result):
     """Notify when a console command is executed."""

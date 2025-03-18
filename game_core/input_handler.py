@@ -4,6 +4,7 @@ Input Handler - Processes all user input and events
 import pygame
 from ui import Interface
 
+
 class InputHandler:
     """Handles all user input and pygame events."""
     
@@ -31,6 +32,10 @@ class InputHandler:
             if event.type == pygame.QUIT:
                 self.game_state.running = False
                 print("Quit event received")
+            
+            # Handle window resize events
+            elif event.type == pygame.VIDEORESIZE:
+                self._handle_resize_event(event)
             
             # Key press events
             elif event.type == pygame.KEYDOWN:
@@ -65,13 +70,69 @@ class InputHandler:
         if old_camera_pos != new_camera_pos:
             Interface.on_camera_moved(old_camera_pos, new_camera_pos)
     
+    def _handle_resize_event(self, event):
+        """Handle window resize events properly.
+        
+        Args:
+            event: The pygame VIDEORESIZE event
+        """
+        # Store old screen size for Interface notification
+        old_screen_size = (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+        
+        # Update screen size
+        self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT = event.size
+        
+        # Create new resizable window with the updated dimensions
+        self.game_state.screen = pygame.display.set_mode(
+            (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
+            pygame.RESIZABLE
+        )
+        
+        # Update UI components for new screen size
+        self.update_ui_for_resize()
+        
+        # Adjust camera bounds based on new screen size
+        self._adjust_camera_after_resize()
+        
+        # Notify Interface about screen resize
+        if hasattr(Interface, 'on_screen_resized'):
+            Interface.on_screen_resized(old_screen_size, event.size)
+        
+        print(f"Screen resized to: {self.game_state.SCREEN_WIDTH}x{self.game_state.SCREEN_HEIGHT}")
+            
+    def update_ui_for_resize(self):
+        """Update UI components when screen is resized."""
+        # Update console dimensions
+        if hasattr(self.game_state, 'console_manager'):
+            self.game_state.console_manager.console_width = self.game_state.SCREEN_WIDTH
+            self.game_state.console_manager.console_y = self.game_state.SCREEN_HEIGHT - self.game_state.console_manager.console_height
+            self.game_state.console_manager.input_width = self.game_state.SCREEN_WIDTH - 20
+            self.game_state.console_manager.input_y = self.game_state.SCREEN_HEIGHT - 40
+        
+        # Update UI manager components
+        if hasattr(self.game_state, 'ui_manager'):
+            self.game_state.ui_manager.screen_width = self.game_state.SCREEN_WIDTH
+            self.game_state.ui_manager.screen_height = self.game_state.SCREEN_HEIGHT
+        
+        # Update housing UI components
+        if hasattr(self.game_state, 'housing_ui'):
+            self.game_state.housing_ui.screen_width = self.game_state.SCREEN_WIDTH
+            self.game_state.housing_ui.screen_height = self.game_state.SCREEN_HEIGHT
+            
+        # Update renderer if it has a viewport update method
+        if hasattr(self.game_state, 'renderer') and hasattr(self.game_state.renderer, 'update_viewport'):
+            self.game_state.renderer.update_viewport(self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+        
     def _handle_key_press(self, event):
         """Handle keyboard key press events.
         
         Args:
             event: The pygame key event
         """
-        if event.key == pygame.K_ESCAPE:
+        if event.key == pygame.K_f:
+            # Toggle fullscreen mode
+            self._toggle_fullscreen()
+        elif event.key == pygame.K_ESCAPE:
             self.game_state.running = False
             print("ESC key pressed - quitting")
         elif event.key == pygame.K_p:
@@ -108,6 +169,41 @@ class InputHandler:
                 # Notify through Interface
                 Interface.on_ui_panel_toggled("building_interiors", state)
     
+    def _toggle_fullscreen(self):
+        """Toggle between fullscreen and windowed mode."""
+        # Store current mode
+        is_fullscreen = bool(pygame.display.get_surface().get_flags() & pygame.FULLSCREEN)
+        
+        if is_fullscreen:
+            # Switch to windowed mode
+            self.game_state.screen = pygame.display.set_mode(
+                (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
+                pygame.RESIZABLE
+            )
+            print("Switched to windowed mode")
+        else:
+            # Get current screen info
+            screen_info = pygame.display.Info()
+            full_width, full_height = screen_info.current_w, screen_info.current_h
+            
+            # Switch to fullscreen mode
+            self.game_state.screen = pygame.display.set_mode(
+                (full_width, full_height), 
+                pygame.FULLSCREEN
+            )
+            
+            # Update internal screen dimensions
+            self.game_state.SCREEN_WIDTH = full_width
+            self.game_state.SCREEN_HEIGHT = full_height
+            
+            # Update UI components for new screen size
+            self.update_ui_for_resize()
+            
+            # Adjust camera bounds
+            self._adjust_camera_after_resize()
+            
+            print(f"Switched to fullscreen mode: {full_width}x{full_height}")
+
     def handle_input(self):
         """Handle continuous keyboard input for camera movement."""
         # Skip handling input if console is active
@@ -186,6 +282,14 @@ class InputHandler:
         
         return False
     
+    def _adjust_camera_after_resize(self):
+        """Adjust camera boundaries after screen resize."""
+        # Ensure camera stays within village bounds
+        self.game_state.camera_x = max(0, min(self.game_state.camera_x, 
+                                self.game_state.village_data['size'] - self.game_state.SCREEN_WIDTH))
+        self.game_state.camera_y = max(0, min(self.game_state.camera_y, 
+                                self.game_state.village_data['size'] - self.game_state.SCREEN_HEIGHT))
+        
     def _check_villager_click(self, world_x, world_y):
         """Check if the click is on a villager and select it if so.
         

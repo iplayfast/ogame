@@ -1,134 +1,144 @@
 """
-Game State - Core game state class
+Game State - Handles overall game state management
 """
 import pygame
-from ui import Interface
 import random
-
-# Import managers and systems
-from game_core.input_handler import InputHandler
-from game_core.update_manager import UpdateManager
-from game_core.render_manager import RenderManager
+import math
+import os
+from utils import config_manager
+from ui.Interface import setup_default_callbacks, on_game_started
+from ui.console_manager import ConsoleManager
+from ui.housing_ui import HousingUI
+from ui.renderer import Renderer
+from ui.ui_manager import UIManager
+from systems.time_manager import TimeManager
+from systems.time_system import TimeSystem
+from systems.interaction_system import InteractionSystem
+from systems.command_system import CommandSystem
+from utils.asset_loader import load_assets
+from village.village_generator import generate_village  # Fixed import
 from entities.villager_manager import VillagerManager
 from entities.housing_manager import HousingManager
-from systems.command_system import CommandSystem
-from systems.interaction_system import InteractionSystem
-from systems.time_system import TimeSystem
-
-# Import existing modules
-from utils.asset_loader import load_assets
-from village.village_generator import generate_village
-from ui.ui_manager import UIManager
-from ui.renderer import Renderer
-from ui.console_manager import ConsoleManager
-from systems.time_manager import TimeManager
-from ui.housing_ui import HousingUI
-from ui.renderer_enhancement import enhance_renderer_for_interiors
+from game_core.input_handler import InputHandler
+from game_core.render_manager import RenderManager
+from game_core.update_manager import UpdateManager
 
 class VillageGame:
-    """Main game state class that holds all game data and manager references."""
+    """Main game state class that coordinates all game components."""
     
     def __init__(self):
-        """Initialize the game state and all subsystems."""
-        # Game setup
-        self.running = True
-        self.clock = pygame.time.Clock()
-        self.fps = 60
-        self.time_scale = 1.0
+        """Initialize the game state."""
+        # Load configuration
+        self.config = config_manager.get_config()
         
-        # Get screen information
-        infoObject = pygame.display.Info()
-        self.SCREEN_WIDTH = infoObject.current_w
-        self.SCREEN_HEIGHT = infoObject.current_h - 40
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT))
+        # Basic setup
+        self.SCREEN_WIDTH = 1280
+        self.SCREEN_HEIGHT = 720
+        self.TILE_SIZE = 32
+        self.CAMERA_SPEED = 10
+        
+        # Initialize screen
+        # In the __init__ method of VillageGame
+        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT),pygame.RESIZABLE)        
         pygame.display.set_caption("Village Simulation")
         
-        # Game constants
-        self.TILE_SIZE = 32
-        self.CAMERA_SPEED = 8
-        self.INTERACTION_RADIUS = 50
-        
-        # Load assets first - everything depends on this
+        # Load assets
         self.assets = load_assets()
         
-        # Initialize UI components
-        self.ui_manager = UIManager(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
-        self.renderer = Renderer(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.TILE_SIZE)
-        self.housing_ui = HousingUI(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        # Create game clock
+        self.clock = pygame.time.Clock()
+        self.fps = 60
+        
+        # Create UI components
         self.console_manager = ConsoleManager(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.housing_ui = HousingUI(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.renderer = Renderer(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.TILE_SIZE)
+        self.ui_manager = UIManager(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
         
-        # Initialize time manager
-        self.time_manager = TimeManager(day_length_seconds=600)  # 10 minutes per day
-        self.time_manager.set_time(6.0)  # 6 am
+        # Load village size from config
+        self.village_size = self.config.get("village", {}).get("size", 60)  # Default to 60 if not specified
+
+        # Generate village with the configured size
+        self.village_data = generate_village(self.village_size, self.assets, self.TILE_SIZE)
         
-        # Generate village
-        self.village_data = generate_village(60, self.assets, self.TILE_SIZE)
         
-        # Enhance renderer for interiors
-        enhance_renderer_for_interiors(Renderer)
-        self.renderer.initialize_interiors(self.village_data)
+        # Initialize systems
+        self.time_manager = TimeManager()
+        self.time_system = TimeSystem(self)
+        self.interaction_system = InteractionSystem(self)
         
-        # Create villager manager and initialize villagers
+        # Initialize entity managers
         self.villager_manager = VillagerManager(self)
-        self.villagers = pygame.sprite.Group()  # Sprite group for villagers
-        self.villager_manager.create_villagers(20)  # Create 20 villagers
-        
-        # Create housing manager and assign housing
         self.housing_manager = HousingManager(self)
-        self.housing_manager.assign_building_types()
-        self.housing_manager.assign_housing()
-        self.housing_manager.force_villagers_to_homes()
         
-        # Create command system and register commands
+        # Initialize core game managers
+        self.input_handler = InputHandler(self)
+        self.render_manager = RenderManager(self)
+        self.update_manager = UpdateManager(self)
+        
+        # Initialize command system for console
         self.command_system = CommandSystem(self, self.console_manager)
         self.command_system.register_commands()
         
-        # Create interaction system
-        self.interaction_system = InteractionSystem(self)
+        # Get number of villagers from config
+        self.num_villagers = self.config["villagers"].get("count", 10)
         
-        # Create time system
-        self.time_system = TimeSystem(self)
+        # Create villagers
+        self.villagers = pygame.sprite.Group()
+        self.villager_manager.create_villagers(self.num_villagers)
         
-        # Camera position - start at center of village
+        # Assign housing to villagers
+        self.housing_manager.assign_housing()
+        
+        # Initialize building interiors
+        if hasattr(self.renderer, 'initialize_interiors'):
+            self.renderer.initialize_interiors(self.village_data)
+        
+        # Camera position (starts at center of village)
         self.camera_x = (self.village_data['size'] - self.SCREEN_WIDTH) // 2
         self.camera_y = (self.village_data['size'] - self.SCREEN_HEIGHT) // 2
-        
-        # Game state
-        self.selected_villager = None
+        # Get screen size from config
+        self.SCREEN_WIDTH = self.config.get("system", {}).get("window_width", 1280)
+        self.SCREEN_HEIGHT = self.config.get("system", {}).get("window_height", 720)
+        # Game state flags
+        self.running = True
         self.paused = False
+        
+        # Debug flags
         self.show_debug = False
         self.show_paths = False
-        
-        # Mouse hover state
-        self.hovered_building = None
         
         # Animation state
         self.animation_timer = 0
         self.water_frame = 0
         
-        # Create additional managers
-        self.input_handler = InputHandler(self)
-        self.update_manager = UpdateManager(self)
-        self.render_manager = RenderManager(self)
+        # Currently selected villager
+        self.selected_villager = None
         
-        # Notify Interface about game start
-        Interface.on_game_started(self)
-        current_time = pygame.time.get_ticks()
-        Interface.update(current_time, 0)
-        Interface.on_village_generated(self.village_data)
+        # Currently hovered building
+        self.hovered_building = None
+        
+        # Time scale factor
+        self.time_scale = 1.0
+        
+        # Add self to village_data for reference
+        self.village_data['game_state'] = self
+        
+        # Notify Interface that game has started
+        on_game_started(self)
     
     def handle_events(self):
-        """Handle pygame events."""
+        """Delegate event handling to input handler."""
         self.input_handler.handle_events()
     
     def handle_input(self):
-        """Handle keyboard input for camera movement."""
+        """Delegate input processing to input handler."""
         self.input_handler.handle_input()
     
     def update(self):
-        """Update game state."""
+        """Delegate game state updates to update manager."""
         self.update_manager.update()
     
     def render(self):
-        """Render the game."""
+        """Delegate rendering to render manager."""
         self.render_manager.render()

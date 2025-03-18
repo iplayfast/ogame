@@ -1,0 +1,19 @@
+{
+    "villagers": {
+        "count": 20,
+        "comments": "Number of villagers to create at game start"
+    },
+    "buildings": {
+        "size_multiplier": 1.0,
+        "comments": "Multiplier for building sizes (1.0 = default, 2.0 = double size, 3.0 = triple size, etc.)"
+    },
+    {
+	    "village": { 
+		    "size": 60
+	    }
+    },
+    "system": {
+        "debug_mode": false,
+        "enable_console": true
+    }
+}

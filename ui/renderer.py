@@ -120,7 +120,23 @@ class Renderer:
             
             # Draw the time string
             self.screen.blit(time_surface, (time_x, time_y))
-    
+    def update_viewport(self, screen_width, screen_height):
+        """Update renderer viewport when screen size changes.
+        
+        Args:
+            screen_width: New screen width
+            screen_height: New screen height
+        """
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        
+        # If we have a overlay surface that depends on screen size, update it
+        if hasattr(self, 'overlay_surface'):
+            self.overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
+        
+        # Update any methods or calculations that depend on screen dimensions
+        print(f"Renderer viewport updated to {screen_width}x{screen_height}")
+        
     def _render_terrain(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
         """Render terrain (grass)."""
         for y in range(visible_top, visible_bottom):
