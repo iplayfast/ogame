@@ -384,9 +384,8 @@ class InputHandler:
                     pygame.SRCALPHA
                 )
 
-
     def handle_input(self):
-        """Handle continuous keyboard input for camera movement."""
+        """Handle continuous keyboard input for camera movement with improved boundary checking."""
         # Skip handling input if console is active
         if self.game_state.console_manager.is_active():
             return
@@ -402,13 +401,26 @@ class InputHandler:
             self.game_state.camera_y -= self.game_state.CAMERA_SPEED
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.game_state.camera_y += self.game_state.CAMERA_SPEED
-        # Use width and height instead of single size value for constraints
-        village_width = self.game_state.village_data.get('width')
-        village_height = self.game_state.village_data.get('height')
-    
-        # Ensure camera stays within village bounds
-        self.game_state.camera_x = max(0, min(self.game_state.camera_x, village_width - self.game_state.SCREEN_WIDTH))
-        self.game_state.camera_y = max(0, min(self.game_state.camera_y, village_height - self.game_state.SCREEN_HEIGHT))
+        
+        # Use the village width and height directly, ensuring they exist
+        village_width = self.game_state.village_data.get('width', 0)
+        village_height = self.game_state.village_data.get('height', 0)
+        
+        # Validate dimensions before applying constraints
+        if village_width <= 0 or village_height <= 0:
+            print("Warning: Invalid village dimensions for camera constraints")
+            return
+            
+        if self.game_state.SCREEN_WIDTH <= 0 or self.game_state.SCREEN_HEIGHT <= 0:
+            print("Warning: Invalid screen dimensions for camera constraints")
+            return
+        
+        # Ensure camera stays within village bounds, use max to prevent negative values
+        max_camera_x = max(0, village_width - self.game_state.SCREEN_WIDTH)
+        max_camera_y = max(0, village_height - self.game_state.SCREEN_HEIGHT)
+        
+        self.game_state.camera_x = max(0, min(self.game_state.camera_x, max_camera_x))
+        self.game_state.camera_y = max(0, min(self.game_state.camera_y, max_camera_y))
 
     
     def handle_click(self, pos):
@@ -507,16 +519,21 @@ class InputHandler:
         
         return False
     
+    
     def _adjust_camera_after_resize(self):
         """Adjust camera boundaries after screen resize to ensure view stays centered."""
         # Calculate camera movement to keep the view centered after resize
         # This helps maintain focus on the area being viewed when resizing
         
-        # Get village size
+        # Get village size - use direct access and validate dimensions
+        village_width = self.game_state.village_data.get('width', 0)
+        village_height = self.game_state.village_data.get('height', 0)
         
-        village_width = self.game_state.village_data.get('width')
-        village_height = self.game_state.village_data.get('height')
-    
+        # Validate village dimensions
+        if village_width <= 0 or village_height <= 0:
+            print(f"Warning: Invalid village dimensions: {village_width}x{village_height}")
+            return
+            
         # Calculate old center position
         old_center_x = self.game_state.camera_x + self.game_state.SCREEN_WIDTH // 2
         old_center_y = self.game_state.camera_y + self.game_state.SCREEN_HEIGHT // 2
@@ -526,15 +543,18 @@ class InputHandler:
         new_camera_y = old_center_y - self.game_state.SCREEN_HEIGHT // 2
         
         # Ensure camera stays within village bounds
-
-        new_camera_x = max(0, min(new_camera_x, village_width - self.game_state.SCREEN_WIDTH))
-        new_camera_y = max(0, min(new_camera_y, village_height - self.game_state.SCREEN_HEIGHT))        
+        # Handle case where screen is larger than village
+        max_camera_x = max(0, village_width - self.game_state.SCREEN_WIDTH)
+        max_camera_y = max(0, village_height - self.game_state.SCREEN_HEIGHT)
+        
+        new_camera_x = max(0, min(new_camera_x, max_camera_x))
+        new_camera_y = max(0, min(new_camera_y, max_camera_y))
         
         # Apply the new camera position
         self.game_state.camera_x = new_camera_x
         self.game_state.camera_y = new_camera_y
         
-        print(f"Camera adjusted to ({new_camera_x}, {new_camera_y}) to maintain view center")
+        print(f"Camera adjusted to ({new_camera_x}, {new_camera_y})")
 
     def _check_villager_click(self, world_x, world_y):
         """Check if the click is on a villager and select it if so.

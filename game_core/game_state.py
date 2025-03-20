@@ -112,11 +112,12 @@ class VillageGame:
             self.renderer.initialize_interiors(self.village_data)
         
         # Camera position (starts at center of village)
+        self._update_camera_bounds()
         self.camera_x = (self.village_data['width'] - self.SCREEN_WIDTH) // 2
         self.camera_y = (self.village_data['height'] - self.SCREEN_HEIGHT) // 2
         # Get screen size from config
-        self.SCREEN_WIDTH = self.config.get("system", {}).get("window_width", 1280)
-        self.SCREEN_HEIGHT = self.config.get("system", {}).get("window_height", 720)
+        #self.SCREEN_WIDTH = self.config.get("system", {}).get("window_width", 1280)
+        #self.SCREEN_HEIGHT = self.config.get("system", {}).get("window_height", 720)
         # Game state flags
         self.running = True
         self.paused = False
@@ -161,6 +162,27 @@ class VillageGame:
         """Delegate rendering to render manager."""
         self.render_manager.render()
     
+    def _update_camera_bounds(self):
+        """Update camera boundaries based on current screen and village size."""
+        # Ensure we have valid width and height values for both village and screen
+        if not hasattr(self, 'village_data') or 'width' not in self.village_data or 'height' not in self.village_data:
+            print("Warning: Cannot update camera bounds - missing village dimensions")
+            return
+            
+        # Validate that village dimensions make sense
+        if self.village_data['width'] <= 0 or self.village_data['height'] <= 0:
+            print(f"Warning: Invalid village dimensions: {self.village_data['width']}x{self.village_data['height']}")
+            return
+            
+        # Validate screen dimensions
+        if self.SCREEN_WIDTH <= 0 or self.SCREEN_HEIGHT <= 0:
+            print(f"Warning: Invalid screen dimensions: {self.SCREEN_WIDTH}x{self.SCREEN_HEIGHT}")
+            return
+            
+        # Log current values for debugging
+        print(f"Updating camera bounds - Screen: {self.SCREEN_WIDTH}x{self.SCREEN_HEIGHT}, Village: {self.village_data['width']}x{self.village_data['height']}")
+
+
     def update(self):
         """Delegate game state updates to update manager or handle resize mode."""
         if self.resize_mode:
