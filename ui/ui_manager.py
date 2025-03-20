@@ -204,6 +204,7 @@ class UIManager:
             f"Village size: {village_size}x{village_size} pixels", True, self.WHITE)
         self.screen.blit(village_size_text, (10, 90))
 
+    
     def draw_building_type_indicator(self, building, x, y, camera_x, camera_y, tile_size):
         """Draw an indicator of the building type on the building.
         
@@ -215,58 +216,78 @@ class UIManager:
             camera_y: Camera Y position
             tile_size: Size of a tile in pixels
         """
-        size = tile_size * 3 if building['size'] == 'large' else (
-            tile_size * 2 if building['size'] == 'medium' else tile_size)
-        
-        building_type = building.get('building_type', '')
-        
-        # Draw simple icon based on building type
-        screen_x = x - camera_x + size // 2
-        screen_y = y - camera_y + size // 2
-        
-        # More specific matching for building types to ensure correct icons
-        # Use the first letter of the building type as the icon character by default
-        icon_char = building_type[0] if building_type else "?"
-        
-        # Choose color based on building type
-        if building_type in ["House", "Cottage", "Manor"]:
-            color = (200, 200, 100)  # Yellow for residential
-            icon_char = "H"
-        elif building_type == "Store" or building_type == "Market":
-            color = (100, 200, 100)  # Green for shops
-            icon_char = "S"
-        elif building_type == "Bakery":
-            color = (230, 180, 80)  # Light brown for bakery
-            icon_char = "B"
-        elif building_type in ["Inn", "Tavern"]:
-            color = (200, 100, 100)  # Red for inns/taverns
-            icon_char = "I"
-        elif building_type == "Workshop":
-            color = (150, 150, 150)  # Gray for workshops
-            icon_char = "W"
-        elif building_type == "Smithy":
-            color = (180, 120, 80)  # Bronze for smithy
-            icon_char = "F"  # F for Forge
-        elif building_type == "Storage":
-            color = (130, 110, 70)  # Brown for storage
-            icon_char = "S"  # S for Storage
-        elif building_type == "Town Hall":
-            color = (100, 100, 200)  # Blue for official buildings
-            icon_char = "T"
-        elif building_type == "Temple":
-            color = (230, 230, 150)  # Light gold for temple
-            icon_char = "T"
-        else:
-            color = (150, 150, 150)  # Gray for other buildings
-        
-        # Draw circular background
-        pygame.draw.circle(self.screen, color, (screen_x, screen_y), tile_size // 3)
-        pygame.draw.circle(self.screen, (0, 0, 0), (screen_x, screen_y), tile_size // 3, 1)
-        
-        # Draw text
-        text = self.font.render(icon_char, True, (0, 0, 0))
-        text_rect = text.get_rect(center=(screen_x, screen_y))
-        self.screen.blit(text, text_rect)
+        try:
+            # Extra safety check - make sure screen is valid
+            if self.screen is None or not pygame.display.get_init():
+                print("Skipping indicator - display not initialized")
+                return
+                
+            # Validate screen bit depth
+            if self.screen.get_bitsize() > 32:
+                print(f"Invalid bit depth: {self.screen.get_bitsize()}, skipping draw")
+                return
+                
+            size = tile_size * 3 if building['size'] == 'large' else (
+                tile_size * 2 if building['size'] == 'medium' else tile_size)
+            
+            building_type = building.get('building_type', '')
+            
+            # Draw simple icon based on building type
+            screen_x = x - camera_x + size // 2
+            screen_y = y - camera_y + size // 2
+            
+            # More specific matching for building types to ensure correct icons
+            # Use the first letter of the building type as the icon character by default
+            icon_char = building_type[0] if building_type else "?"
+            
+            # Choose color based on building type
+            if building_type in ["House", "Cottage", "Manor"]:
+                color = (200, 200, 100)  # Yellow for residential
+                icon_char = "H"
+            elif building_type == "Store" or building_type == "Market":
+                color = (100, 200, 100)  # Green for shops
+                icon_char = "S"
+            elif building_type == "Bakery":
+                color = (230, 180, 80)  # Light brown for bakery
+                icon_char = "B"
+            elif building_type in ["Inn", "Tavern"]:
+                color = (200, 100, 100)  # Red for inns/taverns
+                icon_char = "I"
+            elif building_type == "Workshop":
+                color = (150, 150, 150)  # Gray for workshops
+                icon_char = "W"
+            elif building_type == "Smithy":
+                color = (180, 120, 80)  # Bronze for smithy
+                icon_char = "F"  # F for Forge
+            elif building_type == "Storage":
+                color = (130, 110, 70)  # Brown for storage
+                icon_char = "S"  # S for Storage
+            elif building_type == "Town Hall":
+                color = (100, 100, 200)  # Blue for official buildings
+                icon_char = "T"
+            elif building_type == "Temple":
+                color = (230, 230, 150)  # Light gold for temple
+                icon_char = "T"
+            else:
+                color = (150, 150, 150)  # Gray for other buildings
+            
+            # SAFETY: Check if screen position is valid
+            if not (0 <= screen_x < self.screen_width and 0 <= screen_y < self.screen_height):
+                return
+            
+            # Draw circular background - Wrapped in try/except for safety
+            try:
+                pygame.draw.circle(self.screen, color, (screen_x, screen_y), tile_size // 3)
+                pygame.draw.circle(self.screen, (0, 0, 0), (screen_x, screen_y), tile_size // 3, 1)
+                
+                # Draw text
+                text = self.font.render(icon_char, True, (0, 0, 0))
+                text_rect = text.get_rect(center=(screen_x, screen_y))
+                self.screen.blit(text, text_rect)
+            except Exception as e:
+                print(f"Error drawing building indicator: {e}")
+        except Exception as e:
+            print(f"Error in draw_building_type_indicator: {e}")
 
     def draw_multiple_villagers_indicator(self, selected_villager, villagers, camera_x, camera_y):
         """Draw an indicator when multiple villagers are in the same location."""

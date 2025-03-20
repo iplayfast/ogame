@@ -39,8 +39,22 @@ class VillageGame:
         
         # Initialize screen
         # In the __init__ method of VillageGame
-        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT),pygame.RESIZABLE)        
+
+        self._windowed_size = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+    
+    
+        # Initialize screen
+        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Village Simulation")
+
+        # Store reference to window for better position management
+        try:
+            from pygame._sdl2.video import Window
+            self.window = Window.from_display_module()
+        except (ImportError, AttributeError) as e:
+            print(f"Warning: SDL2 window management not available: {e}")
+            self.window = None
+        
         
         # Load assets
         self.assets = load_assets()

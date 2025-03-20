@@ -18,7 +18,8 @@ Example:
     
     Interface.register_villager_moved_callback(on_villager_moved)
 """
-
+import traceback
+import sys
 import time
 import inspect
 from datetime import datetime
@@ -664,7 +665,7 @@ def on_screen_resized(old_size, new_size):
 # Game events
 def on_game_started(game_state):
     """Notify when the game starts."""
-    dispatch_game_event('game_started', game_state=game_state)
+    dispatch_game_event('game_started', game_stagy=game_state)
 
 def on_game_paused(is_paused):
     """Notify when the game is paused/unpaused."""

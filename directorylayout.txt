@@ -51,27 +51,9 @@
 │   │   ├── icon_money.png
 │   │   └── icon_mood.png
 │   └── village_assignments.json
-├── bak
-│   ├── activity_system.py
-│   ├── asset_loader.py
-│   ├── console_manager.py
-│   ├── game.py
-│   ├── housing_ui.py
-│   ├── Interface.py
-│   ├── renderer_enhancement.py
-│   ├── renderer.py
-│   ├── time_manager.py
-│   ├── ui_manager.py
-│   ├── utils.py
-│   ├── village_base.py
-│   ├── village_buildings.py
-│   ├── village_generator_class.py
-│   ├── village_interaction.py
-│   ├── village_landscape.py
-│   ├── village_paths.py
-│   ├── villager_housing.py
-│   └── villager.py
 ├── building_interiors_doc.md
+├── config.json
+├── diff.txt
 ├── directorylayout.txt
 ├── entities
 │   ├── housing_manager.py
@@ -79,7 +61,6 @@
 │   ├── villager_housing.py
 │   ├── villager_manager.py
 │   └── villager.py
-├── file_structure.md
 ├── game_core
 │   ├── game_state.py
 │   ├── __init__.py
@@ -88,14 +69,11 @@
 │   └── update_manager.py
 ├── game.py
 ├── heapq
-├── implementation_plan.md
-├── Interface.py
 ├── LICENSE
 ├── math
 ├── random
 ├── readme.md
 ├── README.md
-├── refactoring_steps.md
 ├── requirements.txt
 ├── systems
 │   ├── activity_system.py
@@ -107,21 +85,25 @@
 ├── ui
 │   ├── console_manager.py
 │   ├── housing_ui.py
+│   ├── __init__.py
+│   ├── Interface.py
 │   ├── renderer_enhancement.py
 │   ├── renderer.py
 │   └── ui_manager.py
 ├── utils
 │   ├── asset_loader.py
 │   ├── compatibility.py
+│   ├── config_manager.py
 │   ├── __init__.py
 │   ├── interface_utils.py
 │   └── landscape_utils.py
-└── village
-    ├── village_base.py
-    ├── village_buildings.py
-    ├── village_generator_class.py
-    ├── village_interaction.py
-    ├── village_landscape.py
-    └── village_paths.py
+├── village
+│   ├── village_base.py
+│   ├── village_buildings.py
+│   ├── village_generator.py
+│   ├── village_interaction.py
+│   ├── village_landscape.py
+│   └── village_paths.py
+└── village_assignments.json
 
-13 directories, 112 files
+12 directories, 95 files

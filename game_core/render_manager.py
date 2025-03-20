@@ -15,7 +15,50 @@ class RenderManager:
         self.game_state = game_state
     
     def render(self):
-        """Render the game world and UI."""
+        """Render the game world and UI with frame skipping support."""
+        # Check if we're in frame skip mode (for fullscreen toggle)
+        if hasattr(self.game_state, 'frame_skip_count') and self.game_state.frame_skip_count > 0:
+            self.game_state.frame_skip_count -= 1
+            print(f"Skipping render frame during display transition ({self.game_state.frame_skip_count} remaining)")
+            
+            # If this is the last skipped frame, now update all UI components
+            if self.game_state.frame_skip_count == 0:
+                print("Resuming rendering - updating UI components")
+                # Update all component screen references
+                if hasattr(self.game_state, 'renderer'):
+                    self.game_state.renderer.screen = self.game_state.screen
+                    self.game_state.renderer.screen_width = self.game_state.SCREEN_WIDTH
+                    self.game_state.renderer.screen_height = self.game_state.SCREEN_HEIGHT
+                
+                if hasattr(self.game_state, 'ui_manager'):
+                    self.game_state.ui_manager.screen = self.game_state.screen
+                    self.game_state.ui_manager.screen_width = self.game_state.SCREEN_WIDTH
+                    self.game_state.ui_manager.screen_height = self.game_state.SCREEN_HEIGHT
+                
+                if hasattr(self.game_state, 'console_manager'):
+                    self.game_state.console_manager.screen = self.game_state.screen
+                
+                if hasattr(self.game_state, 'housing_ui'):
+                    self.game_state.housing_ui.screen = self.game_state.screen
+                    self.game_state.housing_ui.screen_width = self.game_state.SCREEN_WIDTH
+                    self.game_state.housing_ui.screen_height = self.game_state.SCREEN_HEIGHT
+                
+                # Update UI for new size
+                self.game_state.input_handler.update_ui_for_resize()
+                self.game_state.input_handler._adjust_camera_after_resize()
+                
+                # Clear event queue again
+                pygame.event.clear()
+            
+            # During skipped frames, just draw a simple color fill to refresh the screen
+            try:
+                self.game_state.screen.fill((0, 0, 0))  # Black screen during transition
+                pygame.display.flip()  # Update display
+            except Exception as e:
+                print(f"Error during transition frame: {e}")
+            
+            return  # Skip the rest of rendering
+            
         # Call the main rendering code
         self.game_state.renderer.render_village(
             self.game_state.village_data,

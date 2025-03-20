@@ -1,3 +1,6 @@
+import traceback
+import sys
+
 import pygame
 import math
 
@@ -25,101 +28,119 @@ class Renderer:
         self.BLUE = (100, 100, 200)
     
     def render_village(self, village_data, villagers, camera_x, camera_y, ui_manager, selected_villager, 
-                      hovered_building, show_debug, clock, water_frame, 
-                      console_active=False, console_height=0, time_manager=None):
-        """Render the entire village and UI.
-        
-        Args:
-            village_data: Village data dictionary
-            villagers: List of villager objects
-            camera_x: Camera X position
-            camera_y: Camera Y position
-            ui_manager: UI manager object
-            selected_villager: Currently selected villager (if any)
-            hovered_building: Building currently being hovered over (if any)
-            show_debug: Whether to show debug information
-            clock: Pygame clock object for FPS calculation
-            water_frame: Current water animation frame
-            console_active: Whether the console is active
-            console_height: Height of the console area
-            time_manager: Time manager for day/night effects
-        """
-        # Clear the screen
-        self.screen.fill(self.GREEN)
-        
-        # Calculate visible area based on camera position
-        visible_left = camera_x // self.tile_size
-        visible_right = (camera_x + self.screen_width) // self.tile_size + 1
-        visible_top = camera_y // self.tile_size
-        visible_bottom = (camera_y + self.screen_height) // self.tile_size + 1
-        
-        # Limit to village size
-        visible_left = max(0, visible_left)
-        visible_right = min(village_data['size'] // self.tile_size, visible_right)
-        visible_top = max(0, visible_top)
-        visible_bottom = min(village_data['size'] // self.tile_size, visible_bottom)
-        
-        # Render all world elements
-        self._render_terrain(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
-        self._render_paths(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
-        self._render_water(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, water_frame)
-        self._render_bridges(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
-        # Get current shadow length from time manager if available
-        shadow_length = 0
-        if time_manager:
-            shadow_length = time_manager.get_shadow_length()
+                    hovered_building, show_debug, clock, water_frame, 
+                    console_active=False, console_height=0, time_manager=None):
+        """Render the entire village and UI."""
+        try:
+            print("about to clear the screen")
+            self.screen.fill(self.GREEN)
+            print("made it past clearing the screen")
             
-        # Render shadows first if it's daytime
-        if shadow_length > 0:
-            self._render_shadows(village_data, villagers, visible_left, visible_right, visible_top, visible_bottom, 
-                                camera_x, camera_y, shadow_length)
+            # Calculate visible area based on camera position
+            print("calculating visible area")
+            visible_left = camera_x // self.tile_size
+            visible_right = (camera_x + self.screen_width) // self.tile_size + 1
+            visible_top = camera_y // self.tile_size
+            visible_bottom = (camera_y + self.screen_height) // self.tile_size + 1
             
-        self._render_buildings(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager)
-        self._render_trees(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
-        self._render_villagers(villagers, camera_x, camera_y)
-        
-        # Apply day/night lighting overlay
-        if time_manager:
-            darkness_overlay = time_manager.get_darkness_overlay(self.screen_width, self.screen_height)
-            self.screen.blit(darkness_overlay, (0, 0))
-        
-        # Render UI elements
-        ui_manager.draw_selected_villager_info(selected_villager, self.tile_size)
-        
-        # Only draw minimap if console is not active or if it doesn't overlap console area
-        if not console_active:
-            ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size)
-        else:
-            # Draw minimap in upper right corner instead if console is active
-            ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size, 
-                                   position='upper_right')
-        
-        if hovered_building:
-            ui_manager.draw_building_info(hovered_building, camera_x, camera_y)
+            # Limit to village size
+            print("limiting to village size")
+            visible_left = max(0, visible_left)
+            visible_right = min(village_data['size'] // self.tile_size, visible_right)
+            visible_top = max(0, visible_top)
+            visible_bottom = min(village_data['size'] // self.tile_size, visible_bottom)
             
-        if show_debug:
-            ui_manager.draw_debug_info(clock, villagers, camera_x, camera_y, village_data['size'])
+            # Render all world elements
+            print("rendering terrain")
+            self._render_terrain(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-        # Draw time of day if time manager exists
-        if time_manager:
-            # Create a background for the time display
-            time_text = time_manager.get_time_string()
-            time_surface = ui_manager.font.render(time_text, True, self.WHITE)
-            time_x = 10
-            time_y = self.screen_height - 30
+            print("rendering paths")
+            self._render_paths(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-            # Don't draw over console
-            if console_active and time_y > self.screen_height - console_height:
-                time_y = self.screen_height - console_height - 30
+            print("rendering water")
+            self._render_water(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, water_frame)
             
-            bg_rect = pygame.Rect(time_x - 5, time_y - 5, 
-                                  time_surface.get_width() + 10, 
-                                  time_surface.get_height() + 10)
-            pygame.draw.rect(self.screen, (0, 0, 0, 150), bg_rect)
-            pygame.draw.rect(self.screen, (100, 100, 100), bg_rect, 1)
+            print("rendering bridges")
+            self._render_bridges(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-            # Draw the time string
-            self.screen.blit(time_surface, (time_x, time_y))
+            # Get current shadow length from time manager if available
+            shadow_length = 0
+            if time_manager:
+                print("getting shadow length")
+                shadow_length = time_manager.get_shadow_length()
+                
+            # Render shadows first if it's daytime
+            if shadow_length > 0:
+                print("rendering shadows")
+                self._render_shadows(village_data, villagers, visible_left, visible_right, visible_top, visible_bottom, 
+                                    camera_x, camera_y, shadow_length)
+                
+            print("rendering buildings")
+            self._render_buildings(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager)
+            
+            print("rendering trees")
+            self._render_trees(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
+            
+            print("rendering villagers")
+            self._render_villagers(villagers, camera_x, camera_y)
+            
+            # Apply day/night lighting overlay
+            if time_manager:
+                print("applying day/night overlay")
+                darkness_overlay = time_manager.get_darkness_overlay(self.screen_width, self.screen_height)
+                self.screen.blit(darkness_overlay, (0, 0))
+            
+            # Render UI elements
+            print("rendering UI elements")
+            ui_manager.draw_selected_villager_info(selected_villager, self.tile_size)
+            
+            # Only draw minimap if console is not active or if it doesn't overlap console area
+            if not console_active:
+                print("rendering minimap (console inactive)")
+                ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size)
+            else:
+                # Draw minimap in upper right corner instead if console is active
+                print("rendering minimap (console active)")
+                ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size, 
+                                    position='upper_right')
+            
+            if hovered_building:
+                print("rendering building info")
+                ui_manager.draw_building_info(hovered_building, camera_x, camera_y)
+                
+            if show_debug:
+                print("rendering debug info")
+                ui_manager.draw_debug_info(clock, villagers, camera_x, camera_y, village_data['size'])
+                
+            # Draw time of day if time manager exists
+            if time_manager:
+                print("rendering time display")
+                # Create a background for the time display
+                time_text = time_manager.get_time_string()
+                time_surface = ui_manager.font.render(time_text, True, self.WHITE)
+                time_x = 10
+                time_y = self.screen_height - 30
+                
+                # Don't draw over console
+                if console_active and time_y > self.screen_height - console_height:
+                    time_y = self.screen_height - console_height - 30
+                
+                bg_rect = pygame.Rect(time_x - 5, time_y - 5, 
+                                    time_surface.get_width() + 10, 
+                                    time_surface.get_height() + 10)
+                pygame.draw.rect(self.screen, (0, 0, 0, 150), bg_rect)
+                pygame.draw.rect(self.screen, (100, 100, 100), bg_rect, 1)
+                
+                # Draw the time string
+                self.screen.blit(time_surface, (time_x, time_y))
+            
+            print("rendering complete")
+        except Exception as e:
+            print(f"ERROR in render_village: {e}")
+            import traceback
+            traceback.print_exc()
+
+    
     def update_viewport(self, screen_width, screen_height):
         """Update renderer viewport when screen size changes.
         
@@ -130,13 +151,16 @@ class Renderer:
         self.screen_width = screen_width
         self.screen_height = screen_height
         
-        # If we have a overlay surface that depends on screen size, update it
+        # IMPORTANT: The screen reference might have changed, update it
+        self.screen = pygame.display.get_surface()
+        
+        # If we have an overlay surface that depends on screen size, update it
         if hasattr(self, 'overlay_surface'):
             self.overlay_surface = pygame.Surface((screen_width, screen_height), pygame.SRCALPHA)
         
-        # Update any methods or calculations that depend on screen dimensions
         print(f"Renderer viewport updated to {screen_width}x{screen_height}")
-        
+
+
     def _render_terrain(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y):
         """Render terrain (grass)."""
         for y in range(visible_top, visible_bottom):
@@ -273,103 +297,147 @@ class Renderer:
         self.screen.blit(shadow_surface, (0, 0))
 
     def _render_buildings(self, village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager, selected_villager=None):
-        """Render buildings and their indicators."""
-        # Initialize the home and workplace IDs
-        home_id = None
-        workplace_id = None
-        
-        # Get home and workplace IDs if a villager is selected
-        if selected_villager:
-            if hasattr(selected_villager, 'home') and selected_villager.home and 'id' in selected_villager.home:
-                home_id = selected_villager.home['id']
+        """Render buildings and their indicators with improved safety."""
+        try:
+            # Check surface validity before proceeding
+            if self.screen is None or not pygame.display.get_surface():
+                print("Cannot render buildings - invalid screen surface")
+                return
                 
-            if hasattr(selected_villager, 'workplace') and selected_villager.workplace and 'id' in selected_villager.workplace:
-                workplace_id = selected_villager.workplace['id']
-        
-        # First pass: draw normal buildings
-        for building in village_data['buildings']:
-            building_id = village_data['buildings'].index(building)
+            # Initialize the home and workplace IDs
+            home_id = None
+            workplace_id = None
             
-            # Skip if this is a special highlight building (we'll draw it in second pass)
-            if home_id is not None and building_id == home_id:
-                continue
-                
-            if workplace_id is not None and building_id == workplace_id:
-                continue
-                
-            x, y = building['position']
-            building_size = self.tile_size * 3 if building['size'] == 'large' else (
-                        self.tile_size * 2 if building['size'] == 'medium' else self.tile_size)
+            # Get home and workplace IDs if a villager is selected
+            if selected_villager:
+                if hasattr(selected_villager, 'home') and selected_villager.home and 'id' in selected_villager.home:
+                    home_id = selected_villager.home['id']
+                    
+                if hasattr(selected_villager, 'workplace') and selected_villager.workplace and 'id' in selected_villager.workplace:
+                    workplace_id = selected_villager.workplace['id']
             
-            # Check if building is in visible area (with buffer for larger buildings)
-            if ((visible_left - 3) * self.tile_size <= x <= visible_right * self.tile_size and
-                (visible_top - 3) * self.tile_size <= y <= visible_bottom * self.tile_size):
-                
-                # Render the building texture
-                self._find_and_render_building_texture(building, x, y, camera_x, camera_y)
-                
-                # Draw building type indicator using UI manager
-                ui_manager.draw_building_type_indicator(
-                    building, x, y, camera_x, camera_y, self.tile_size)
-        
-        # Second pass: draw highlighted buildings if a villager is selected
-        if selected_villager:
-            # Draw highlighted buildings
-            for highlight_id in [home_id, workplace_id]:
-                if highlight_id is not None and 0 <= highlight_id < len(village_data['buildings']):
-                    building = village_data['buildings'][highlight_id]
+            # First pass: draw normal buildings
+            for building_index, building in enumerate(village_data['buildings']):
+                try:
+                    # Skip if this is a special highlight building (we'll draw it in second pass)
+                    if home_id is not None and building_index == home_id:
+                        continue
+                        
+                    if workplace_id is not None and building_index == workplace_id:
+                        continue
+                        
                     x, y = building['position']
                     building_size = self.tile_size * 3 if building['size'] == 'large' else (
                                 self.tile_size * 2 if building['size'] == 'medium' else self.tile_size)
                     
-                    # Check if building is in visible area
+                    # Check if building is in visible area (with buffer for larger buildings)
                     if ((visible_left - 3) * self.tile_size <= x <= visible_right * self.tile_size and
                         (visible_top - 3) * self.tile_size <= y <= visible_bottom * self.tile_size):
-                        
-                        # Create highlight effect
-                        highlight_color = (0, 255, 0, 100) if highlight_id == home_id else (255, 0, 0, 100)
-                        highlight_surface = pygame.Surface((building_size, building_size), pygame.SRCALPHA)
-                        highlight_surface.fill(highlight_color)
                         
                         # Render the building texture
                         self._find_and_render_building_texture(building, x, y, camera_x, camera_y)
                         
-                        # Draw highlight over building
-                        self.screen.blit(highlight_surface, (x - camera_x, y - camera_y))
-                        
-                        # Draw glow effect around building
-                        glow_size = 4
-                        glow_color = (0, 255, 0) if highlight_id == home_id else (255, 100, 0)
-                        pygame.draw.rect(self.screen, glow_color, 
-                                    (x - camera_x - glow_size, y - camera_y - glow_size, 
-                                        building_size + glow_size * 2, building_size + glow_size * 2), 
-                                    glow_size)
-                        
-                        # Draw building type indicator
-                        ui_manager.draw_building_type_indicator(
-                            building, x, y, camera_x, camera_y, self.tile_size)
-                        
-                        # Add "Home" or "Workplace" label
-                        label = "Home" if highlight_id == home_id else "Workplace"
-                        label_color = (0, 255, 0) if highlight_id == home_id else (255, 100, 0)
-                        font = pygame.font.SysFont(None, 24)
-                        label_text = font.render(label, True, label_color)
-                        
-                        # Position label above building
-                        label_x = x - camera_x + building_size // 2 - label_text.get_width() // 2
-                        label_y = y - camera_y - 25
-                        
-                        # Draw background for label
-                        bg_rect = pygame.Rect(
-                            label_x - 5, label_y - 2, 
-                            label_text.get_width() + 10, label_text.get_height() + 4)
-                        bg_surface = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
-                        bg_surface.fill((0, 0, 0, 150))
-                        self.screen.blit(bg_surface, bg_rect)
-                        
-                        # Draw label
-                        self.screen.blit(label_text, (label_x, label_y))
-
+                        # Draw building type indicator safely
+                        try:
+                            # Create a local proxy function with explicit safety checks
+                            def safe_draw_indicator(building, x, y, camera_x, camera_y, tile_size):
+                                try:
+                                    # Enhanced safety check
+                                    if not pygame.display.get_init() or self.screen is None:
+                                        return
+                                        
+                                    ui_manager.draw_building_type_indicator(
+                                        building, x, y, camera_x, camera_y, tile_size)
+                                except Exception as e:
+                                    print(f"Indicator draw error: {e}")
+                                    
+                            safe_draw_indicator(building, x, y, camera_x, camera_y, self.tile_size)
+                        except Exception as e:
+                            print(f"Error with building indicator for building {building_index}: {e}")
+                except Exception as e:
+                    print(f"Error rendering building {building_index}: {e}")
+            
+            # Second pass: draw highlighted buildings if a villager is selected
+            if selected_villager:
+                try:
+                    # Draw highlighted buildings
+                    for highlight_id in [home_id, workplace_id]:
+                        if highlight_id is not None and 0 <= highlight_id < len(village_data['buildings']):
+                            building = village_data['buildings'][highlight_id]
+                            x, y = building['position']
+                            building_size = self.tile_size * 3 if building['size'] == 'large' else (
+                                        self.tile_size * 2 if building['size'] == 'medium' else self.tile_size)
+                            
+                            # Check if building is in visible area
+                            if ((visible_left - 3) * self.tile_size <= x <= visible_right * self.tile_size and
+                                (visible_top - 3) * self.tile_size <= y <= visible_bottom * self.tile_size):
+                                
+                                # Create highlight effect
+                                highlight_color = (0, 255, 0, 100) if highlight_id == home_id else (255, 0, 0, 100)
+                                highlight_surface = pygame.Surface((building_size, building_size), pygame.SRCALPHA)
+                                highlight_surface.fill(highlight_color)
+                                
+                                # Render the building texture safely
+                                try:
+                                    self._find_and_render_building_texture(building, x, y, camera_x, camera_y)
+                                except Exception as e:
+                                    print(f"Error rendering highlight building texture: {e}")
+                                
+                                # Draw highlight over building safely
+                                try:
+                                    if self.screen:
+                                        self.screen.blit(highlight_surface, (x - camera_x, y - camera_y))
+                                except Exception as e:
+                                    print(f"Error drawing highlight: {e}")
+                                
+                                # Draw glow effect around building safely
+                                try:
+                                    if self.screen:
+                                        glow_size = 4
+                                        glow_color = (0, 255, 0) if highlight_id == home_id else (255, 100, 0)
+                                        pygame.draw.rect(self.screen, glow_color, 
+                                                    (x - camera_x - glow_size, y - camera_y - glow_size, 
+                                                        building_size + glow_size * 2, building_size + glow_size * 2), 
+                                                    glow_size)
+                                except Exception as e:
+                                    print(f"Error drawing glow: {e}")
+                                
+                                # Draw building type indicator safely
+                                try:
+                                    ui_manager.draw_building_type_indicator(
+                                        building, x, y, camera_x, camera_y, self.tile_size)
+                                except Exception as e:
+                                    print(f"Error drawing indicator for highlight: {e}")
+                                
+                                # Add "Home" or "Workplace" label safely
+                                try:
+                                    label = "Home" if highlight_id == home_id else "Workplace"
+                                    label_color = (0, 255, 0) if highlight_id == home_id else (255, 100, 0)
+                                    font = pygame.font.SysFont(None, 24)
+                                    label_text = font.render(label, True, label_color)
+                                    
+                                    # Position label above building
+                                    label_x = x - camera_x + building_size // 2 - label_text.get_width() // 2
+                                    label_y = y - camera_y - 25
+                                    
+                                    # Draw background for label
+                                    bg_rect = pygame.Rect(
+                                        label_x - 5, label_y - 2, 
+                                        label_text.get_width() + 10, label_text.get_height() + 4)
+                                    bg_surface = pygame.Surface((bg_rect.width, bg_rect.height), pygame.SRCALPHA)
+                                    bg_surface.fill((0, 0, 0, 150))
+                                    
+                                    if self.screen:
+                                        self.screen.blit(bg_surface, bg_rect)
+                                        self.screen.blit(label_text, (label_x, label_y))
+                                except Exception as e:
+                                    print(f"Error drawing label: {e}")
+                except Exception as e:
+                    print(f"Error in highlight rendering: {e}")
+        except Exception as e:
+            print(f"Error in _render_buildings: {e}")
+            import traceback
+            traceback.print_exc()
 
     def _find_and_render_building_texture(self, building, x, y, camera_x, camera_y):
         """Helper method to find and render the appropriate building texture.

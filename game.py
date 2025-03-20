@@ -88,9 +88,17 @@ def main():
         
         # Update game state
         game.update()
-        
-        # Render
-        game.render()
+
+        try:
+            # Render
+            game.render()
+        except pygame.error as e:
+            if "display Surface quit" in str(e):
+                print("Warning: Display surface quit during rendering - attempting recovery")
+                # Let the next frame try again with the new surface
+                pygame.time.delay(100)  # Short delay
+            else:
+                raise  # Re-raise other pygame errors
         
         # Cap the frame rate
         game.clock.tick(game.fps)

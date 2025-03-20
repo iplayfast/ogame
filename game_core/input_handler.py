@@ -1,6 +1,8 @@
 """
 Input Handler - Processes all user input and events
 """
+import traceback
+import sys
 import pygame
 from ui import Interface
 
@@ -77,29 +79,36 @@ class InputHandler:
             event: The pygame VIDEORESIZE event
         """
         # Store old screen size for Interface notification
-        old_screen_size = (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+        old_screen_width = self.game_state.SCREEN_WIDTH
+        old_screen_height = self.game_state.SCREEN_HEIGHT
+        old_screen_size = (old_screen_width, old_screen_height)
         
-        # Update screen size
-        self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT = event.size
-        
-        # Create new resizable window with the updated dimensions
-        self.game_state.screen = pygame.display.set_mode(
-            (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
-            pygame.RESIZABLE
-        )
-        
-        # Update UI components for new screen size
-        self.update_ui_for_resize()
-        
-        # Adjust camera bounds based on new screen size
-        self._adjust_camera_after_resize()
-        
-        # Notify Interface about screen resize
-        if hasattr(Interface, 'on_screen_resized'):
-            Interface.on_screen_resized(old_screen_size, event.size)
-        
-        print(f"Screen resized to: {self.game_state.SCREEN_WIDTH}x{self.game_state.SCREEN_HEIGHT}")
+        # Only apply resize if dimensions actually changed significantly
+        # This prevents issues with single-pixel resizing
+        if (abs(event.size[0] - old_screen_width) > 1 or 
+            abs(event.size[1] - old_screen_height) > 1):
+
+            # Update screen size
+            self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT = event.size
             
+            # Create new resizable window with the updated dimensions
+            self.game_state.screen = pygame.display.set_mode(
+                (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
+                pygame.RESIZABLE
+            )
+            
+            # Update UI components for new screen size
+            self.update_ui_for_resize()
+            
+            # Adjust camera bounds based on new screen size
+            self._adjust_camera_after_resize()
+            
+            # Notify Interface about screen resize
+            if hasattr(Interface, 'on_screen_resized'):
+                Interface.on_screen_resized(old_screen_size, event.size)
+            
+            print(f"Screen resized to: {self.game_state.SCREEN_WIDTH}x{self.game_state.SCREEN_HEIGHT}")
+
     def update_ui_for_resize(self):
         """Update UI components when screen is resized."""
         # Update console dimensions
@@ -118,11 +127,24 @@ class InputHandler:
         if hasattr(self.game_state, 'housing_ui'):
             self.game_state.housing_ui.screen_width = self.game_state.SCREEN_WIDTH
             self.game_state.housing_ui.screen_height = self.game_state.SCREEN_HEIGHT
-            
-        # Update renderer if it has a viewport update method
-        if hasattr(self.game_state, 'renderer') and hasattr(self.game_state.renderer, 'update_viewport'):
-            self.game_state.renderer.update_viewport(self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+                
+        # Update renderer viewport if it has a viewport update method
+        if hasattr(self.game_state, 'renderer'):
+            if hasattr(self.game_state.renderer, 'update_viewport'):
+                self.game_state.renderer.update_viewport(self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+            else:
+                # Fallback for renderers without the update_viewport method
+                self.game_state.renderer.screen_width = self.game_state.SCREEN_WIDTH
+                self.game_state.renderer.screen_height = self.game_state.SCREEN_HEIGHT
         
+        # Ensure renderer has the current screen reference
+        for component in ['renderer', 'ui_manager', 'console_manager', 'housing_ui']:
+            if hasattr(self.game_state, component):
+                component_obj = getattr(self.game_state, component)
+                if hasattr(component_obj, 'screen'):
+                    component_obj.screen = self.game_state.screen
+
+
     def _handle_key_press(self, event):
         """Handle keyboard key press events.
         
@@ -168,41 +190,193 @@ class InputHandler:
                 print(f"Building interiors {'enabled' if state else 'disabled'}")
                 # Notify through Interface
                 Interface.on_ui_panel_toggled("building_interiors", state)
+
     
     def _toggle_fullscreen(self):
-        """Toggle between fullscreen and windowed mode."""
-        # Store current mode
-        is_fullscreen = bool(pygame.display.get_surface().get_flags() & pygame.FULLSCREEN)
+        """Toggle fullscreen with safer multi-frame skipping."""
+        # Store current state
+        was_fullscreen = bool(pygame.display.get_surface().get_flags() & pygame.FULLSCREEN)
         
-        if is_fullscreen:
-            # Switch to windowed mode
-            self.game_state.screen = pygame.display.set_mode(
-                (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
-                pygame.RESIZABLE
-            )
-            print("Switched to windowed mode")
+        # Store dimensions
+        if not hasattr(self.game_state, '_windowed_size'):
+            self.game_state._windowed_size = (1280, 720)
+        
+        # Determine target settings
+        if was_fullscreen:
+            # Going to windowed mode
+            target_width, target_height = self.game_state._windowed_size
+            target_flags = pygame.RESIZABLE
         else:
-            # Get current screen info
-            screen_info = pygame.display.Info()
-            full_width, full_height = screen_info.current_w, screen_info.current_h
+            # Going to fullscreen
+            self.game_state._windowed_size = (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+            info = pygame.display.Info()
+            target_width, target_height = info.current_w, info.current_h
+            target_flags = pygame.FULLSCREEN
+        
+        print(f"Toggle fullscreen: {was_fullscreen} -> {not was_fullscreen}")
+        
+        # Set up multi-frame skipping
+        self.game_state.frame_skip_count = 3  # Skip next 3 render frames
+        
+        try:
+            # Special recovery section to ONLY handle display change, nothing else
+            # This isolates the display change from other operations
+            pygame.display.quit()
+            pygame.time.delay(200)  # Delay for clean shutdown
             
-            # Switch to fullscreen mode
-            self.game_state.screen = pygame.display.set_mode(
-                (full_width, full_height), 
-                pygame.FULLSCREEN
+            pygame.display.init()
+            pygame.time.delay(200)  # Delay after init
+            
+            # Create new display with minimal operations
+            new_screen = pygame.display.set_mode(
+                (target_width, target_height), 
+                target_flags, 
+                32
             )
+            pygame.display.set_caption("Village Simulation")
             
-            # Update internal screen dimensions
-            self.game_state.SCREEN_WIDTH = full_width
-            self.game_state.SCREEN_HEIGHT = full_height
+            # Only update the most essential screen references
+            # Leave the detailed UI updates for after frame skipping
+            self.game_state.screen = new_screen
+            self.game_state.SCREEN_WIDTH = target_width
+            self.game_state.SCREEN_HEIGHT = target_height
             
-            # Update UI components for new screen size
-            self.update_ui_for_resize()
+            # Clear the event queue
+            pygame.event.clear()
             
-            # Adjust camera bounds
-            self._adjust_camera_after_resize()
+            print(f"Display mode changed to {target_width}x{target_height}")
+            print(f"Will skip next {self.game_state.frame_skip_count} frames for stability")
             
-            print(f"Switched to fullscreen mode: {full_width}x{full_height}")
+        except Exception as e:
+            print(f"ERROR during display toggle: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # Only attempt basic recovery
+            try:
+                pygame.quit()
+                pygame.init()
+                recovery_screen = pygame.display.set_mode((1280, 720), pygame.RESIZABLE)
+                self.game_state.screen = recovery_screen
+                self.game_state.SCREEN_WIDTH = 1280
+                self.game_state.SCREEN_HEIGHT = 720
+                print("RECOVERY: Reset to 1280x720 windowed mode")
+            except Exception as e2:
+                print(f"CRITICAL: Recovery failed: {e2}")
+
+    def _add_drawing_safety_wrapper(self):
+        """Add a safety wrapper to UI manager's drawing functions to check surface validity."""
+        # Specifically target the circle drawing function that's causing issues
+        if hasattr(self.game_state, 'ui_manager'):
+            ui_manager = self.game_state.ui_manager
+            
+            # Store original drawing function
+            if not hasattr(ui_manager, '_original_draw_building_type_indicator'):
+                ui_manager._original_draw_building_type_indicator = ui_manager.draw_building_type_indicator
+            
+            # Create safer version with surface check
+            def safe_draw_building_type_indicator(building, x, y, camera_x, camera_y, tile_size):
+                try:
+                    # Ensure screen is valid
+                    if ui_manager.screen is None or not pygame.display.get_surface():
+                        ui_manager.screen = pygame.display.get_surface()
+                        if ui_manager.screen is None:
+                            print("Skipping building indicator draw - no valid surface")
+                            return
+                    
+                    # Check bit depth - if invalid, update reference
+                    if ui_manager.screen.get_bitsize() > 32:  # Invalid bit depth
+                        print(f"Invalid bit depth detected: {ui_manager.screen.get_bitsize()}, updating reference")
+                        ui_manager.screen = pygame.display.get_surface()
+                    
+                    # Now call original with validated surface
+                    ui_manager._original_draw_building_type_indicator(building, x, y, camera_x, camera_y, tile_size)
+                except Exception as e:
+                    print(f"Error in building indicator draw: {e}")
+            
+            # Replace the function
+            ui_manager.draw_building_type_indicator = safe_draw_building_type_indicator
+
+    def _patch_render_for_safe_surface(self):
+        """Patch the render method to safely handle surface quits during mode change."""
+        # Store original render method
+        if not hasattr(self.game_state.render_manager, '_original_render'):
+            self.game_state.render_manager._original_render = self.game_state.render_manager.render
+        
+        # Create a safe version that checks for valid surface
+        def safe_render():
+            try:
+                # Check if display is initialized and surface exists
+                if pygame.get_init() and pygame.display.get_surface():
+                    # Call original render
+                    self.game_state.render_manager._original_render()
+                else:
+                    print("Skipping render - display not initialized")
+            except Exception as e:
+                print(f"Error in safe_render: {e}")
+        
+        # Replace the render method
+        self.game_state.render_manager.render = safe_render
+
+    def _patch_render_for_surface_check(self):
+        """Patch renderer to check surface validity before each rendering operation."""
+        # First, fix the main renderer class to check surface validity
+        original_render_village = self.game_state.renderer.render_village
+        
+        def safe_render_village(*args, **kwargs):
+            try:
+                # Check if surface is valid before using
+                if not pygame.display.get_init() or not pygame.display.get_surface():
+                    print("Skipping render - display not available")
+                    return
+                    
+                # Extra safety - update screen reference
+                self.game_state.renderer.screen = pygame.display.get_surface()
+                
+                # Now call the original render
+                return original_render_village(*args, **kwargs)
+            except pygame.error as e:
+                if "display Surface quit" in str(e):
+                    print("Surface quit detected - skipping render cycle")
+                else:
+                    print(f"Render error: {e}")
+            except Exception as e:
+                print(f"Unexpected render error: {e}")
+        
+        # Replace the render method
+        self.game_state.renderer.render_village = safe_render_village
+
+    def _update_screen_references(self, new_screen):
+        """Update all screen references throughout the application."""
+        # Core components
+        if hasattr(self.game_state, 'renderer'):
+            self.game_state.renderer.screen = new_screen
+        
+        if hasattr(self.game_state, 'ui_manager'):
+            self.game_state.ui_manager.screen = new_screen
+        
+        if hasattr(self.game_state, 'console_manager'):
+            self.game_state.console_manager.screen = new_screen
+        
+        if hasattr(self.game_state, 'housing_ui'):
+            self.game_state.housing_ui.screen = new_screen
+
+    def _reload_critical_assets(self):
+        """Reload any critical assets that might be tied to the screen surface."""
+        # This might include UI elements, overlays, etc.
+        # For now, focus on the essential renderer components
+        
+        if hasattr(self.game_state, 'renderer'):
+            # Reset any renderer-specific surfaces
+            renderer = self.game_state.renderer
+            
+            # If renderer has overlay surface, recreate it
+            if hasattr(renderer, 'overlay_surface'):
+                renderer.overlay_surface = pygame.Surface(
+                    (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT), 
+                    pygame.SRCALPHA
+                )
+
 
     def handle_input(self):
         """Handle continuous keyboard input for camera movement."""
@@ -283,13 +457,29 @@ class InputHandler:
         return False
     
     def _adjust_camera_after_resize(self):
-        """Adjust camera boundaries after screen resize."""
-        # Ensure camera stays within village bounds
-        self.game_state.camera_x = max(0, min(self.game_state.camera_x, 
-                                self.game_state.village_data['size'] - self.game_state.SCREEN_WIDTH))
-        self.game_state.camera_y = max(0, min(self.game_state.camera_y, 
-                                self.game_state.village_data['size'] - self.game_state.SCREEN_HEIGHT))
+        """Adjust camera boundaries after screen resize to ensure view stays centered."""
+        # Calculate camera movement to keep the view centered after resize
+        # This helps maintain focus on the area being viewed when resizing
         
+        # Get village size
+        village_size = self.game_state.village_data['size']
+        
+        # Calculate old center position
+        old_center_x = self.game_state.camera_x + self.game_state.SCREEN_WIDTH // 2
+        old_center_y = self.game_state.camera_y + self.game_state.SCREEN_HEIGHT // 2
+        
+        # Calculate new camera position based on old center
+        new_camera_x = old_center_x - self.game_state.SCREEN_WIDTH // 2
+        new_camera_y = old_center_y - self.game_state.SCREEN_HEIGHT // 2
+        
+        # Ensure camera stays within village bounds
+        self.game_state.camera_x = max(0, min(new_camera_x, 
+                                village_size - self.game_state.SCREEN_WIDTH))
+        self.game_state.camera_y = max(0, min(new_camera_y, 
+                                village_size - self.game_state.SCREEN_HEIGHT))
+        
+        print(f"Camera adjusted to {self.game_state.camera_x}, {self.game_state.camera_y}")
+
     def _check_villager_click(self, world_x, world_y):
         """Check if the click is on a villager and select it if so.
         
