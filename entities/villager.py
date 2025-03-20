@@ -2,6 +2,8 @@ import pygame
 import random
 import math
 import utils
+import heapq
+
 from ui import Interface
 from systems.activity_system import ActivitySystem
 from village.village_generator import initialize_village_grid
@@ -332,17 +334,21 @@ class Villager(pygame.sprite.Sprite):
 
         # Always clear destination during sleep
         self.destination = None
-
     def handle_activity_movement(self, village_data, dt, current_hour):
-        """Handle movement based on current activity and time of day."""
+        """Handle movement based on current activity and time of day.
+        
+        Args:
+            village_data: Village data dictionary containing terrain info
+            dt: Delta time in milliseconds
+            current_hour: Current hour (0-24)
+        """
         # Handle sleep behavior at night
         if "Sleeping" in self.current_activity and hasattr(self, 'home') and self.home:
             # Stay at home position during sleep
             home_pos = self.home.get('position')
-            if home_pos:
-                # Gradually move closer to bed position (slightly offset from home center)
-                bed_x = home_pos[0] + self.TILE_SIZE // 2
-                bed_y = home_pos[1] + self.TILE_SIZE // 2
+            if home_pos and hasattr(self, 'bed_position') and self.bed_position:
+                # Use bed position as destination
+                bed_x, bed_y = self.bed_position
                 
                 # If not at bed, move toward it
                 dx = bed_x - self.position.x
@@ -356,6 +362,11 @@ class Villager(pygame.sprite.Sprite):
                     
                     self.position.x += move_x
                     self.position.y += move_y
+                else:
+                    # Occasionally make small movements to simulate restless sleep
+                    if random.random() < 0.01:  # 1% chance per update
+                        self.position.x += random.uniform(-0.5, 0.5)
+                        self.position.y += random.uniform(-0.5, 0.5)
                     
                 # Always clear destination during sleep
                 self.destination = None
@@ -384,9 +395,7 @@ class Villager(pygame.sprite.Sprite):
                     self.current_path_index = 0
         
         # Handle "heading home" or evening activities
-        if ("home" in self.current_activity.lower() and 
-            hasattr(self, 'home') and self.home):
-            
+        if "home" in self.current_activity.lower() and hasattr(self, 'home') and self.home:
             home_pos = self.home.get('position')
             if home_pos and (not self.destination or random.random() < 0.1):
                 offset_x = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
@@ -400,8 +409,10 @@ class Villager(pygame.sprite.Sprite):
                 self.path = self.calculate_path(start_pos, self.destination, village_data)
                 self.current_path_index = 0
         
-        # Follow the path if we have one
-        if hasattr(self, 'path') and self.path and len(self.path) > 0 and hasattr(self, 'current_path_index'):
+        # Follow the path if we have one and we're not sleeping
+        if (not self.is_sleeping and hasattr(self, 'path') and self.path and 
+            len(self.path) > 0 and hasattr(self, 'current_path_index')):
+            
             # Skip if we're at the end of the path
             if self.current_path_index >= len(self.path):
                 self.destination = None
@@ -436,37 +447,138 @@ class Villager(pygame.sprite.Sprite):
                 self.rect.centerx = int(self.position.x)
                 self.rect.centery = int(self.position.y)
         else:
-            # Regular movement handling (direct path to destination)
+            # Regular movement handling (find new destination if needed)
             if self.destination is None or self.idle_timer > 0:
                 # If no destination or idle, handle idle timer
                 if self.idle_timer > 0:
                     self.idle_timer -= dt
                 else:
-                    # Find new destination
+                    # Find new destination based on activity
                     self.find_new_destination(village_data)
                     self.idle_timer = 0
             else:
-                # No path available, move directly to destination
-                dx = self.destination[0] - self.position.x
-                dy = self.destination[1] - self.position.y
-                distance = math.sqrt(dx*dx + dy*dy)
+                # Make sure we have a path to the destination
+                if not hasattr(self, 'path') or not self.path or len(self.path) == 0:
+                    start_pos = (self.position.x, self.position.y)
+                    self.path = self.calculate_path(start_pos, self.destination, village_data)
+                    self.current_path_index = 0
+
+    def find_new_destination(self, village_data):
+        """Find a new destination for the villager and calculate a path to it.
+        
+        Args:
+            village_data: Village data containing terrain and path information
+        """
+        # Before choosing a destination, update the pathfinding grid
+        if hasattr(self, 'update_pathfinding_grid'):
+            self.update_pathfinding_grid(village_data)
+        
+        # Check for home or workplace based on activity
+        if hasattr(self, 'home') and self.home and "home" in self.current_activity.lower():
+            # Go home if activity involves home
+            home_pos = self.home['position']
+            offset_x = random.randint(-self.TILE_SIZE//2, self.TILE_SIZE//2)
+            offset_y = random.randint(-self.TILE_SIZE//2, self.TILE_SIZE//2)
+            self.destination = (
+                home_pos[0] + offset_x,
+                home_pos[1] + offset_y
+            )
+        elif hasattr(self, 'workplace') and self.workplace and "Working" in self.current_activity:
+            # Go to workplace if working
+            workplace_pos = self.workplace['position']
+            offset_x = random.randint(-self.TILE_SIZE//2, self.TILE_SIZE//2)
+            offset_y = random.randint(-self.TILE_SIZE//2, self.TILE_SIZE//2)
+            self.destination = (
+                workplace_pos[0] + offset_x,
+                workplace_pos[1] + offset_y
+            )
+        else:
+            # Random destination, with preference for paths
+            if random.random() < self.path_preference and village_data['paths']:
+                # Choose random path - preferences paths for movement
+                possible_paths = random.sample(village_data['paths'], min(5, len(village_data['paths'])))
                 
-                if distance < 2:  # Close enough to destination
-                    self.position.x = self.destination[0]
-                    self.position.y = self.destination[1]
-                    self.destination = None
-                    self.idle_timer = random.randint(2000, 5000)  # Idle for 2-5 seconds
+                # Try to find a path not too far away
+                current_pos = (self.position.x, self.position.y)
+                
+                # Sort by distance (closer paths first)
+                sorted_paths = sorted(possible_paths, 
+                                key=lambda p: ((p['position'][0] - current_pos[0])**2 + 
+                                            (p['position'][1] - current_pos[1])**2))
+                
+                # Choose one of the closer paths (with some randomness)
+                path_index = min(int(random.expovariate(0.5)), len(sorted_paths) - 1)
+                chosen_path = sorted_paths[path_index]
+                
+                self.destination = chosen_path['position']
+            elif random.random() < 0.6 and village_data['buildings']:
+                # Head to a random building (not too far away)
+                closest_buildings = []
+                for building in village_data['buildings']:
+                    dist = ((building['position'][0] - self.position.x)**2 + 
+                        (building['position'][1] - self.position.y)**2)**0.5
+                    if dist < village_data['size'] // 2:  # Limit to reasonably close buildings
+                        closest_buildings.append((building, dist))
+                
+                if closest_buildings:
+                    # Sort by distance
+                    closest_buildings.sort(key=lambda x: x[1])
+                    # Choose one of the closer buildings
+                    building_index = min(int(random.expovariate(0.5)), len(closest_buildings) - 1)
+                    building = closest_buildings[building_index][0]
+                    
+                    # Try to find the door
+                    door_found = False
+                    for point in village_data.get('interaction_points', []):
+                        if point.get('type') == 'door' and point.get('building_id') == village_data['buildings'].index(building):
+                            self.destination = point['position']
+                            door_found = True
+                            break
+                    
+                    if not door_found:
+                        # No door found, just go near the building
+                        offset_x = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                        offset_y = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                        self.destination = (
+                            building['position'][0] + offset_x,
+                            building['position'][1] + offset_y
+                        )
                 else:
-                    # Move toward destination
-                    move_x = dx / distance * self.speed * (dt / 16.67)
-                    move_y = dy / distance * self.speed * (dt / 16.67)
+                    # No close buildings, choose a random position
+                    padding = self.TILE_SIZE * 3
+                    self.destination = (
+                        random.randint(padding, village_data['size'] - padding),
+                        random.randint(padding, village_data['size'] - padding)
+                    )
+            else:
+                # Head to a random position (but keep within village borders and not in water)
+                padding = self.TILE_SIZE * 3
+                
+                # Try up to 10 times to find a valid position not in water
+                for _ in range(10):
+                    dest_x = random.randint(padding, village_data['size'] - padding)
+                    dest_y = random.randint(padding, village_data['size'] - padding)
                     
-                    self.position.x += move_x
-                    self.position.y += move_y
-                    
-                    # Update rect position
-                    self.rect.centerx = int(self.position.x)
-                    self.rect.centery = int(self.position.y)
+                    # Check if this position is in water
+                    if (dest_x, dest_y) not in village_data.get('water_positions', set()):
+                        self.destination = (dest_x, dest_y)
+                        break
+                else:
+                    # If all attempts failed, just use current position
+                    self.destination = (self.position.x, self.position.y)
+        
+        # Calculate path to the destination using A* pathfinding
+        start_pos = (self.position.x, self.position.y)
+        self.path = self.calculate_path(start_pos, self.destination, village_data)
+        
+        # Reset path index
+        self.current_path_index = 0
+        
+        # Debug output for selected villager
+        if self.is_selected:
+            print(f"Found new destination for {self.name}: {self.destination}")
+            print(f"Calculated path with {len(self.path)} waypoints")
+    
     def update(self, village_data, current_time, assets, time_manager=None):
         """Update method that respects manual sleep state overrides."""
         # Store current state for change detection
@@ -842,68 +954,16 @@ class Villager(pygame.sprite.Sprite):
             # Initialize path cache if it doesn't exist
             village_data['path_cache'] = {}
         
-        # Use the existing village grid if available
+        # Initialize or update the village grid if needed
         if 'village_grid' not in village_data:
-            # If grid doesn't exist yet, request initialization
-            print("Village grid not found. Initializing grid for pathfinding...")
+            from village.village_generator import initialize_village_grid
             initialize_village_grid(village_data, self.TILE_SIZE)
         
-        # Update furniture information in the grid
-        # This needs to be done here because furniture is part of the interior system
-        # which may be initialized after the village grid
-        if 'furniture_updated' not in village_data:
-            grid = village_data['village_grid']
-            grid_size = len(grid[0])
-            
-            # Add furniture (impassable) from building interiors
-            for i, building in enumerate(village_data['buildings']):
-                pos = building['position']
-                size_name = building['size']
-                
-                # Determine building size in tiles
-                size_multiplier = 3 if size_name == 'large' else (
-                                2 if size_name == 'medium' else 1)
-                size_tiles = size_multiplier
-                
-                # Find interior_manager (could be in village_data or in game_state)
-                interior_manager = None
-                if hasattr(village_data, 'interior_manager'):
-                    interior_manager = village_data.interior_manager
-                elif 'game_state' in village_data and hasattr(village_data['game_state'], 'interior_manager'):
-                    interior_manager = village_data['game_state'].interior_manager
-                
-                # Add furniture from interiors
-                if interior_manager and hasattr(interior_manager, 'interiors') and i in interior_manager.interiors:
-                    for furniture in interior_manager.interiors[i]['furniture']:
-                        rect = furniture['rect']
-                        # Convert furniture rect to grid coordinates
-                        furn_left = (rect.left) // self.TILE_SIZE
-                        furn_top = (rect.top) // self.TILE_SIZE
-                        furn_right = (rect.right + self.TILE_SIZE - 1) // self.TILE_SIZE
-                        furn_bottom = (rect.bottom + self.TILE_SIZE - 1) // self.TILE_SIZE
-                        
-                        # Mark furniture in grid
-                        for grid_x in range(furn_left, furn_right):
-                            for grid_y in range(furn_top, furn_bottom):
-                                if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
-                                    # Special case for beds - allow walking on them for sleeping
-                                    is_bed = furniture['type'] == 'bed'
-                                    grid[grid_y][grid_x] = {
-                                        'type': 'furniture',
-                                        'furniture_type': furniture['type'],
-                                        'building_id': i,
-                                        'passable': is_bed,  # Beds are passable for sleeping
-                                        'preferred': False
-                                    }
-            
-            # Mark as updated
-            village_data['furniture_updated'] = True
-        
         # Get the village grid
-        village_grid = village_data['village_grid']
-        grid_size = len(village_grid[0])
+        grid = village_data['village_grid']
+        grid_size = len(grid[0])
         
-        # Define function to check if a position is valid using the grid
+        # Define function to check if a position is valid
         def is_valid_position(pos):
             x, y = pos
             
@@ -911,39 +971,44 @@ class Villager(pygame.sprite.Sprite):
             if x < 0 or x >= grid_size or y < 0 or y >= grid_size:
                 return False
             
-            # Check if cell is passable in our grid
-            cell = village_grid[y][x]
-            return cell.get('passable', True)
+            # Check if cell is passable
+            if 0 <= y < len(grid) and 0 <= x < len(grid[0]):
+                cell = grid[y][x]
+                return cell.get('passable', True)
+            return False
         
         def get_movement_cost(from_pos, to_pos):
-            """Get the cost to move from one position to another."""
+            """Get the cost to move from one position to another based on terrain."""
             from_x, from_y = from_pos
             to_x, to_y = to_pos
             
-            # Basic cost (1.0 for cardinal moves, 1.414 for diagonal)
+            # Base cost (1.0 for cardinal moves, 1.414 for diagonal)
             is_diagonal = from_x != to_x and from_y != to_y
             base_cost = 1.414 if is_diagonal else 1.0
             
-            # Get cell data
-            cell = village_grid[to_y][to_x]
-            cell_type = cell.get('type', 'empty')
-            
-            # Apply terrain modifiers
-            if cell_type == 'path' or cell.get('preferred', False):
-                # Reduce cost for paths based on villager's path preference
-                return base_cost * (1.0 - self.path_preference)
-            elif cell_type == 'building':
-                # Slight reduction for building floors
-                return base_cost * 0.9
-            elif cell_type == 'terrain' and cell.get('terrain_type') == 'grass':
-                # Different costs for grass variants
-                variant = cell.get('variant', 1)
-                if variant == 1:  # Normal grass
-                    return base_cost
-                elif variant == 2:  # Grass near water - slightly avoid
-                    return base_cost * 1.2
-                elif variant == 3:  # Grass near building entrances - prefer
-                    return base_cost * 0.8
+            # Get cell data for destination
+            if 0 <= to_y < len(grid) and 0 <= to_x < len(grid[0]):
+                cell = grid[to_y][to_x]
+                cell_type = cell.get('type', 'empty')
+                
+                # Prefer paths (reduced cost)
+                if cell_type == 'path' or cell.get('preferred', False):
+                    return base_cost * (1.0 - self.path_preference)
+                # Slight reduction for building interiors
+                elif cell_type == 'building' and cell.get('passable', False):
+                    return base_cost * 0.9
+                # Increase cost for terrain types (less preferred than paths)
+                elif cell_type == 'terrain':
+                    terrain_type = cell.get('terrain_type', '')
+                    if terrain_type == 'grass':
+                        # Different costs for grass variants
+                        variant = cell.get('variant', 1)
+                        if variant == 1:  # Normal grass
+                            return base_cost
+                        elif variant == 2:  # Grass near water - slightly avoid
+                            return base_cost * 1.2
+                        elif variant == 3:  # Grass near building entrances - prefer
+                            return base_cost * 0.8
             
             # Default cost
             return base_cost
@@ -953,10 +1018,7 @@ class Villager(pygame.sprite.Sprite):
             # Manhattan distance
             return abs(pos[0] - goal[0]) + abs(pos[1] - goal[1])
         
-        # Use A* pathfinding
-        import heapq
-        
-        # Initialize search variables
+        # A* pathfinding
         open_set = []
         heapq.heappush(open_set, (0, start_grid))
         came_from = {}
@@ -1011,14 +1073,12 @@ class Villager(pygame.sprite.Sprite):
             for dx, dy in directions:
                 neighbor = (current[0] + dx, current[1] + dy)
                 
-                # Skip invalid positions
+                # Skip if not valid
                 if not is_valid_position(neighbor):
                     continue
                 
                 # Calculate movement cost based on terrain
-                move_cost = get_movement_cost(current, neighbor)
-                
-                tentative_g = g_score[current] + move_cost
+                tentative_g = g_score[current] + get_movement_cost(current, neighbor)
                 
                 if neighbor not in g_score or tentative_g < g_score[neighbor]:
                     # This path is better
@@ -1034,7 +1094,7 @@ class Villager(pygame.sprite.Sprite):
         if self.is_selected:
             print(f"A* failed to find path for {self.name} after {iterations} iterations. Using fallback.")
         
-        # Fallback: Try simple direct path with water avoidance
+        # Fallback: Create a simple direct path with water avoidance
         direct_path = []
         current_pos = start_grid
         direct_path.append((
@@ -1051,7 +1111,7 @@ class Villager(pygame.sprite.Sprite):
             for dx, dy in directions:
                 next_pos = (current_pos[0] + dx, current_pos[1] + dy)
                 
-                # Skip invalid positions
+                # Skip if not valid
                 if not is_valid_position(next_pos):
                     continue
                 
@@ -1089,6 +1149,160 @@ class Villager(pygame.sprite.Sprite):
         
         return direct_path
 
+    def update_pathfinding_grid(self, village_data):
+        """Create and update a grid representation of the village for efficient pathfinding.
+        
+        Args:
+            village_data: Village data dictionary
+        """
+        # Calculate grid size
+        grid_size = village_data['size'] // self.TILE_SIZE
+        
+        # Initialize the grid with empty passable cells
+        grid = [[{'type': 'empty', 'passable': True, 'preferred': False} 
+                for _ in range(grid_size)] for _ in range(grid_size)]
+        
+        # Add terrain (grass, etc.)
+        for pos, terrain_data in village_data.get('terrain', {}).items():
+            x, y = pos
+            grid_x, grid_y = x // self.TILE_SIZE, y // self.TILE_SIZE
+            
+            if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                grid[grid_y][grid_x] = {
+                    'type': 'terrain',
+                    'terrain_type': terrain_data['type'],
+                    'variant': terrain_data.get('variant', 1),
+                    'passable': True,
+                    'preferred': False
+                }
+        
+        # Add water (impassable)
+        for water in village_data.get('water', []):
+            x, y = water['position']
+            grid_x, grid_y = x // self.TILE_SIZE, y // self.TILE_SIZE
+            
+            if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                grid[grid_y][grid_x] = {
+                    'type': 'water',
+                    'passable': False,
+                    'preferred': False
+                }
+        
+        # Add bridges (passable, preferred)
+        for bridge in village_data.get('bridges', []):
+            x, y = bridge['position']
+            grid_x, grid_y = x // self.TILE_SIZE, y // self.TILE_SIZE
+            
+            if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                grid[grid_y][grid_x] = {
+                    'type': 'bridge',
+                    'bridge_type': bridge.get('type', 'bridge'),
+                    'passable': True,
+                    'preferred': True
+                }
+        
+        # Add paths (passable, preferred)
+        for path in village_data.get('paths', []):
+            x, y = path['position']
+            grid_x, grid_y = x // self.TILE_SIZE, y // self.TILE_SIZE
+            
+            if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                grid[grid_y][grid_x] = {
+                    'type': 'path',
+                    'variant': path.get('variant', 1),
+                    'passable': True,
+                    'preferred': True
+                }
+        
+        # Add buildings (generally impassable)
+        for i, building in enumerate(village_data.get('buildings', [])):
+            pos = building['position']
+            size_name = building['size']
+            
+            # Determine building size in tiles
+            size_multiplier = 3 if size_name == 'large' else (
+                            2 if size_name == 'medium' else 1)
+            size_tiles = size_multiplier
+            
+            # Add building footprint to grid
+            for dx in range(size_tiles):
+                for dy in range(size_tiles):
+                    pos_x, pos_y = pos
+                    grid_x = (pos_x // self.TILE_SIZE) + dx
+                    grid_y = (pos_y // self.TILE_SIZE) + dy
+                    
+                    if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                        grid[grid_y][grid_x] = {
+                            'type': 'building',
+                            'building_id': i,
+                            'building_type': building.get('building_type', 'Unknown'),
+                            'passable': False,  # Buildings are generally impassable
+                            'preferred': False
+                        }
+        
+        # Add furniture from building interiors
+        if hasattr(village_data, 'interior_manager') or 'game_state' in village_data:
+            interior_manager = None
+            if hasattr(village_data, 'interior_manager'):
+                interior_manager = village_data.interior_manager
+            elif 'game_state' in village_data and hasattr(village_data['game_state'], 'interior_manager'):
+                interior_manager = village_data['game_state'].interior_manager
+                
+            if interior_manager and hasattr(interior_manager, 'interiors'):
+                for building_id, interior in interior_manager.interiors.items():
+                    for furniture in interior.get('furniture', []):
+                        # Skip if furniture doesn't have a rect
+                        if 'rect' not in furniture:
+                            continue
+                            
+                        rect = furniture['rect']
+                        # Convert furniture rect to grid coordinates
+                        furn_left = rect.left // self.TILE_SIZE
+                        furn_top = rect.top // self.TILE_SIZE
+                        furn_right = (rect.right + self.TILE_SIZE - 1) // self.TILE_SIZE
+                        furn_bottom = (rect.bottom + self.TILE_SIZE - 1) // self.TILE_SIZE
+                        
+                        # Mark furniture in grid
+                        for grid_x in range(furn_left, furn_right):
+                            for grid_y in range(furn_top, furn_bottom):
+                                if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                                    # Special case for beds - allow walking on them for sleeping
+                                    is_bed = furniture.get('type') == 'bed'
+                                    grid[grid_y][grid_x] = {
+                                        'type': 'furniture',
+                                        'furniture_type': furniture.get('type', 'generic'),
+                                        'building_id': building_id,
+                                        'passable': is_bed,  # Beds are passable for sleeping
+                                        'preferred': False
+                                    }
+        
+        # Add doors to buildings (passable, preferred)
+        for point in village_data.get('interaction_points', []):
+            if point.get('type') == 'door':
+                x, y = point['position']
+                grid_x, grid_y = x // self.TILE_SIZE, y // self.TILE_SIZE
+                
+                if 0 <= grid_x < grid_size and 0 <= grid_y < grid_size:
+                    grid[grid_y][grid_x] = {
+                        'type': 'door',
+                        'building_id': point.get('building_id'),
+                        'passable': True,
+                        'preferred': True
+                    }
+        
+        # Store the grid in village_data
+        village_data['village_grid'] = grid
+        
+        # Reset path cache when grid changes
+        if hasattr(self, 'path_cache'):
+            self.path_cache = {}
+        if 'path_cache' in village_data:
+            village_data['path_cache'] = {}
+        
+        if hasattr(self, 'pathfinding_grid'):
+            self.pathfinding_grid = grid
+
+    
     def draw_path(self, surface, camera_offset_x, camera_offset_y):
         """Draw the villager's planned path for debugging."""
         if hasattr(self, 'path') and self.path and len(self.path) > 1:
