@@ -41,7 +41,9 @@ class VillageGame:
         # In the __init__ method of VillageGame
 
         self._windowed_size = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
-    
+        self.resize_mode = False
+        self.resize_timer = 0
+        self.resize_timeout = 100
     
         # Initialize screen
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.RESIZABLE)
@@ -148,11 +150,41 @@ class VillageGame:
     def handle_input(self):
         """Delegate input processing to input handler."""
         self.input_handler.handle_input()
-    
-    def update(self):
-        """Delegate game state updates to update manager."""
-        self.update_manager.update()
-    
+        
     def render(self):
         """Delegate rendering to render manager."""
         self.render_manager.render()
+    
+    def update(self):
+        """Delegate game state updates to update manager or handle resize mode."""
+        if self.resize_mode:
+            # In resize mode, we use a different event model
+            # Process events one at a time like in the demo
+            pygame.event.pump()
+            
+            # Check if we have events waiting
+            if pygame.event.peek(pygame.VIDEORESIZE):
+                # Process the resize event
+                event = pygame.event.get(pygame.VIDEORESIZE)[0]
+                self.input_handler._handle_resize_event(event)
+                
+                # Reset the resize timer
+                self.resize_timer = pygame.time.get_ticks()
+            else:
+                # Check if we should exit resize mode
+                current_time = pygame.time.get_ticks()
+                if current_time - self.resize_timer > self.resize_timeout:
+                    self.resize_mode = False
+                    print("Exiting resize mode")
+            
+            # Still process other critical events, but one at a time
+            for event_type in [pygame.QUIT, pygame.KEYDOWN]:
+                if pygame.event.peek(event_type):
+                    event = pygame.event.get(event_type)[0]
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                        self.running = False
+        else:
+            # Normal update when not in resize mode
+            self.update_manager.update()

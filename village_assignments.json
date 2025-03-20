@@ -1,652 +1,634 @@
 {
     "villagers": [
         {
-            "name": "Aiden Ford",
+            "name": "Yara River",
             "job": "Miner",
             "home": {
-                "id": 0,
+                "id": 8,
                 "type": "House",
                 "position": [
-                    2240,
-                    1760
+                    1536,
+                    2496
                 ],
                 "roommates": [
-                    "Aiden Ford",
-                    "Rosa Swift"
+                    "Yara River",
+                    "Eliza Field"
                 ],
-                "name": "Aiden Ford and Rosa Swift's House"
+                "name": "Yara River and Eliza Field's House"
             },
             "daily_activities": [
-                "Travel to mines",
                 "Repair tools",
+                "Dig for ore",
                 "Visit the market",
                 "Sell findings",
-                "Dig for ore",
-                "Collect water from well",
+                "Travel to mines",
                 "Sort materials",
                 "Return home"
             ]
         },
         {
-            "name": "Rosa Swift",
-            "job": "Hunter",
+            "name": "Eliza Field",
+            "job": "Tailor",
             "home": {
-                "id": 0,
+                "id": 8,
                 "type": "House",
                 "position": [
-                    2240,
-                    1760
+                    1536,
+                    2496
                 ],
                 "roommates": [
-                    "Aiden Ford",
-                    "Rosa Swift"
+                    "Yara River",
+                    "Eliza Field"
                 ],
-                "name": "Aiden Ford and Rosa Swift's House"
+                "name": "Yara River and Eliza Field's House"
+            },
+            "workplace": {
+                "id": 9,
+                "type": "Workshop",
+                "position": [
+                    1440,
+                    2400
+                ]
             },
             "daily_activities": [
-                "Hunt for game",
-                "Sell meat at market",
-                "Go for a walk",
-                "Track animals",
-                "Check traps",
-                "Prepare hides",
-                "Attend town gathering",
+                "Sew garments",
+                "Make alterations",
+                "Eat at the Inn",
+                "Visit the market",
+                "Collect water from well",
+                "Cut fabric",
+                "Design new styles",
+                "Meet with clients",
                 "Return home"
             ]
         },
         {
-            "name": "Wren Baker",
-            "job": "Baker",
+            "name": "Rosa Wood",
+            "job": "Hunter",
             "home": {
-                "id": 24,
+                "id": 36,
                 "type": "House",
                 "position": [
-                    2432,
-                    1856
+                    1696,
+                    1536
                 ],
                 "roommates": [
-                    "Wren Baker",
-                    "Ulric Fletcher"
+                    "Rosa Wood",
+                    "Ivan Swift"
                 ],
-                "name": "Wren Baker and Ulric Fletcher's House"
+                "name": "Rosa Wood and Ivan Swift's House"
+            },
+            "daily_activities": [
+                "Prepare hides",
+                "Sell meat at market",
+                "Hunt for game",
+                "Check traps",
+                "Track animals",
+                "Attend town gathering",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Otto Thatcher",
+            "job": "Baker",
+            "home": {
+                "id": 86,
+                "type": "House",
+                "position": [
+                    1632,
+                    2752
+                ],
+                "roommates": [
+                    "Otto Thatcher"
+                ],
+                "name": "Otto Thatcher's House"
             },
             "workplace": {
-                "id": 5,
+                "id": 1,
                 "type": "Bakery",
                 "position": [
-                    2432,
-                    1728
+                    1632,
+                    2304
                 ]
             },
             "daily_activities": [
                 "Bake bread",
-                "Wake up early",
-                "Eat at the Inn",
-                "Chat with customers",
-                "Sell goods to customers",
-                "Visit the market",
-                "Go for a walk",
                 "Prepare dough",
-                "Clean bakery",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara River",
-            "job": "Farmer",
-            "home": {
-                "id": 9,
-                "type": "House",
-                "position": [
-                    2432,
-                    1952
-                ],
-                "roommates": [
-                    "Yara River",
-                    "Aiden Fisher"
-                ],
-                "name": "Yara River and Aiden Fisher's House"
-            },
-            "daily_activities": [
-                "Feed animals",
-                "Plant new seeds",
-                "Tend to crops",
-                "Repair fences",
+                "Visit the market",
+                "Sell goods to customers",
+                "Wake up early",
                 "Go for a walk",
-                "Take produce to market",
-                "Attend town gathering",
+                "Clean bakery",
+                "Chat with customers",
                 "Return home"
             ]
         },
         {
-            "name": "Ulric Fletcher",
-            "job": "Tailor",
+            "name": "Ivan Stone",
+            "job": "Guard",
             "home": {
-                "id": 24,
+                "id": 231,
                 "type": "House",
                 "position": [
-                    2432,
+                    1216,
                     1856
                 ],
                 "roommates": [
-                    "Wren Baker",
-                    "Ulric Fletcher"
+                    "Ivan Stone",
+                    "Xander Smith"
                 ],
-                "name": "Wren Baker and Ulric Fletcher's House"
-            },
-            "workplace": {
-                "id": 2,
-                "type": "Workshop",
-                "position": [
-                    2336,
-                    1664
-                ]
-            },
-            "daily_activities": [
-                "Design new styles",
-                "Go for a walk",
-                "Cut fabric",
-                "Sew garments",
-                "Eat at the Inn",
-                "Make alterations",
-                "Meet with clients",
-                "Relax at home"
-            ]
-        },
-        {
-            "name": "Lily Baker",
-            "job": "Merchant",
-            "home": {
-                "id": 15,
-                "type": "House",
-                "position": [
-                    2304,
-                    2048
-                ],
-                "roommates": [
-                    "Lily Baker",
-                    "Julia Swift"
-                ],
-                "name": "Lily Baker and Julia Swift's House"
-            },
-            "workplace": {
-                "id": 7,
-                "type": "Store",
-                "position": [
-                    2240,
-                    1952
-                ]
-            },
-            "daily_activities": [
-                "Close shop",
-                "Count earnings",
-                "Arrange merchandise",
-                "Bargain with customers",
-                "Restock inventory",
-                "Open shop",
-                "Collect water from well",
-                "Relax at home"
-            ]
-        },
-        {
-            "name": "Aiden Fisher",
-            "job": "Farmer",
-            "home": {
-                "id": 9,
-                "type": "House",
-                "position": [
-                    2432,
-                    1952
-                ],
-                "roommates": [
-                    "Yara River",
-                    "Aiden Fisher"
-                ],
-                "name": "Yara River and Aiden Fisher's House"
-            },
-            "daily_activities": [
-                "Tend to crops",
-                "Take produce to market",
-                "Repair fences",
-                "Visit the market",
-                "Plant new seeds",
-                "Collect water from well",
-                "Feed animals",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Julia Swift",
-            "job": "Merchant",
-            "home": {
-                "id": 15,
-                "type": "House",
-                "position": [
-                    2304,
-                    2048
-                ],
-                "roommates": [
-                    "Lily Baker",
-                    "Julia Swift"
-                ],
-                "name": "Lily Baker and Julia Swift's House"
-            },
-            "workplace": {
-                "id": 7,
-                "type": "Store",
-                "position": [
-                    2240,
-                    1952
-                ]
-            },
-            "daily_activities": [
-                "Count earnings",
-                "Open shop",
-                "Eat at the Inn",
-                "Close shop",
-                "Bargain with customers",
-                "Go for a walk",
-                "Chat with neighbors",
-                "Restock inventory",
-                "Arrange merchandise",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara Gray",
-            "job": "Carpenter",
-            "home": {
-                "id": 206,
-                "type": "House",
-                "position": [
-                    2400,
-                    1440
-                ],
-                "roommates": [
-                    "Yara Gray",
-                    "Eliza Stone"
-                ],
-                "name": "Yara Gray and Eliza Stone's House"
-            },
-            "workplace": {
-                "id": 2,
-                "type": "Workshop",
-                "position": [
-                    2336,
-                    1664
-                ]
-            },
-            "daily_activities": [
-                "Finish projects",
-                "Select wood",
-                "Build furniture",
-                "Make repairs around village",
-                "Cut lumber",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Eliza Stone",
-            "job": "Guard",
-            "home": {
-                "id": 206,
-                "type": "House",
-                "position": [
-                    2400,
-                    1440
-                ],
-                "roommates": [
-                    "Yara Gray",
-                    "Eliza Stone"
-                ],
-                "name": "Yara Gray and Eliza Stone's House"
-            },
-            "workplace": {
-                "id": 13,
-                "type": "Town Hall",
-                "position": [
-                    2240,
-                    1504
-                ]
-            },
-            "daily_activities": [
-                "Stand watch at gate",
-                "Attend town gathering",
-                "Train with weapons",
-                "Collect water from well",
-                "Check on merchants",
-                "Eat at the Inn",
-                "Patrol village",
-                "Report to captain",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Smith",
-            "job": "Tailor",
-            "home": {
-                "id": 186,
-                "type": "House",
-                "position": [
-                    2496,
-                    1472
-                ],
-                "roommates": [
-                    "Otto Smith"
-                ],
-                "name": "Otto Smith's House"
-            },
-            "workplace": {
-                "id": 2,
-                "type": "Workshop",
-                "position": [
-                    2336,
-                    1664
-                ]
-            },
-            "daily_activities": [
-                "Visit the market",
-                "Make alterations",
-                "Design new styles",
-                "Sew garments",
-                "Go for a walk",
-                "Meet with clients",
-                "Cut fabric",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Clara Stone",
-            "job": "Merchant",
-            "home": {
-                "id": 90,
-                "type": "House",
-                "position": [
-                    2624,
-                    1888
-                ],
-                "roommates": [
-                    "Clara Stone",
-                    "Yara River"
-                ],
-                "name": "Clara Stone and Yara River's House"
-            },
-            "workplace": {
-                "id": 7,
-                "type": "Store",
-                "position": [
-                    2240,
-                    1952
-                ]
-            },
-            "daily_activities": [
-                "Chat with neighbors",
-                "Restock inventory",
-                "Open shop",
-                "Arrange merchandise",
-                "Bargain with customers",
-                "Count earnings",
-                "Eat at the Inn",
-                "Close shop",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Bela Green",
-            "job": "Innkeeper",
-            "home": {
-                "id": 141,
-                "type": "House",
-                "position": [
-                    1952,
-                    2432
-                ],
-                "roommates": [
-                    "Bela Green",
-                    "Doran Brook"
-                ],
-                "name": "Bela Green and Doran Brook's House"
-            },
-            "workplace": {
-                "id": 1,
-                "type": "Inn",
-                "position": [
-                    1920,
-                    2112
-                ]
-            },
-            "daily_activities": [
-                "Welcome new travelers",
-                "Prepare breakfast for guests",
-                "Visit the market",
-                "Attend town gathering",
-                "Close up for the night",
-                "Manage staff",
-                "Clean rooms",
-                "Serve food and drinks",
-                "Relax at home"
-            ]
-        },
-        {
-            "name": "Ulric Thatcher",
-            "job": "Miner",
-            "home": {
-                "id": 37,
-                "type": "House",
-                "position": [
-                    160,
-                    1344
-                ],
-                "roommates": [
-                    "Ulric Thatcher",
-                    "Hilda Thatcher"
-                ],
-                "name": "The Thatcher House"
-            },
-            "daily_activities": [
-                "Visit the market",
-                "Travel to mines",
-                "Sell findings",
-                "Repair tools",
-                "Collect water from well",
-                "Sort materials",
-                "Dig for ore",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara River",
-            "job": "Innkeeper",
-            "home": {
-                "id": 90,
-                "type": "House",
-                "position": [
-                    2624,
-                    1888
-                ],
-                "roommates": [
-                    "Clara Stone",
-                    "Yara River"
-                ],
-                "name": "Clara Stone and Yara River's House"
+                "name": "Ivan Stone and Xander Smith's House"
             },
             "workplace": {
                 "id": 3,
-                "type": "Inn",
+                "type": "Town Hall",
                 "position": [
-                    2144,
-                    1952
+                    1280,
+                    1984
                 ]
             },
             "daily_activities": [
-                "Close up for the night",
-                "Serve food and drinks",
-                "Manage staff",
-                "Prepare breakfast for guests",
-                "Clean rooms",
-                "Eat at the Inn",
-                "Chat with neighbors",
-                "Welcome new travelers",
+                "Check on merchants",
+                "Stand watch at gate",
+                "Report to captain",
+                "Collect water from well",
+                "Patrol village",
+                "Train with weapons",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Xander Smith",
+            "job": "Guard",
+            "home": {
+                "id": 231,
+                "type": "House",
+                "position": [
+                    1216,
+                    1856
+                ],
+                "roommates": [
+                    "Ivan Stone",
+                    "Xander Smith"
+                ],
+                "name": "Ivan Stone and Xander Smith's House"
+            },
+            "workplace": {
+                "id": 3,
+                "type": "Town Hall",
+                "position": [
+                    1280,
+                    1984
+                ]
+            },
+            "daily_activities": [
+                "Train with weapons",
+                "Go for a walk",
+                "Stand watch at gate",
+                "Check on merchants",
+                "Patrol village",
+                "Report to captain",
                 "Relax at home"
             ]
         },
         {
-            "name": "Hilda Thatcher",
+            "name": "Ivan Swift",
             "job": "Farmer",
             "home": {
-                "id": 37,
+                "id": 36,
                 "type": "House",
                 "position": [
-                    160,
-                    1344
+                    1696,
+                    1536
                 ],
                 "roommates": [
-                    "Ulric Thatcher",
-                    "Hilda Thatcher"
+                    "Rosa Wood",
+                    "Ivan Swift"
                 ],
-                "name": "The Thatcher House"
+                "name": "Rosa Wood and Ivan Swift's House"
             },
             "daily_activities": [
-                "Plant new seeds",
-                "Visit the market",
                 "Take produce to market",
                 "Feed animals",
+                "Plant new seeds",
                 "Tend to crops",
                 "Repair fences",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Stone",
-            "job": "Miner",
-            "home": {
-                "id": 42,
-                "type": "House",
-                "position": [
-                    1280,
-                    1888
-                ],
-                "roommates": [
-                    "Otto Stone",
-                    "Eliza Stone"
-                ],
-                "name": "The Stone House"
-            },
-            "daily_activities": [
-                "Sell findings",
-                "Sort materials",
-                "Collect water from well",
-                "Repair tools",
-                "Travel to mines",
                 "Chat with neighbors",
-                "Dig for ore",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Doran Brook",
-            "job": "Blacksmith",
-            "home": {
-                "id": 141,
-                "type": "House",
-                "position": [
-                    1952,
-                    2432
-                ],
-                "roommates": [
-                    "Bela Green",
-                    "Doran Brook"
-                ],
-                "name": "Bela Green and Doran Brook's House"
-            },
-            "workplace": {
-                "id": 4,
-                "type": "Smithy",
-                "position": [
-                    2048,
-                    2080
-                ]
-            },
-            "daily_activities": [
-                "Forge tools and weapons",
-                "Work on special orders",
-                "Go for a walk",
-                "Repair items",
-                "Sell wares",
-                "Get materials ready",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Eliza Stone",
-            "job": "Miner",
-            "home": {
-                "id": 42,
-                "type": "House",
-                "position": [
-                    1280,
-                    1888
-                ],
-                "roommates": [
-                    "Otto Stone",
-                    "Eliza Stone"
-                ],
-                "name": "The Stone House"
-            },
-            "daily_activities": [
-                "Sell findings",
-                "Sort materials",
-                "Travel to mines",
-                "Chat with neighbors",
-                "Dig for ore",
-                "Repair tools",
                 "Attend town gathering",
-                "Visit the market",
                 "Return home"
             ]
         },
         {
-            "name": "Clara Dale",
+            "name": "Doran Gray",
             "job": "Hunter",
             "home": {
                 "id": 44,
                 "type": "House",
                 "position": [
-                    2048,
-                    1184
+                    2112,
+                    1344
                 ],
                 "roommates": [
-                    "Clara Dale"
+                    "Doran Gray",
+                    "Quinn Smith"
                 ],
-                "name": "Clara Dale's House"
+                "name": "Doran Gray and Quinn Smith's House"
             },
             "daily_activities": [
                 "Chat with neighbors",
+                "Prepare hides",
+                "Sell meat at market",
+                "Attend town gathering",
+                "Hunt for game",
+                "Track animals",
                 "Check traps",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Quinn Smith",
+            "job": "Farmer",
+            "home": {
+                "id": 44,
+                "type": "House",
+                "position": [
+                    2112,
+                    1344
+                ],
+                "roommates": [
+                    "Doran Gray",
+                    "Quinn Smith"
+                ],
+                "name": "Doran Gray and Quinn Smith's House"
+            },
+            "daily_activities": [
+                "Feed animals",
+                "Tend to crops",
+                "Chat with neighbors",
+                "Repair fences",
+                "Visit the market",
+                "Plant new seeds",
+                "Take produce to market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Eliza Cooper",
+            "job": "Carpenter",
+            "home": {
+                "id": 125,
+                "type": "Cottage",
+                "position": [
+                    1184,
+                    2592
+                ],
+                "roommates": [
+                    "Eliza Cooper",
+                    "Otto Black"
+                ],
+                "name": "Eliza Cooper and Otto Black's House"
+            },
+            "workplace": {
+                "id": 9,
+                "type": "Workshop",
+                "position": [
+                    1440,
+                    2400
+                ]
+            },
+            "daily_activities": [
+                "Cut lumber",
+                "Attend town gathering",
+                "Make repairs around village",
+                "Build furniture",
+                "Select wood",
+                "Finish projects",
+                "Visit the market",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Otto White",
+            "job": "Blacksmith",
+            "home": {
+                "id": 90,
+                "type": "Cottage",
+                "position": [
+                    2304,
+                    2496
+                ],
+                "roommates": [
+                    "Otto White"
+                ],
+                "name": "Otto White's House"
+            },
+            "workplace": {
+                "id": 27,
+                "type": "Smithy",
+                "position": [
+                    2112,
+                    2400
+                ]
+            },
+            "daily_activities": [
+                "Go for a walk",
+                "Repair items",
+                "Attend town gathering",
+                "Get materials ready",
+                "Forge tools and weapons",
+                "Sell wares",
+                "Eat at the Inn",
+                "Work on special orders",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Otto Fisher",
+            "job": "Innkeeper",
+            "home": {
+                "id": 35,
+                "type": "Cottage",
+                "position": [
+                    1408,
+                    1728
+                ],
+                "roommates": [
+                    "Otto Fisher",
+                    "Ivan Fisher"
+                ],
+                "name": "The Fisher House"
+            },
+            "workplace": {
+                "id": 2,
+                "type": "Inn",
+                "position": [
+                    1440,
+                    2048
+                ]
+            },
+            "daily_activities": [
+                "Close up for the night",
+                "Visit the market",
+                "Welcome new travelers",
+                "Serve food and drinks",
+                "Collect water from well",
+                "Prepare breakfast for guests",
+                "Manage staff",
+                "Clean rooms"
+            ]
+        },
+        {
+            "name": "Finn Gray",
+            "job": "Miner",
+            "home": {
+                "id": 46,
+                "type": "House",
+                "position": [
+                    1888,
+                    1152
+                ],
+                "roommates": [
+                    "Finn Gray",
+                    "Otto Strong"
+                ],
+                "name": "Finn Gray and Otto Strong's House"
+            },
+            "daily_activities": [
+                "Sell findings",
+                "Go for a walk",
+                "Travel to mines",
+                "Repair tools",
+                "Dig for ore",
+                "Sort materials",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Otto Strong",
+            "job": "Hunter",
+            "home": {
+                "id": 46,
+                "type": "House",
+                "position": [
+                    1888,
+                    1152
+                ],
+                "roommates": [
+                    "Finn Gray",
+                    "Otto Strong"
+                ],
+                "name": "Finn Gray and Otto Strong's House"
+            },
+            "daily_activities": [
+                "Visit the market",
                 "Prepare hides",
                 "Hunt for game",
                 "Sell meat at market",
-                "Visit the market",
+                "Check traps",
+                "Go for a walk",
                 "Track animals",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Petra Gray",
+            "job": "Innkeeper",
+            "home": {
+                "id": 200,
+                "type": "Cottage",
+                "position": [
+                    2048,
+                    2656
+                ],
+                "roommates": [
+                    "Petra Gray"
+                ],
+                "name": "Petra Gray's House"
+            },
+            "workplace": {
+                "id": 20,
+                "type": "Inn",
+                "position": [
+                    1952,
+                    2464
+                ]
+            },
+            "daily_activities": [
+                "Clean rooms",
+                "Visit the market",
+                "Welcome new travelers",
+                "Collect water from well",
+                "Close up for the night",
+                "Manage staff",
+                "Serve food and drinks",
+                "Prepare breakfast for guests"
+            ]
+        },
+        {
+            "name": "Ivan Fisher",
+            "job": "Merchant",
+            "home": {
+                "id": 35,
+                "type": "Cottage",
+                "position": [
+                    1408,
+                    1728
+                ],
+                "roommates": [
+                    "Otto Fisher",
+                    "Ivan Fisher"
+                ],
+                "name": "The Fisher House"
+            },
+            "workplace": {
+                "id": 0,
+                "type": "Store",
+                "position": [
+                    1536,
+                    2208
+                ]
+            },
+            "daily_activities": [
+                "Open shop",
+                "Close shop",
+                "Go for a walk",
+                "Bargain with customers",
+                "Chat with neighbors",
+                "Restock inventory",
+                "Arrange merchandise",
+                "Count earnings",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Wren White",
+            "job": "Farmer",
+            "home": {
+                "id": 62,
+                "type": "House",
+                "position": [
+                    1792,
+                    1504
+                ],
+                "roommates": [
+                    "Wren White",
+                    "Ulric Fletcher"
+                ],
+                "name": "Wren White and Ulric Fletcher's House"
+            },
+            "daily_activities": [
+                "Feed animals",
+                "Collect water from well",
+                "Repair fences",
+                "Plant new seeds",
+                "Go for a walk",
+                "Take produce to market",
+                "Tend to crops",
+                "Visit the market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ulric Fletcher",
+            "job": "Hunter",
+            "home": {
+                "id": 62,
+                "type": "House",
+                "position": [
+                    1792,
+                    1504
+                ],
+                "roommates": [
+                    "Wren White",
+                    "Ulric Fletcher"
+                ],
+                "name": "Wren White and Ulric Fletcher's House"
+            },
+            "daily_activities": [
+                "Go for a walk",
+                "Hunt for game",
+                "Check traps",
                 "Eat at the Inn",
+                "Sell meat at market",
+                "Track animals",
+                "Prepare hides",
+                "Attend town gathering",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Otto Black",
+            "job": "Tailor",
+            "home": {
+                "id": 125,
+                "type": "Cottage",
+                "position": [
+                    1184,
+                    2592
+                ],
+                "roommates": [
+                    "Eliza Cooper",
+                    "Otto Black"
+                ],
+                "name": "Eliza Cooper and Otto Black's House"
+            },
+            "workplace": {
+                "id": 9,
+                "type": "Workshop",
+                "position": [
+                    1440,
+                    2400
+                ]
+            },
+            "daily_activities": [
+                "Make alterations",
+                "Meet with clients",
+                "Collect water from well",
+                "Cut fabric",
+                "Sew garments",
+                "Design new styles",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Tilly Dale",
+            "job": "Blacksmith",
+            "home": {
+                "id": 70,
+                "type": "House",
+                "position": [
+                    2496,
+                    1600
+                ],
+                "roommates": [
+                    "Tilly Dale"
+                ],
+                "name": "Tilly Dale's House"
+            },
+            "daily_activities": [
+                "Chat with neighbors",
+                "Get materials ready",
+                "Forge tools and weapons",
+                "Sell wares",
+                "Repair items",
+                "Eat at the Inn",
+                "Work on special orders",
                 "Return home"
             ]
         }
     ],
     "house_names": {
-        "0": "Aiden Ford and Rosa Swift's House",
-        "24": "Wren Baker and Ulric Fletcher's House",
-        "9": "Yara River and Aiden Fisher's House",
-        "15": "Lily Baker and Julia Swift's House",
-        "206": "Yara Gray and Eliza Stone's House",
-        "186": "Otto Smith's House",
-        "90": "Clara Stone and Yara River's House",
-        "141": "Bela Green and Doran Brook's House",
-        "37": "The Thatcher House",
-        "42": "The Stone House",
-        "44": "Clara Dale's House"
+        "8": "Yara River and Eliza Field's House",
+        "36": "Rosa Wood and Ivan Swift's House",
+        "86": "Otto Thatcher's House",
+        "231": "Ivan Stone and Xander Smith's House",
+        "44": "Doran Gray and Quinn Smith's House",
+        "125": "Eliza Cooper and Otto Black's House",
+        "90": "Otto White's House",
+        "35": "The Fisher House",
+        "46": "Finn Gray and Otto Strong's House",
+        "200": "Petra Gray's House",
+        "62": "Wren White and Ulric Fletcher's House",
+        "70": "Tilly Dale's House"
     }
 }

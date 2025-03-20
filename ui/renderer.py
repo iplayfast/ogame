@@ -32,89 +32,87 @@ class Renderer:
                     console_active=False, console_height=0, time_manager=None):
         """Render the entire village and UI."""
         try:
-            print("about to clear the screen")
+            
             self.screen.fill(self.GREEN)
-            print("made it past clearing the screen")
+            
             
             # Calculate visible area based on camera position
-            print("calculating visible area")
+            
             visible_left = camera_x // self.tile_size
             visible_right = (camera_x + self.screen_width) // self.tile_size + 1
             visible_top = camera_y // self.tile_size
             visible_bottom = (camera_y + self.screen_height) // self.tile_size + 1
             
             # Limit to village size
-            print("limiting to village size")
+            
             visible_left = max(0, visible_left)
             visible_right = min(village_data['size'] // self.tile_size, visible_right)
             visible_top = max(0, visible_top)
             visible_bottom = min(village_data['size'] // self.tile_size, visible_bottom)
             
             # Render all world elements
-            print("rendering terrain")
+            
             self._render_terrain(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-            print("rendering paths")
+            
             self._render_paths(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-            print("rendering water")
+            
             self._render_water(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, water_frame)
             
-            print("rendering bridges")
+            
             self._render_bridges(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
             # Get current shadow length from time manager if available
             shadow_length = 0
-            if time_manager:
-                print("getting shadow length")
+            if time_manager:            
                 shadow_length = time_manager.get_shadow_length()
                 
             # Render shadows first if it's daytime
-            if shadow_length > 0:
-                print("rendering shadows")
+            if shadow_length > 0:            
                 self._render_shadows(village_data, villagers, visible_left, visible_right, visible_top, visible_bottom, 
                                     camera_x, camera_y, shadow_length)
                 
-            print("rendering buildings")
+            
             self._render_buildings(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y, ui_manager)
             
-            print("rendering trees")
+            
             self._render_trees(village_data, visible_left, visible_right, visible_top, visible_bottom, camera_x, camera_y)
             
-            print("rendering villagers")
+            
             self._render_villagers(villagers, camera_x, camera_y)
             
             # Apply day/night lighting overlay
             if time_manager:
-                print("applying day/night overlay")
+            
                 darkness_overlay = time_manager.get_darkness_overlay(self.screen_width, self.screen_height)
                 self.screen.blit(darkness_overlay, (0, 0))
             
             # Render UI elements
-            print("rendering UI elements")
+            
             ui_manager.draw_selected_villager_info(selected_villager, self.tile_size)
             
             # Only draw minimap if console is not active or if it doesn't overlap console area
             if not console_active:
-                print("rendering minimap (console inactive)")
+            
                 ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size)
             else:
                 # Draw minimap in upper right corner instead if console is active
-                print("rendering minimap (console active)")
+            
                 ui_manager.draw_minimap(village_data, villagers, camera_x, camera_y, self.tile_size, 
                                     position='upper_right')
             
             if hovered_building:
-                print("rendering building info")
+            
                 ui_manager.draw_building_info(hovered_building, camera_x, camera_y)
                 
             if show_debug:
-                print("rendering debug info")
+            
                 ui_manager.draw_debug_info(clock, villagers, camera_x, camera_y, village_data['size'])
                 
             # Draw time of day if time manager exists
             if time_manager:
-                print("rendering time display")
+            
                 # Create a background for the time display
                 time_text = time_manager.get_time_string()
                 time_surface = ui_manager.font.render(time_text, True, self.WHITE)
@@ -132,9 +130,7 @@ class Renderer:
                 pygame.draw.rect(self.screen, (100, 100, 100), bg_rect, 1)
                 
                 # Draw the time string
-                self.screen.blit(time_surface, (time_x, time_y))
-            
-            print("rendering complete")
+                self.screen.blit(time_surface, (time_x, time_y))            
         except Exception as e:
             print(f"ERROR in render_village: {e}")
             import traceback
