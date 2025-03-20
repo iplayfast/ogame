@@ -224,8 +224,9 @@ class InputHandler:
                 # Notify through Interface
                 Interface.on_ui_panel_toggled("building_interiors", state)
 
+    
     def _toggle_fullscreen(self):
-        """Toggle fullscreen using a more direct approach similar to demofullscreen.py."""
+        """Toggle fullscreen using a more direct approach with proper windowed size memory."""
         # Check current fullscreen state
         is_fullscreen = bool(pygame.display.get_surface().get_flags() & pygame.FULLSCREEN)
         
@@ -235,7 +236,7 @@ class InputHandler:
                 if hasattr(self.game_state, '_windowed_size'):
                     windowed_width, windowed_height = self.game_state._windowed_size
                 else:
-                    # Default if no size is stored
+                    # Default if no size is stored (shouldn't happen now)
                     windowed_width, windowed_height = 1280, 720
                     
                 print(f"Switching to windowed mode: {windowed_width}x{windowed_height}")
@@ -244,7 +245,7 @@ class InputHandler:
                 self.game_state.SCREEN_HEIGHT = windowed_height
             else:
                 # Save current windowed size before switching to fullscreen
-                self.game_state._windowed_size = (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)
+                #self.game_state._windowed_size = (self.game_state.SCREEN_WIDTH, self.game_state.SCREEN_HEIGHT)                
                 print(f"Saving current windowed size: {self.game_state._windowed_size}")
                 
                 # Switch to fullscreen

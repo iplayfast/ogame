@@ -48,7 +48,8 @@ class VillageGame:
         # Initialize screen
         self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.RESIZABLE)
         pygame.display.set_caption("Village Simulation")
-
+        self._windowed_size = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        print(f"Initial window size saved: {self._windowed_size}")
         # Store reference to window for better position management
         try:
             from pygame._sdl2.video import Window
