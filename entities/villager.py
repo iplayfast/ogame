@@ -19,7 +19,7 @@ class Villager(pygame.sprite.Sprite):
         self.sleep_hour = random.uniform(21.0, 23.0)  # Random sleep time between 9-11 PM
         
         # Sleep state override system
-        self.sleep_override = False
+        self.sleep_override = False 
         self.sleep_override_time = 0
         self.sleep_override_duration = 0
 
@@ -334,6 +334,10 @@ class Villager(pygame.sprite.Sprite):
 
         # Always clear destination during sleep
         self.destination = None
+    
+    # Modification 1: Fix for villager activity descriptions
+# Update the handle_activity_movement method in villager.py
+
     def handle_activity_movement(self, village_data, dt, current_hour):
         """Handle movement based on current activity and time of day.
         
@@ -381,33 +385,88 @@ class Villager(pygame.sprite.Sprite):
             
             workplace_pos = self.workplace.get('position')
             if workplace_pos:
-                # Set destination to workplace if not already there
-                if not self.destination or random.random() < 0.1:  # Occasionally change position
+                # Check if we're at the workplace
+                dx = workplace_pos[0] - self.position.x
+                dy = workplace_pos[1] - self.position.y
+                distance = math.sqrt(dx*dx + dy*dy)
+                
+                # Get workplace building size
+                workplace_id = self.workplace.get('id', -1)
+                workplace_size = self.TILE_SIZE  # Default
+                if 0 <= workplace_id < len(village_data['buildings']):
+                    building = village_data['buildings'][workplace_id]
+                    size_name = building['size']
+                    size_multiplier = 3 if size_name == 'large' else (2 if size_name == 'medium' else 1)
+                    workplace_size = self.TILE_SIZE * size_multiplier
+                
+                # Change activity to "Traveling to work" if we're not there yet
+                if distance > workplace_size:
+                    if self.current_activity == "Working":
+                        self.current_activity = "Traveling to work"
+                    
+                    # Set destination to workplace if not already there
+                    if not self.destination:
+                        offset_x = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
+                        offset_y = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
+                        self.destination = (
+                            workplace_pos[0] + offset_x,
+                            workplace_pos[1] + offset_y
+                        )
+                        # Recalculate path to the new destination
+                        start_pos = (self.position.x, self.position.y)
+                        self.path = self.calculate_path(start_pos, self.destination, village_data)
+                        self.current_path_index = 0
+                else:
+                    # We've arrived at the workplace - now we can actually work
+                    if self.current_activity == "Traveling to work":
+                        self.current_activity = "Working"
+                    
+                    # Occasionally change position within the workplace
+                    if random.random() < 0.05:  # 5% chance to move around workplace
+                        offset_x = random.randint(-workplace_size // 2, workplace_size // 2)
+                        offset_y = random.randint(-workplace_size // 2, workplace_size // 2)
+                        self.destination = (
+                            workplace_pos[0] + offset_x,
+                            workplace_pos[1] + offset_y
+                        )
+                        # Recalculate path to the new destination
+                        start_pos = (self.position.x, self.position.y)
+                        self.path = self.calculate_path(start_pos, self.destination, village_data)
+                        self.current_path_index = 0
+        
+        # Handle "heading home" or evening activities
+        if "home" in self.current_activity.lower() and hasattr(self, 'home') and self.home:
+            home_pos = self.home.get('position')
+            if home_pos:
+                # Check if we're at home
+                dx = home_pos[0] - self.position.x
+                dy = home_pos[1] - self.position.y
+                distance = math.sqrt(dx*dx + dy*dy)
+                
+                # Get home building size
+                home_id = self.home.get('id', -1)
+                home_size = self.TILE_SIZE  # Default
+                if 0 <= home_id < len(village_data['buildings']):
+                    building = village_data['buildings'][home_id]
+                    size_name = building['size']
+                    size_multiplier = 3 if size_name == 'large' else (2 if size_name == 'medium' else 1)
+                    home_size = self.TILE_SIZE * size_multiplier
+                
+                # Change activity to "Returning home" if we're not there yet
+                if distance > home_size and "Return" not in self.current_activity:
+                    self.current_activity = "Returning home"
+                    
+                if not self.destination or random.random() < 0.1:
                     offset_x = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
                     offset_y = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
                     self.destination = (
-                        workplace_pos[0] + offset_x,
-                        workplace_pos[1] + offset_y
+                        home_pos[0] + offset_x,
+                        home_pos[1] + offset_y
                     )
                     # Recalculate path to the new destination
                     start_pos = (self.position.x, self.position.y)
                     self.path = self.calculate_path(start_pos, self.destination, village_data)
                     self.current_path_index = 0
-        
-        # Handle "heading home" or evening activities
-        if "home" in self.current_activity.lower() and hasattr(self, 'home') and self.home:
-            home_pos = self.home.get('position')
-            if home_pos and (not self.destination or random.random() < 0.1):
-                offset_x = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
-                offset_y = random.randint(-self.TILE_SIZE // 2, self.TILE_SIZE // 2)
-                self.destination = (
-                    home_pos[0] + offset_x,
-                    home_pos[1] + offset_y
-                )
-                # Recalculate path to the new destination
-                start_pos = (self.position.x, self.position.y)
-                self.path = self.calculate_path(start_pos, self.destination, village_data)
-                self.current_path_index = 0
         
         # Follow the path if we have one and we're not sleeping
         if (not self.is_sleeping and hasattr(self, 'path') and self.path and 
@@ -417,6 +476,14 @@ class Villager(pygame.sprite.Sprite):
             if self.current_path_index >= len(self.path):
                 self.destination = None
                 self.idle_timer = random.randint(2000, 5000)  # Idle for 2-5 seconds
+                
+                # If we have an activity that's "Traveling to X", change it to appropriate
+                # activity now that we've arrived
+                if "Traveling to" in self.current_activity:
+                    if "work" in self.current_activity.lower():
+                        self.current_activity = "Working"
+                    elif "home" in self.current_activity.lower():
+                        self.current_activity = "At home"
                 return
                 
             # Get current waypoint
@@ -435,6 +502,14 @@ class Villager(pygame.sprite.Sprite):
                 if self.current_path_index >= len(self.path):
                     self.destination = None
                     self.idle_timer = random.randint(2000, 5000)  # Idle for 2-5 seconds
+                    
+                    # If we have an activity that's "Traveling to X", change it to appropriate
+                    # activity now that we've arrived
+                    if "Traveling to" in self.current_activity:
+                        if "work" in self.current_activity.lower():
+                            self.current_activity = "Working"
+                        elif "home" in self.current_activity.lower():
+                            self.current_activity = "At home"
             else:
                 # Move toward waypoint
                 move_x = dx / distance * self.speed * (dt / 16.67)
@@ -462,6 +537,197 @@ class Villager(pygame.sprite.Sprite):
                     start_pos = (self.position.x, self.position.y)
                     self.path = self.calculate_path(start_pos, self.destination, village_data)
                     self.current_path_index = 0
+
+
+    # Modification 2: Fix for villagers not starting in bed
+    # Modify the housing_manager.py file
+
+    def initialize_unique_bed_position(self, villager, occupied_bed_positions=None):
+        """Initialize home position with a unique bed position for each villager.
+        
+        Args:
+            villager: Villager to position
+            occupied_bed_positions: Dictionary of already occupied bed positions
+        """
+        if occupied_bed_positions is None:
+            occupied_bed_positions = {}
+                
+        if not hasattr(villager, 'home') or not villager.home or 'position' not in villager.home:
+            # No home assigned, can't initialize
+            return
+                
+        home_pos = villager.home['position']
+        home_id = villager.home.get('id', -1)
+        
+        # Find the actual building
+        if 0 <= home_id < len(self.game_state.village_data['buildings']):
+            building = self.game_state.village_data['buildings'][home_id]
+            building_pos = building['position']
+            building_size = building['size']
+            
+            # Convert to pixel sizes
+            size_multiplier = 3 if building_size == 'large' else (2 if building_size == 'medium' else 1)
+            building_size_px = self.game_state.TILE_SIZE * size_multiplier
+            
+            # Get the number of roommates to determine how to spread beds
+            roommates = villager.home.get('roommates', [])
+            num_roommates = len(roommates)
+            
+            # Default position (for safety)
+            bed_x = building_pos[0] + building_size_px // 2
+            bed_y = building_pos[1] + building_size_px // 2
+            
+            # Try to find an available position
+            attempt_count = 0
+            padding = self.game_state.TILE_SIZE // 3
+            
+            # Keep trying to find an unoccupied position
+            while attempt_count < 10:  # Limit attempts to avoid infinite loops
+                # Calculate positions based on number of roommates and building size
+                if building_size == 'large':
+                    # For large buildings (manor), we can have up to 4 beds in a grid pattern
+                    row = attempt_count % 2
+                    col = (attempt_count // 2) % 2
+                    
+                    # Divide the building interior into a 2x2 grid
+                    cell_size = (building_size_px - padding * 2) // 2
+                    bed_x = building_pos[0] + padding + col * cell_size + cell_size // 2
+                    bed_y = building_pos[1] + padding + row * cell_size + cell_size // 2
+                elif building_size == 'medium':
+                    # For medium buildings, we can have up to 2 beds in a row
+                    if num_roommates <= 1:
+                        # Single occupant - place in center
+                        bed_x = building_pos[0] + building_size_px // 2
+                        bed_y = building_pos[1] + building_size_px // 2
+                    else:
+                        # Two occupants - place side by side
+                        col = attempt_count % 2
+                        bed_x = building_pos[0] + padding + col * (building_size_px - padding * 2 - self.game_state.TILE_SIZE)
+                        bed_y = building_pos[1] + building_size_px // 2
+                else:  # small
+                    # For small buildings, we have limited space
+                    if num_roommates <= 1:
+                        # Single occupant - place in center
+                        bed_x = building_pos[0] + building_size_px // 2
+                        bed_y = building_pos[1] + building_size_px // 2
+                    else:
+                        # Multiple occupants - stagger positions slightly
+                        offset_x = (attempt_count % 3 - 1) * (self.game_state.TILE_SIZE // 3)
+                        offset_y = (attempt_count // 3 - 1) * (self.game_state.TILE_SIZE // 3)
+                        bed_x = building_pos[0] + building_size_px // 2 + offset_x
+                        bed_y = building_pos[1] + building_size_px // 2 + offset_y
+                
+                # Check if this position is already occupied
+                position_key = f"{int(bed_x)},{int(bed_y)}"
+                if position_key not in occupied_bed_positions:
+                    # Found an unoccupied position
+                    occupied_bed_positions[position_key] = villager.name
+                    break
+                    
+                # Try another position
+                attempt_count += 1
+                
+            # Add some randomness to avoid perfect alignment
+            bed_x += random.randint(-3, 3)
+            bed_y += random.randint(-3, 3)
+            
+            # Set the villager's bed position
+            villager.bed_position = (bed_x, bed_y)
+            
+            # Move villager to bed
+            villager.position.x = bed_x
+            villager.position.y = bed_y
+            
+            # Update rect
+            villager.rect.centerx = int(villager.position.x)
+            villager.rect.centery = int(villager.position.y)
+            
+            # Clear destination
+            villager.destination = None
+
+
+    # Modification 3: Ensure all villagers start asleep in bed
+    # Modify the update_game_with_assignments method in villager_housing.py
+
+    def update_game_with_assignments(game_state, assignments):
+        """
+        Update the game state with the villager assignments.
+        
+        Args:
+            game_state: Game state object
+            assignments: Villager assignments dictionary
+        """
+        if not assignments or 'villagers' not in assignments:
+            return
+        
+        # Update buildings with names
+        if 'house_names' in assignments:
+            for building in game_state.village_data['buildings']:
+                building_id = game_state.village_data['buildings'].index(building)
+                if str(building_id) in assignments['house_names']:
+                    building['name'] = assignments['house_names'][str(building_id)]
+        
+        # Keep track of occupied bed positions
+        occupied_bed_positions = {}
+        
+        # Update villagers with home and workplace info
+        for villager in game_state.villagers:
+            for v_data in assignments['villagers']:
+                if villager.name == v_data['name']:
+                    # Add home and workplace references
+                    villager.home = v_data.get('home', {})
+                    villager.workplace = v_data.get('workplace', {})
+                    villager.daily_activities = v_data.get('daily_activities', [])
+                    villager.is_sleeping = True  # Ensure all villagers start asleep
+                    villager.current_activity = "Sleeping"
+
+                    # Initialize bed position and place villager there
+                    if hasattr(game_state.housing_manager, 'initialize_unique_bed_position'):
+                        game_state.housing_manager.initialize_unique_bed_position(villager, occupied_bed_positions)
+
+                    # Update villager's AI to consider home and workplace
+                    if hasattr(villager, 'find_new_destination'):
+                        # Store the original method
+                        villager._original_find_destination = villager.find_new_destination
+                        
+                        # Replace with our enhanced method that considers home and workplace
+                        def enhanced_find_destination(self, village_data):
+                            # 40% chance to go to home or workplace, 60% chance for normal behavior
+                            if random.random() < 0.4:
+                                if hasattr(self, 'home') and hasattr(self, 'workplace'):
+                                    # Decide between home and workplace based on time of day
+                                    # For now we'll just randomly choose
+                                    if random.random() < 0.5 and self.workplace:
+                                        # Go to workplace
+                                        workplace_pos = self.workplace.get('position')
+                                        if workplace_pos:
+                                            offset_x = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                                            offset_y = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                                            self.destination = (
+                                                workplace_pos[0] + offset_x,
+                                                workplace_pos[1] + offset_y
+                                            )
+                                            self.current_activity = f"Traveling to {self.workplace.get('type', 'workplace')}"
+                                            return
+                                    else:
+                                        # Go home
+                                        home_pos = self.home.get('position')
+                                        if home_pos:
+                                            offset_x = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                                            offset_y = random.randint(-self.TILE_SIZE, self.TILE_SIZE)
+                                            self.destination = (
+                                                home_pos[0] + offset_x,
+                                                home_pos[1] + offset_y
+                                            )
+                                            self.current_activity = "Returning home"
+                                            return
+                            
+                            # Fall back to original behavior
+                            self._original_find_destination(village_data)
+                        
+                        # Bind our enhanced method to the villager
+                        import types
+                        villager.find_new_destination = types.MethodType(enhanced_find_destination, villager)
 
     def find_new_destination(self, village_data):
         """Find a new destination for the villager and calculate a path to it.

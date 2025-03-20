@@ -140,7 +140,11 @@ class VillageGame:
         
         # Add self to village_data for reference
         self.village_data['game_state'] = self
-        
+            # Assign housing to villagers
+        self.housing_manager.assign_housing()
+    
+        # Force villagers to start in their homes
+        self.housing_manager.force_villagers_to_homes()
         # Notify Interface that game has started
         on_game_started(self)
     
