@@ -112,8 +112,8 @@ class VillageGame:
             self.renderer.initialize_interiors(self.village_data)
         
         # Camera position (starts at center of village)
-        self.camera_x = (self.village_data['size'] - self.SCREEN_WIDTH) // 2
-        self.camera_y = (self.village_data['size'] - self.SCREEN_HEIGHT) // 2
+        self.camera_x = (self.village_data['width'] - self.SCREEN_WIDTH) // 2
+        self.camera_y = (self.village_data['height'] - self.SCREEN_HEIGHT) // 2
         # Get screen size from config
         self.SCREEN_WIDTH = self.config.get("system", {}).get("window_width", 1280)
         self.SCREEN_HEIGHT = self.config.get("system", {}).get("window_height", 720)
@@ -146,6 +146,7 @@ class VillageGame:
         # Force villagers to start in their homes
         self.housing_manager.force_villagers_to_homes()
         # Notify Interface that game has started
+        self.input_handler._adjust_camera_after_resize()
         on_game_started(self)
     
     def handle_events(self):

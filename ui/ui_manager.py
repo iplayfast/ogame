@@ -83,6 +83,13 @@ class UIManager:
         activity_text = self.font.render(f"Activity: {status['Activity']}", True, self.WHITE)
         self.screen.blit(activity_text, (panel_x + 10, y_offset))
     
+    """
+    Update minimap rendering and interaction to use separate width and height properties
+    instead of the single size property.
+    """
+
+    # 1. Update the draw_minimap method in ui_manager.py:
+
     def draw_minimap(self, village_data, villagers, camera_x, camera_y, tile_size, position='bottom_right'):
         """Draw a minimap of the village.
         
@@ -116,8 +123,14 @@ class UIManager:
         pygame.draw.rect(self.screen, (100, 100, 100), 
                         (minimap_x, minimap_y, minimap_size, minimap_size), 1)
         
-        # Scale factor for minimap
-        scale = minimap_size / village_data['size']
+        # Get village dimensions
+        village_width = village_data['width']
+        village_height = village_data['height']
+        
+        # Calculate scale factors for width and height
+        # Use the larger dimension to ensure everything fits
+        max_dimension = max(village_width, village_height)
+        scale = minimap_size / max_dimension
         
         # Draw buildings on minimap
         for building in village_data['buildings']:
@@ -133,7 +146,7 @@ class UIManager:
                 building_color = (200, 100, 100)  # Red for inns
             
             pygame.draw.rect(self.screen, building_color, 
-                           (minimap_x + int(x * scale), 
+                        (minimap_x + int(x * scale), 
                             minimap_y + int(y * scale), 
                             building_size, building_size))
         
@@ -141,7 +154,7 @@ class UIManager:
         for path in village_data['paths']:
             x, y = path['position']
             pygame.draw.rect(self.screen, (180, 160, 120), 
-                           (minimap_x + int(x * scale), 
+                        (minimap_x + int(x * scale), 
                             minimap_y + int(y * scale), 
                             max(1, int(tile_size * scale)), 
                             max(1, int(tile_size * scale))))
@@ -150,7 +163,7 @@ class UIManager:
         for water_tile in village_data['water']:
             x, y = water_tile['position']
             pygame.draw.rect(self.screen, (80, 130, 200), 
-                           (minimap_x + int(x * scale), 
+                        (minimap_x + int(x * scale), 
                             minimap_y + int(y * scale), 
                             max(1, int(tile_size * scale)), 
                             max(1, int(tile_size * scale))))
@@ -161,19 +174,22 @@ class UIManager:
             # Highlight selected villager
             color = (0, 255, 255) if villager.is_selected else (255, 255, 255)
             pygame.draw.circle(self.screen, color, 
-                             (minimap_x + int(x * scale), 
-                              minimap_y + int(y * scale)), 
-                             2)
+                            (minimap_x + int(x * scale), 
+                            minimap_y + int(y * scale)), 
+                            2)
         
         # Draw camera view rectangle on minimap
         pygame.draw.rect(self.screen, (255, 255, 255), 
                         (minimap_x + int(camera_x * scale), 
-                         minimap_y + int(camera_y * scale),
-                         int(self.screen_width * scale),
-                         int(self.screen_height * scale)), 
+                        minimap_y + int(camera_y * scale),
+                        int(self.screen_width * scale),
+                        int(self.screen_height * scale)), 
                         1)
+
     
-    def draw_debug_info(self, clock, villagers, camera_x, camera_y, village_size):
+
+    
+    def draw_debug_info(self, clock, villagers, camera_x, camera_y, village_width,village_height):
         """Draw debug information in the top left corner.
         
         Args:
@@ -201,7 +217,7 @@ class UIManager:
         self.screen.blit(help_text, (10, 70))
         
         village_size_text = self.small_font.render(
-            f"Village size: {village_size}x{village_size} pixels", True, self.WHITE)
+            f"Village Dimentions: {village_width},{village_height} pixels", True, self.WHITE)
         self.screen.blit(village_size_text, (10, 90))
 
     

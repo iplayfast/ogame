@@ -75,7 +75,7 @@ class InputHandler:
                         # Convert minimap click to world position
                         map_x = event.pos[0] - minimap_rect.left
                         map_y = event.pos[1] - minimap_rect.top
-                        scale = minimap_rect.width / self.game_state.village_data['size']
+                        scale = minimap_rect.width / (self.game_state.village_data['width'] * self.game_state.village_data['height'])
                         world_x = int(map_x / scale)
                         world_y = int(map_y / scale)
                         Interface.on_minimap_clicked(event.pos, (world_x, world_y))
@@ -402,12 +402,14 @@ class InputHandler:
             self.game_state.camera_y -= self.game_state.CAMERA_SPEED
         if keys[pygame.K_DOWN] or keys[pygame.K_s]:
             self.game_state.camera_y += self.game_state.CAMERA_SPEED
-        
+        # Use width and height instead of single size value for constraints
+        village_width = self.game_state.village_data.get('width')
+        village_height = self.game_state.village_data.get('height')
+    
         # Ensure camera stays within village bounds
-        self.game_state.camera_x = max(0, min(self.game_state.camera_x, 
-                                      self.game_state.village_data['size'] - self.game_state.SCREEN_WIDTH))
-        self.game_state.camera_y = max(0, min(self.game_state.camera_y, 
-                                      self.game_state.village_data['size'] - self.game_state.SCREEN_HEIGHT))
+        self.game_state.camera_x = max(0, min(self.game_state.camera_x, village_width - self.game_state.SCREEN_WIDTH))
+        self.game_state.camera_y = max(0, min(self.game_state.camera_y, village_height - self.game_state.SCREEN_HEIGHT))
+
     
     def handle_click(self, pos):
         """Handle mouse click with Interface integration.
@@ -423,6 +425,46 @@ class InputHandler:
         old_selected_villager = self.game_state.selected_villager
         old_selected_building = self.game_state.housing_ui.selected_building if hasattr(self.game_state.housing_ui, 'selected_building') else None
             
+        # Check if click is on the minimap
+        minimap_size = 150  # Same size as in draw_minimap
+        minimap_rect = pygame.Rect(
+            self.game_state.SCREEN_WIDTH - minimap_size - 10, 
+            self.game_state.SCREEN_HEIGHT - minimap_size - 10, 
+            minimap_size, minimap_size
+        )
+        
+        if minimap_rect.collidepoint(pos):
+            # Handle minimap click
+            village_width = self.game_state.village_data['width']
+            village_height = self.game_state.village_data['height']
+            
+            # Calculate click position within minimap
+            minimap_click_x = pos[0] - minimap_rect.left
+            minimap_click_y = pos[1] - minimap_rect.top
+            
+            # Calculate scale based on the larger dimension
+            max_dimension = max(village_width, village_height)
+            scale = minimap_size / max_dimension
+            
+            # Convert minimap position to world position
+            world_x = int(minimap_click_x / scale)
+            world_y = int(minimap_click_y / scale)
+            
+            # Center camera on clicked position
+            self.game_state.camera_x = world_x - self.game_state.SCREEN_WIDTH // 2
+            self.game_state.camera_y = world_y - self.game_state.SCREEN_HEIGHT // 2
+            
+            # Ensure camera stays within village bounds
+            self.game_state.camera_x = max(0, min(self.game_state.camera_x, 
+                                        village_width - self.game_state.SCREEN_WIDTH))
+            self.game_state.camera_y = max(0, min(self.game_state.camera_y, 
+                                        village_height - self.game_state.SCREEN_HEIGHT))
+            
+            # Notify through Interface
+            Interface.on_minimap_clicked(pos, (world_x, world_y))
+            
+            return
+        
         # Convert screen position to world position
         world_x = pos[0] + self.game_state.camera_x
         world_y = pos[1] + self.game_state.camera_y
@@ -433,7 +475,9 @@ class InputHandler:
         # If a building wasn't clicked, check if clicked on a villager
         if not self.game_state.housing_ui.selected_building:
             self._check_villager_click(world_x, world_y)
-    
+
+
+
     def _check_building_click(self, world_x, world_y):
         """Check if the click is on a building and select it if so.
         
@@ -469,8 +513,10 @@ class InputHandler:
         # This helps maintain focus on the area being viewed when resizing
         
         # Get village size
-        village_size = self.game_state.village_data['size']
         
+        village_width = self.game_state.village_data.get('width')
+        village_height = self.game_state.village_data.get('height')
+    
         # Calculate old center position
         old_center_x = self.game_state.camera_x + self.game_state.SCREEN_WIDTH // 2
         old_center_y = self.game_state.camera_y + self.game_state.SCREEN_HEIGHT // 2
@@ -480,8 +526,9 @@ class InputHandler:
         new_camera_y = old_center_y - self.game_state.SCREEN_HEIGHT // 2
         
         # Ensure camera stays within village bounds
-        new_camera_x = max(0, min(new_camera_x, village_size - self.game_state.SCREEN_WIDTH))
-        new_camera_y = max(0, min(new_camera_y, village_size - self.game_state.SCREEN_HEIGHT))
+
+        new_camera_x = max(0, min(new_camera_x, village_width - self.game_state.SCREEN_WIDTH))
+        new_camera_y = max(0, min(new_camera_y, village_height - self.game_state.SCREEN_HEIGHT))        
         
         # Apply the new camera position
         self.game_state.camera_x = new_camera_x

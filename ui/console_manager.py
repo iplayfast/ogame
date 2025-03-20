@@ -581,11 +581,11 @@ class ConsoleManager:
             return
         
         # Check if coordinates are within village bounds
-        if hasattr(game_state, 'village_data') and 'size' in game_state.village_data:
-            village_size = game_state.village_data['size']
-            if target_x < 0 or target_x >= village_size or target_y < 0 or target_y >= village_size:
-                self.add_output(f"Coordinates out of bounds. Village size is {village_size}x{village_size}.")
-                return
+        village_width = game_state.village_data['width']
+        village_height = game_state.village_data['height']
+        if target_x < 0 or target_x >= village_width or target_y < 0 or target_y >= village_height:
+            self.add_output(f"Coordinates out of bounds. Village size is {village_width}{village_height}.")
+            return
         
         # Try to find and teleport a villager
         if hasattr(game_state, 'villagers'):
@@ -624,15 +624,13 @@ class ConsoleManager:
                 self.add_output("Coordinates must be integers.")
                 return
         else:
-            # Random position within village bounds
-            if hasattr(game_state, 'village_data') and 'size' in game_state.village_data:
-                village_size = game_state.village_data['size']
-                padding = 100  # Keep away from edges
-                spawn_x = random.randint(padding, village_size - padding)
-                spawn_y = random.randint(padding, village_size - padding)
-            else:
-                self.add_output("Cannot determine spawn position. Please specify coordinates.")
-                return
+            # Random position within village bounds            
+            village_width = game_state.village_data['width']
+            village_height = game_state.village_data['height']
+            padding = 100  # Keep away from edges
+            spawn_x = random.randint(padding, village_width - padding)
+            spawn_y = random.randint(padding, village_height - padding)
+        
         
         # Spawn the requested entity type
         if entity_type == "villager":
@@ -688,9 +686,10 @@ class ConsoleManager:
             stats.append(f"FPS: {fps:.1f}")
         
         # Village size
-        if hasattr(game_state, 'village_data') and 'size' in game_state.village_data:
-            village_size = game_state.village_data['size']
-            stats.append(f"Village size: {village_size}x{village_size} pixels")
+        if hasattr(game_state, 'village_data') and 'width' in game_state.village_data:
+            village_width = game_state.village_data['width']
+            village_height = game_state.village_data['height']
+            stats.append(f"Village size: {village_width}x{village_height} pixels")
         
         # Camera position
         if hasattr(game_state, 'camera_x') and hasattr(game_state, 'camera_y'):

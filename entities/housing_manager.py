@@ -33,22 +33,48 @@ class HousingManager:
         # Apply the assignments
         update_game_with_assignments(self.game_state, assignments)
     
+    # Improved function to force villagers to their homes at game start
+# This should be in housing_manager.py
+
     def force_villagers_to_homes(self):
         """Force all villagers to be positioned in their assigned homes."""
+        print("Forcing all villagers to their home positions...")
         villagers_with_homes = 0
         villagers_without_homes = 0
+        
+        # Track occupied bed positions to avoid overlap
+        occupied_bed_positions = {}
         
         for villager in self.game_state.villagers:
             # Check if villager has a home assigned
             if hasattr(villager, 'home') and villager.home and 'position' in villager.home:
                 villagers_with_homes += 1
-                self._position_villager_in_home(villager)
+                
+                # Use the initialize_unique_bed_position method to avoid overlapping beds
+                if hasattr(self, 'initialize_unique_bed_position'):
+                    self.initialize_unique_bed_position(villager, occupied_bed_positions)
+                else:
+                    # Fallback to direct positioning if the method doesn't exist
+                    self._position_villager_in_home(villager)
+                
+                # Ensure villager is in sleeping state
+                villager.is_sleeping = True
+                villager.current_activity = "Sleeping"
+                
+                # Clear any destination
+                villager.destination = None
+                villager.path = []
+                if hasattr(villager, 'current_path_index'):
+                    villager.current_path_index = 0
             else:
                 villagers_without_homes += 1
                 print(f"Warning: {villager.name} has no home assigned")
         
         print(f"Villager home stats: {villagers_with_homes} with homes, {villagers_without_homes} without homes")
+        return villagers_with_homes
+
     
+
     def _position_villager_in_home(self, villager):
         """Position a villager in their assigned home.
         

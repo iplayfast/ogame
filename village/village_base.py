@@ -53,9 +53,14 @@ class Village:
         self.village_center_x = None
         self.village_center_y = None
         
+        # Add explicit width and height (currently same as grid_size for square villages)
+        self.width = self.grid_size
+        self.height = self.grid_size
+    
         # For compatibility with existing code
-        self.village_data = {
-            'size': self.grid_size,
+        self.village_data = {            
+            'width': self.width,
+            'height': self.height,
             'terrain': self.terrain,
             'buildings': self.buildings,
             'trees': self.trees,
@@ -105,8 +110,9 @@ class Village:
         self._analyze_interaction_points()
         
         # Update village_data
-        self.village_data.update({
-            'size': self.grid_size,
+        self.village_data.update({            
+            'width': self.width,
+            'height': self.height,
             'terrain': self.terrain,
             'buildings': self.buildings,
             'trees': self.trees,

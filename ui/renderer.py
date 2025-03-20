@@ -46,9 +46,9 @@ class Renderer:
             # Limit to village size
             
             visible_left = max(0, visible_left)
-            visible_right = min(village_data['size'] // self.tile_size, visible_right)
+            visible_right = min(village_data['width'] // self.tile_size, visible_right)
             visible_top = max(0, visible_top)
-            visible_bottom = min(village_data['size'] // self.tile_size, visible_bottom)
+            visible_bottom = min(village_data['height'] // self.tile_size, visible_bottom)
             
             # Render all world elements
             
@@ -108,7 +108,7 @@ class Renderer:
                 
             if show_debug:
             
-                ui_manager.draw_debug_info(clock, villagers, camera_x, camera_y, village_data['size'])
+                ui_manager.draw_debug_info(clock, villagers, camera_x, camera_y, village_data['width'],village_data['height'])
                 
             # Draw time of day if time manager exists
             if time_manager:

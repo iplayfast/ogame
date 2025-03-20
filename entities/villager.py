@@ -200,7 +200,7 @@ class Villager(pygame.sprite.Sprite):
 
     def update_pathfinding_grid(self):
         # Create a grid representation of obstacles
-        grid_size = self.village_data['size'] // self.TILE_SIZE
+        grid_size = (self.village_data['width'] * self.village_dta['height']) // self.TILE_SIZE
         self.pathfinding_grid = [[True for _ in range(grid_size)] for _ in range(grid_size)]
         
         # Mark water as impassable
@@ -783,7 +783,7 @@ class Villager(pygame.sprite.Sprite):
                 for building in village_data['buildings']:
                     dist = ((building['position'][0] - self.position.x)**2 + 
                         (building['position'][1] - self.position.y)**2)**0.5
-                    if dist < village_data['size'] // 2:  # Limit to reasonably close buildings
+                    if dist < village_data['width'] * village_data['height'] // 2:  # Limit to reasonably close buildings
                         closest_buildings.append((building, dist))
                 
                 if closest_buildings:
@@ -813,8 +813,8 @@ class Villager(pygame.sprite.Sprite):
                     # No close buildings, choose a random position
                     padding = self.TILE_SIZE * 3
                     self.destination = (
-                        random.randint(padding, village_data['size'] - padding),
-                        random.randint(padding, village_data['size'] - padding)
+                        random.randint(padding, village_data['width'] - padding),
+                        random.randint(padding, village_data['height'] - padding)
                     )
             else:
                 # Head to a random position (but keep within village borders and not in water)
@@ -822,8 +822,8 @@ class Villager(pygame.sprite.Sprite):
                 
                 # Try up to 10 times to find a valid position not in water
                 for _ in range(10):
-                    dest_x = random.randint(padding, village_data['size'] - padding)
-                    dest_y = random.randint(padding, village_data['size'] - padding)
+                    dest_x = random.randint(padding, village_data['width'] - padding)
+                    dest_y = random.randint(padding, village_data['height'] - padding)
                     
                     # Check if this position is in water
                     if (dest_x, dest_y) not in village_data.get('water_positions', set()):
@@ -887,13 +887,13 @@ class Villager(pygame.sprite.Sprite):
                 padding = self.TILE_SIZE * 2
                 if self.position.x < padding:
                     self.position.x = padding
-                elif self.position.x > village_data['size'] - padding:
-                    self.position.x = village_data['size'] - padding
+                elif self.position.x > village_data['width'] - padding:
+                    self.position.x = village_data['height'] - padding
 
                 if self.position.y < padding:
                     self.position.y = padding
-                elif self.position.y > village_data['size'] - padding:
-                    self.position.y = village_data['size'] - padding
+                elif self.position.y > village_data['width'] - padding:
+                    self.position.y = village_data['height'] - padding
                 
                 # Update rect position
                 self.rect.centerx = int(self.position.x)
@@ -1060,13 +1060,13 @@ class Villager(pygame.sprite.Sprite):
         padding = self.TILE_SIZE * 2
         if self.position.x < padding:
             self.position.x = padding
-        elif self.position.x > village_data['size'] - padding:
-            self.position.x = village_data['size'] - padding
+        elif self.position.x > village_data['width'] - padding:
+            self.position.x = village_data['height'] - padding
 
         if self.position.y < padding:
             self.position.y = padding
-        elif self.position.y > village_data['size'] - padding:
-            self.position.y = village_data['size'] - padding
+        elif self.position.y > village_data['width'] - padding:
+            self.position.y = village_data['height'] - padding
 
         # Make sure rect position matches
         self.rect.centerx = int(self.position.x)
@@ -1171,8 +1171,8 @@ class Villager(pygame.sprite.Sprite):
                 # Head to a random position but keep within village borders
                 padding = self.TILE_SIZE * 3
                 self.destination = (
-                    random.randint(padding, village_data['size'] - padding),
-                    random.randint(padding, village_data['size'] - padding)
+                    random.randint(padding, village_data['width'] - padding),
+                    random.randint(padding, village_data['height'] - padding)
                 )
         
         # Calculate path to the destination using A* pathfinding
@@ -1422,7 +1422,7 @@ class Villager(pygame.sprite.Sprite):
             village_data: Village data dictionary
         """
         # Calculate grid size
-        grid_size = village_data['size'] // self.TILE_SIZE
+        grid_size = village_data['width'] * village_data['height'] // self.TILE_SIZE
         
         # Initialize the grid with empty passable cells
         grid = [[{'type': 'empty', 'passable': True, 'preferred': False} 

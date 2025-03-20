@@ -52,8 +52,8 @@ class VillagerManager:
         else:
             # Otherwise place randomly
             padding = self.game_state.TILE_SIZE * 3
-            x = random.randint(padding, self.game_state.village_data['size'] - padding)
-            y = random.randint(padding, self.game_state.village_data['size'] - padding)
+            x = random.randint(padding, self.game_state.village_data['width'] - padding)
+            y = random.randint(padding, self.game_state.village_data['height'] - padding)
         
         return x, y
     

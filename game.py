@@ -46,7 +46,11 @@ def main():
     
     # Initialize Interface
     setup_default_callbacks(enable_debug=config["system"].get("debug_mode", False))
+    # Assign housing to villagers
+    game.housing_manager.assign_housing()
     
+    # IMPORTANT: Force all villagers to start in their homes
+    game.housing_manager.force_villagers_to_homes()
     # Print instructions
     print("Village Simulation")
     print(f"Configuration: {game.num_villagers} villagers, {config['buildings']['size_multiplier']}x building size")
