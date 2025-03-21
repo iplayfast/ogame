@@ -26,6 +26,10 @@ from game_core.update_manager import UpdateManager
 class VillageGame:
     """Main game state class that coordinates all game components."""
     
+
+    # In game_core/game_state.py, update the __init__ method to initialize assets before using them
+# This is a partial implementation focusing on the relevant section:
+
     def __init__(self):
         """Initialize the game state."""
         # Load configuration
@@ -36,6 +40,46 @@ class VillageGame:
         self.SCREEN_HEIGHT = 720
         self.TILE_SIZE = 32
         self.CAMERA_SPEED = 10
+        
+        # Initialize screen
+        self._windowed_size = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.resize_mode = False
+        self.resize_timer = 0
+        self.resize_timeout = 100
+        
+        # Initialize screen
+        self.screen = pygame.display.set_mode((self.SCREEN_WIDTH, self.SCREEN_HEIGHT), pygame.RESIZABLE)
+        pygame.display.set_caption("Village Simulation")
+        self._windowed_size = (self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        print(f"Initial window size saved: {self._windowed_size}")
+        
+        # Store reference to window for better position management
+        try:
+            from pygame._sdl2.video import Window
+            self.window = Window.from_display_module()
+        except (ImportError, AttributeError) as e:
+            print(f"Warning: SDL2 window management not available: {e}")
+            self.window = None
+        
+        # Load assets BEFORE generating village
+        self.assets = load_assets()
+        
+        # Create game clock
+        self.clock = pygame.time.Clock()
+        self.fps = 60
+        
+        # Create UI components
+        self.console_manager = ConsoleManager(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.housing_ui = HousingUI(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        self.renderer = Renderer(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT, self.TILE_SIZE)
+        self.ui_manager = UIManager(self.screen, self.assets, self.SCREEN_WIDTH, self.SCREEN_HEIGHT)
+        
+        # Load village size from config
+        self.village_size = self.config.get("village", {}).get("size", 60)  # Default to 60 if not specified
+
+        # NOW generate village with the configured size and pass the config
+        self.village_data = generate_village(self.village_size, self.assets, self.TILE_SIZE, self.config)
+        
         
         # Initialize screen
         # In the __init__ method of VillageGame

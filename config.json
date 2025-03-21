@@ -5,6 +5,7 @@
     },
     "buildings": {
         "size_multiplier": 1.0,
+        "density": 0.6,
         "comments": "Multiplier for building sizes (1.0 = default, 2.0 = double size, etc.)"
     },
     "system": {

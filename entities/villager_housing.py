@@ -122,19 +122,23 @@ def assign_housing_and_jobs(villagers, village_data):
             "Return home"
         ],
         "Miner": [
-            "Travel to mines", 
-            "Dig for ore", 
-            "Sort materials", 
-            "Sell findings", 
-            "Repair tools",
+            "Prepare equipment", 
+            "Travel to mines outside village", 
+            "Dig for ore and minerals", 
+            "Take breaks for meals",
+            "Sort and clean findings", 
+            "Return to village with materials",
+            "Sell findings at market",
             "Return home"
         ],
         "Hunter": [
-            "Check traps", 
-            "Track animals", 
+            "Check hunting equipment", 
+            "Travel to hunting grounds", 
+            "Track animals in the forest", 
             "Hunt for game", 
-            "Prepare hides", 
-            "Sell meat at market",
+            "Process catches",
+            "Return to village with game",
+            "Sell meat and furs at market",
             "Return home"
         ],
         "Guard": [
@@ -268,6 +272,40 @@ def assign_housing_and_jobs(villagers, village_data):
             v_entry['daily_activities'].append(home_activities[0])
         
         villager_data.append(v_entry)
+    
+    # Special handling for miners and hunters who work outside the village
+    for villager in villagers:
+        if villager.job in ["Miner", "Hunter"] and not any(v['name'] == villager.name and 'workplace' in v for v in villager_data):
+            # Create an "external" workplace at the edge of the village
+            village_width = village_data.get('width', 1000)
+            village_height = village_data.get('height', 1000)
+            tile_size = 32  # Default tile size
+            
+            # Choose a direction (north, east, south, west)
+            direction = random.choice(["north", "east", "south", "west"])
+            
+            if direction == "north":
+                workplace_pos = (random.randint(100, village_width - 100), tile_size * 2)
+            elif direction == "east":
+                workplace_pos = (village_width - tile_size * 2, random.randint(100, village_height - 100))
+            elif direction == "south":
+                workplace_pos = (random.randint(100, village_width - 100), village_height - tile_size * 2)
+            else:  # west
+                workplace_pos = (tile_size * 2, random.randint(100, village_height - 100))
+            
+            # Create external workplace data
+            workplace = {
+                'id': -1,  # Special ID for external workplaces
+                'type': f"{villager.job} Workplace",
+                'position': workplace_pos,
+                'external': True  # Mark as external
+            }
+            
+            # Assign to villager
+            v_entry = next((v for v in villager_data if v['name'] == villager.name), None)
+            if v_entry:
+                v_entry['workplace'] = workplace
+                print(f"Assigned external workplace for {villager.name} ({villager.job})")
     
     # Name houses based on occupants
     house_names = {}
@@ -405,3 +443,25 @@ def update_game_with_assignments(game_state, assignments):
                     # Bind our enhanced method to the villager
                     import types
                     villager.find_new_destination = types.MethodType(enhanced_find_destination, villager)
+
+def notify_housing_assignments(villagers, assignments):
+    """Notify Interface of housing and workplace assignments."""
+    if not assignments or 'villagers' not in assignments:
+        return
+        
+    for villager in villagers:
+        for v_data in assignments['villagers']:
+            if villager.name == v_data['name']:
+                # Find the home building
+                if 'home' in v_data and 'id' in v_data['home'] and v_data['home']['id'] >= 0:
+                    home_id = v_data['home']['id']
+                    # Notify Interface
+                    Interface.on_building_housing_assigned(villager, {'id': home_id}, 'home')
+                
+                # Find the workplace building
+                if 'workplace' in v_data and 'id' in v_data['workplace']:
+                    workplace_id = v_data['workplace']['id']
+                    # Notify Interface
+                    Interface.on_building_housing_assigned(villager, {'id': workplace_id}, 'workplace')
+                    
+    print("Interface notified of all housing and workplace assignments")
