@@ -1,4 +1,5 @@
 .
+├── all_source_code.txt
 ├── assets
 │   ├── buildings
 │   │   ├── building_large_house_2.png
@@ -22,12 +23,58 @@
 │   │   ├── building_small_house_3.png
 │   │   └── building_small_shop_3.png
 │   ├── characters
-│   │   ├── villager_1.png
-│   │   ├── villager_2.png
-│   │   ├── villager_3.png
-│   │   ├── villager_4.png
-│   │   └── villager_5.png
+│   │   ├── 1 Old_man
+│   │   │   ├── description.txt
+│   │   │   ├── Old_man_attack.png
+│   │   │   ├── Old_man_death.png
+│   │   │   ├── Old_man_hurt.png
+│   │   │   ├── Old_man_idle.png
+│   │   │   ├── Old_man.png
+│   │   │   └── Old_man_walk.png
+│   │   ├── 2 Old_woman
+│   │   │   ├── description.txt
+│   │   │   ├── Old_woman_attack.png
+│   │   │   ├── Old_woman_death.png
+│   │   │   ├── Old_woman_hurt.png
+│   │   │   ├── Old_woman_idle.png
+│   │   │   ├── Old_woman.png
+│   │   │   └── Old_woman_walk.png
+│   │   ├── 3 Man
+│   │   │   ├── description.txt
+│   │   │   ├── Man_attack.png
+│   │   │   ├── Man_death.png
+│   │   │   ├── Man_hurt.png
+│   │   │   ├── Man_idle.png
+│   │   │   ├── Man.png
+│   │   │   └── Man_walk.png
+│   │   ├── 4 Woman
+│   │   │   ├── description.txt
+│   │   │   ├── Woman_attack.png
+│   │   │   ├── Woman_death.png
+│   │   │   ├── Woman_hurt.png
+│   │   │   ├── Woman_idle.png
+│   │   │   ├── Woman.png
+│   │   │   └── Woman_walk.png
+│   │   ├── 5 Boy
+│   │   │   ├── Boy_attack.png
+│   │   │   ├── Boy_death.png
+│   │   │   ├── Boy_hurt.png
+│   │   │   ├── Boy_idle.png
+│   │   │   ├── Boy.png
+│   │   │   ├── Boy_walk.png
+│   │   │   └── description.txt
+│   │   └── 6 Girl
+│   │       ├── description.txt
+│   │       ├── Girl_attack.png
+│   │       ├── Girl_death.png
+│   │       ├── Girl_hurt.png
+│   │       ├── Girl_idle.png
+│   │       ├── Girl.png
+│   │       └── Girl_walk.png
 │   ├── environment
+│   │   ├── assetTest
+│   │   │   ├── assetTest.py
+│   │   │   └── runAssetTest.py
 │   │   ├── grass_1.png
 │   │   ├── grass_2.png
 │   │   ├── grass_3.png
@@ -44,6 +91,56 @@
 │   │   ├── water_frame_2.png
 │   │   ├── water_frame_3.png
 │   │   └── water_frame_4.png
+│   ├── PSD
+│   │   ├── Boy.psd
+│   │   ├── Girl.psd
+│   │   ├── Man.psd
+│   │   ├── Old_man.psd
+│   │   ├── Old_woman.psd
+│   │   └── Woman.psd
+│   ├── topdown
+│   │   ├── COUPON.pdf
+│   │   ├── COUPON.png
+│   │   ├── Free Assets Craftpix!.url
+│   │   ├── __MACOSX
+│   │   │   ├── PNG
+│   │   │   ├── PSD
+│   │   │   └── Tiled_files
+│   │   ├── PNG
+│   │   │   ├── bird_fly_animation.png
+│   │   │   ├── bird_jump_animation.png
+│   │   │   ├── cat_animation.png
+│   │   │   ├── exterior.png
+│   │   │   ├── ground_grass_details.png
+│   │   │   ├── house_details.png
+│   │   │   ├── Interior.png
+│   │   │   ├── Smoke_animation.png
+│   │   │   ├── Trees_animation.png
+│   │   │   └── walls_floor.png
+│   │   ├── PSD
+│   │   │   ├── bird_fly_animation.psd
+│   │   │   ├── bird_jump_animation.psd
+│   │   │   ├── cat_animation.psd
+│   │   │   ├── exterior.psd
+│   │   │   ├── ground_grass_details.psd
+│   │   │   ├── Interior.psd
+│   │   │   ├── Trees_animation.psd
+│   │   │   └── walls_floor.psd
+│   │   └── Tiled_files
+│   │       ├── bird_fly_animation.png
+│   │       ├── bird_jump_animation.png
+│   │       ├── cat_animation.png
+│   │       ├── Doors_windows_animation.png
+│   │       ├── exterior.png
+│   │       ├── Exterior.tmx
+│   │       ├── Exterior — копия.tmx
+│   │       ├── ground_grass_details.png
+│   │       ├── house_details.png
+│   │       ├── Interior1.tmx
+│   │       ├── Interior.png
+│   │       ├── Smoke_animation.png
+│   │       ├── Trees_animation.png
+│   │       └── walls_floor.png
 │   ├── ui
 │   │   ├── dialog_template.png
 │   │   ├── icon_energy.png
@@ -52,9 +149,109 @@
 │   │   └── icon_mood.png
 │   └── village_assignments.json
 ├── building_interiors_doc.md
+├── character_movement_demo.py
+├── collect_and_concat.sh
 ├── config.json
-├── diff.txt
+├── demofullscreen.py
+├── demoresize.py
 ├── directorylayout.txt
+├── downloads
+│   ├── 1 Old_man
+│   │   ├── Old_man_attack.png
+│   │   ├── Old_man_death.png
+│   │   ├── Old_man_hurt.png
+│   │   ├── Old_man_idle.png
+│   │   ├── Old_man.png
+│   │   └── Old_man_walk.png
+│   ├── 2 Old_woman
+│   │   ├── Old_woman_attack.png
+│   │   ├── Old_woman_death.png
+│   │   ├── Old_woman_hurt.png
+│   │   ├── Old_woman_idle.png
+│   │   ├── Old_woman.png
+│   │   └── Old_woman_walk.png
+│   ├── 3 Man
+│   │   ├── Man_attack.png
+│   │   ├── Man_death.png
+│   │   ├── Man_hurt.png
+│   │   ├── Man_idle.png
+│   │   ├── Man.png
+│   │   └── Man_walk.png
+│   ├── 4 Woman
+│   │   ├── Woman_attack.png
+│   │   ├── Woman_death.png
+│   │   ├── Woman_hurt.png
+│   │   ├── Woman_idle.png
+│   │   ├── Woman.png
+│   │   └── Woman_walk.png
+│   ├── 5 Boy
+│   │   ├── Boy_attack.png
+│   │   ├── Boy_death.png
+│   │   ├── Boy_hurt.png
+│   │   ├── Boy_idle.png
+│   │   ├── Boy.png
+│   │   └── Boy_walk.png
+│   ├── 6 Girl
+│   │   ├── Girl_attack.png
+│   │   ├── Girl_death.png
+│   │   ├── Girl_hurt.png
+│   │   ├── Girl_idle.png
+│   │   ├── Girl.png
+│   │   └── Girl_walk.png
+│   ├── craftpix-781111-free-villagers-sprite-sheets-pixel-art.zip
+│   ├── craftpix-net-654184-main-characters-home-free-top-down-pixel-art-asset
+│   │   ├── COUPON.pdf
+│   │   ├── COUPON.png
+│   │   ├── Free Assets Craftpix!.url
+│   │   ├── __MACOSX
+│   │   │   ├── PNG
+│   │   │   ├── PSD
+│   │   │   └── Tiled_files
+│   │   ├── PNG
+│   │   │   ├── bird_fly_animation.png
+│   │   │   ├── bird_jump_animation.png
+│   │   │   ├── cat_animation.png
+│   │   │   ├── exterior.png
+│   │   │   ├── ground_grass_details.png
+│   │   │   ├── house_details.png
+│   │   │   ├── Interior.png
+│   │   │   ├── Smoke_animation.png
+│   │   │   ├── Trees_animation.png
+│   │   │   └── walls_floor.png
+│   │   ├── PSD
+│   │   │   ├── bird_fly_animation.psd
+│   │   │   ├── bird_jump_animation.psd
+│   │   │   ├── cat_animation.psd
+│   │   │   ├── exterior.psd
+│   │   │   ├── ground_grass_details.psd
+│   │   │   ├── Interior.psd
+│   │   │   ├── Trees_animation.psd
+│   │   │   └── walls_floor.psd
+│   │   └── Tiled_files
+│   │       ├── bird_fly_animation.png
+│   │       ├── bird_jump_animation.png
+│   │       ├── cat_animation.png
+│   │       ├── Doors_windows_animation.png
+│   │       ├── exterior.png
+│   │       ├── Exterior.tmx
+│   │       ├── Exterior — копия.tmx
+│   │       ├── ground_grass_details.png
+│   │       ├── house_details.png
+│   │       ├── Interior1.tmx
+│   │       ├── Interior.png
+│   │       ├── Smoke_animation.png
+│   │       ├── Trees_animation.png
+│   │       └── walls_floor.png
+│   ├── craftpix-net-654184-main-characters-home-free-top-down-pixel-art-asset.zip
+│   ├── Font.txt
+│   ├── License.txt
+│   └── PSD
+│       ├── Boy.psd
+│       ├── Girl.psd
+│       ├── Man.psd
+│       ├── Old_man.psd
+│       ├── Old_woman.psd
+│       └── Woman.psd
 ├── entities
 │   ├── housing_manager.py
 │   ├── __init__.py
@@ -82,6 +279,8 @@
 │   ├── interaction_system.py
 │   ├── time_manager.py
 │   └── time_system.py
+├── test.json
+├── todo.md
 ├── ui
 │   ├── console_manager.py
 │   ├── housing_ui.py
@@ -96,7 +295,9 @@
 │   ├── config_manager.py
 │   ├── __init__.py
 │   ├── interface_utils.py
-│   └── landscape_utils.py
+│   ├── landscape_utils.py
+│   ├── sprite.py
+│   └── tileset.py
 ├── village
 │   ├── village_base.py
 │   ├── village_buildings.py
@@ -106,4 +307,4 @@
 │   └── village_paths.py
 └── village_assignments.json
 
-12 directories, 95 files
+44 directories, 264 files

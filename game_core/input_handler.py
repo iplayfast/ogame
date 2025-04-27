@@ -627,6 +627,12 @@ class InputHandler:
         Args:
             villager: The villager to select
         """
+        previous_selection = self.game_state.selected_villager
+        if previous_selection and previous_selection != villager:
+            previous_selection.is_selected = False
+            # Notify Interface about deselection
+            Interface.on_villager_selected(previous_selection, False)
+            print(f"Deselected villager: {previous_selection.name}") # Debug
         self.game_state.selected_villager = villager
         self.game_state.selected_villager.is_selected = True
         

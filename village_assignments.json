@@ -1,675 +1,661 @@
 {
     "villagers": [
         {
-            "name": "Greta Cooper",
-            "job": "Innkeeper",
+            "name": "Ulric Thatcher",
+            "job": "Tailor",
             "home": {
-                "id": 30,
-                "type": "House",
+                "id": 114,
+                "type": "Cottage",
                 "position": [
-                    1664,
-                    1600
+                    1440,
+                    2400
                 ],
                 "roommates": [
-                    "Greta Cooper",
-                    "Tilly Fisher"
+                    "Ulric Thatcher",
+                    "Bela Gray"
                 ],
-                "name": "Greta Cooper and Tilly Fisher's House"
+                "name": "Ulric Thatcher and Bela Gray's House"
+            },
+            "workplace": {
+                "id": 1,
+                "type": "Workshop",
+                "position": [
+                    1728,
+                    2080
+                ]
+            },
+            "daily_activities": [
+                "Make alterations",
+                "Chat with neighbors",
+                "Collect water from well",
+                "Sew garments",
+                "Visit the market",
+                "Meet with clients",
+                "Cut fabric",
+                "Design new styles",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Lily Brown",
+            "job": "Baker",
+            "home": {
+                "id": 13,
+                "type": "House",
+                "position": [
+                    2240,
+                    2432
+                ],
+                "roommates": [
+                    "Lily Brown",
+                    "Bela Ford"
+                ],
+                "name": "Lily Brown and Bela Ford's House"
+            },
+            "workplace": {
+                "id": 5,
+                "type": "Bakery",
+                "position": [
+                    2080,
+                    2304
+                ]
+            },
+            "daily_activities": [
+                "Bake bread",
+                "Visit the market",
+                "Clean bakery",
+                "Prepare dough",
+                "Wake up early",
+                "Collect water from well",
+                "Sell goods to customers",
+                "Chat with customers",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Bela Gray",
+            "job": "Tailor",
+            "home": {
+                "id": 114,
+                "type": "Cottage",
+                "position": [
+                    1440,
+                    2400
+                ],
+                "roommates": [
+                    "Ulric Thatcher",
+                    "Bela Gray"
+                ],
+                "name": "Ulric Thatcher and Bela Gray's House"
+            },
+            "workplace": {
+                "id": 1,
+                "type": "Workshop",
+                "position": [
+                    1728,
+                    2080
+                ]
+            },
+            "daily_activities": [
+                "Eat at the Inn",
+                "Sew garments",
+                "Collect water from well",
+                "Visit the market",
+                "Meet with clients",
+                "Design new styles",
+                "Cut fabric",
+                "Make alterations",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Hilda Cooper",
+            "job": "Blacksmith",
+            "home": {
+                "id": 191,
+                "type": "House",
+                "position": [
+                    1600,
+                    2528
+                ],
+                "roommates": [
+                    "Hilda Cooper"
+                ],
+                "name": "Hilda Cooper's House"
+            },
+            "workplace": {
+                "id": 4,
+                "type": "Smithy",
+                "position": [
+                    1696,
+                    2208
+                ]
+            },
+            "daily_activities": [
+                "Work on special orders",
+                "Sell wares",
+                "Repair items",
+                "Go for a walk",
+                "Get materials ready",
+                "Collect water from well",
+                "Forge tools and weapons",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ivan Thatcher",
+            "job": "Merchant",
+            "home": {
+                "id": 20,
+                "type": "House",
+                "position": [
+                    2400,
+                    2368
+                ],
+                "roommates": [
+                    "Ivan Thatcher",
+                    "Tilly Swift"
+                ],
+                "name": "Ivan Thatcher and Tilly Swift's House"
+            },
+            "workplace": {
+                "id": 0,
+                "type": "Store",
+                "position": [
+                    2208,
+                    2112
+                ]
+            },
+            "daily_activities": [
+                "Visit the market",
+                "Count earnings",
+                "Bargain with customers",
+                "Eat at the Inn",
+                "Chat with neighbors",
+                "Close shop",
+                "Restock inventory",
+                "Open shop",
+                "Arrange merchandise",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Xander River",
+            "job": "Carpenter",
+            "home": {
+                "id": 177,
+                "type": "House",
+                "position": [
+                    1312,
+                    1920
+                ],
+                "roommates": [
+                    "Xander River",
+                    "Kai Green"
+                ],
+                "name": "Xander River and Kai Green's House"
+            },
+            "workplace": {
+                "id": 1,
+                "type": "Workshop",
+                "position": [
+                    1728,
+                    2080
+                ]
+            },
+            "daily_activities": [
+                "Cut lumber",
+                "Make repairs around village",
+                "Build furniture",
+                "Visit the market",
+                "Select wood",
+                "Finish projects",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Bela Ford",
+            "job": "Miner",
+            "home": {
+                "id": 13,
+                "type": "House",
+                "position": [
+                    2240,
+                    2432
+                ],
+                "roommates": [
+                    "Lily Brown",
+                    "Bela Ford"
+                ],
+                "name": "Lily Brown and Bela Ford's House"
+            },
+            "daily_activities": [
+                "Travel to mines",
+                "Attend town gathering",
+                "Eat at the Inn",
+                "Dig for ore",
+                "Repair tools",
+                "Sort materials",
+                "Sell findings",
+                "Visit the market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Aiden Dale",
+            "job": "Baker",
+            "home": {
+                "id": 141,
+                "type": "House",
+                "position": [
+                    2592,
+                    2016
+                ],
+                "roommates": [
+                    "Aiden Dale"
+                ],
+                "name": "Aiden Dale's House"
+            },
+            "workplace": {
+                "id": 10,
+                "type": "Bakery",
+                "position": [
+                    2464,
+                    2016
+                ]
+            },
+            "daily_activities": [
+                "Chat with neighbors",
+                "Clean bakery",
+                "Bake bread",
+                "Prepare dough",
+                "Visit the market",
+                "Sell goods to customers",
+                "Chat with customers",
+                "Wake up early",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Tilly Swift",
+            "job": "Innkeeper",
+            "home": {
+                "id": 20,
+                "type": "House",
+                "position": [
+                    2400,
+                    2368
+                ],
+                "roommates": [
+                    "Ivan Thatcher",
+                    "Tilly Swift"
+                ],
+                "name": "Ivan Thatcher and Tilly Swift's House"
             },
             "workplace": {
                 "id": 2,
                 "type": "Inn",
                 "position": [
-                    1856,
-                    1760
+                    2080,
+                    2112
                 ]
             },
             "daily_activities": [
                 "Prepare breakfast for guests",
-                "Close up for the night",
-                "Manage staff",
-                "Chat with neighbors",
                 "Serve food and drinks",
+                "Manage staff",
+                "Clean rooms",
                 "Attend town gathering",
-                "Welcome new travelers",
-                "Clean rooms",
-                "Visit the market"
-            ]
-        },
-        {
-            "name": "Kai Fisher",
-            "job": "Merchant",
-            "home": {
-                "id": 116,
-                "type": "House",
-                "position": [
-                    2272,
-                    1344
-                ],
-                "roommates": [
-                    "Kai Fisher",
-                    "Ulric Fisher"
-                ],
-                "name": "The Fisher House"
-            },
-            "workplace": {
-                "id": 0,
-                "type": "Store",
-                "position": [
-                    2144,
-                    1536
-                ]
-            },
-            "daily_activities": [
-                "Count earnings",
-                "Close shop",
-                "Collect water from well",
-                "Chat with neighbors",
-                "Bargain with customers",
-                "Open shop",
-                "Restock inventory",
-                "Arrange merchandise",
-                "Eat at the Inn",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Yara Brook",
-            "job": "Innkeeper",
-            "home": {
-                "id": 149,
-                "type": "House",
-                "position": [
-                    1536,
-                    2368
-                ],
-                "roommates": [
-                    "Yara Brook",
-                    "Vera Baker"
-                ],
-                "name": "Yara Brook and Vera Baker's House"
-            },
-            "workplace": {
-                "id": 19,
-                "type": "Inn",
-                "position": [
-                    1760,
-                    2176
-                ]
-            },
-            "daily_activities": [
-                "Prepare breakfast for guests",
-                "Chat with neighbors",
-                "Clean rooms",
-                "Manage staff",
-                "Serve food and drinks",
-                "Welcome new travelers",
                 "Close up for the night",
-                "Eat at the Inn"
-            ]
-        },
-        {
-            "name": "Kai Green",
-            "job": "Hunter",
-            "home": {
-                "id": 22,
-                "type": "House",
-                "position": [
-                    1536,
-                    1600
-                ],
-                "roommates": [
-                    "Kai Green",
-                    "Hilda Fletcher"
-                ],
-                "name": "Kai Green and Hilda Fletcher's House"
-            },
-            "daily_activities": [
-                "Sell meat at market",
-                "Collect water from well",
-                "Hunt for game",
-                "Check traps",
-                "Prepare hides",
-                "Track animals",
-                "Visit the market",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Hilda Fletcher",
-            "job": "Hunter",
-            "home": {
-                "id": 22,
-                "type": "House",
-                "position": [
-                    1536,
-                    1600
-                ],
-                "roommates": [
-                    "Kai Green",
-                    "Hilda Fletcher"
-                ],
-                "name": "Kai Green and Hilda Fletcher's House"
-            },
-            "daily_activities": [
-                "Check traps",
-                "Visit the market",
-                "Eat at the Inn",
-                "Prepare hides",
-                "Sell meat at market",
-                "Go for a walk",
-                "Hunt for game",
-                "Track animals",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Wood",
-            "job": "Carpenter",
-            "home": {
-                "id": 233,
-                "type": "Cottage",
-                "position": [
-                    1280,
-                    1952
-                ],
-                "roommates": [
-                    "Otto Wood",
-                    "Aiden Green"
-                ],
-                "name": "Otto Wood and Aiden Green's House"
-            },
-            "workplace": {
-                "id": 7,
-                "type": "Workshop",
-                "position": [
-                    1600,
-                    1952
-                ]
-            },
-            "daily_activities": [
-                "Finish projects",
-                "Select wood",
-                "Attend town gathering",
-                "Make repairs around village",
-                "Eat at the Inn",
-                "Build furniture",
-                "Cut lumber",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Ivan Brook",
-            "job": "Innkeeper",
-            "home": {
-                "id": 222,
-                "type": "House",
-                "position": [
-                    1984,
-                    1312
-                ],
-                "roommates": [
-                    "Ivan Brook"
-                ],
-                "name": "Ivan Brook's House"
-            },
-            "workplace": {
-                "id": 29,
-                "type": "Inn",
-                "position": [
-                    2048,
-                    1504
-                ]
-            },
-            "daily_activities": [
-                "Manage staff",
-                "Chat with neighbors",
-                "Serve food and drinks",
-                "Clean rooms",
                 "Welcome new travelers",
-                "Close up for the night",
-                "Prepare breakfast for guests",
-                "Attend town gathering"
-            ]
-        },
-        {
-            "name": "Lily Black",
-            "job": "Innkeeper",
-            "home": {
-                "id": 32,
-                "type": "Cottage",
-                "position": [
-                    1952,
-                    3136
-                ],
-                "roommates": [
-                    "Lily Black"
-                ],
-                "name": "Lily Black's House"
-            },
-            "workplace": {
-                "id": 36,
-                "type": "Inn",
-                "position": [
-                    1952,
-                    3040
-                ]
-            },
-            "daily_activities": [
-                "Clean rooms",
-                "Serve food and drinks",
-                "Manage staff",
-                "Chat with neighbors",
-                "Welcome new travelers",
-                "Prepare breakfast for guests",
-                "Visit the market",
-                "Close up for the night",
                 "Relax at home"
             ]
         },
         {
-            "name": "Tilly Fisher",
-            "job": "Farmer",
+            "name": "Otto Baker",
+            "job": "Baker",
             "home": {
-                "id": 30,
+                "id": 25,
                 "type": "House",
                 "position": [
-                    1664,
-                    1600
+                    1984,
+                    3552
                 ],
                 "roommates": [
-                    "Greta Cooper",
-                    "Tilly Fisher"
+                    "Otto Baker",
+                    "Lily Green"
                 ],
-                "name": "Greta Cooper and Tilly Fisher's House"
+                "name": "Otto Baker and Lily Green's House"
             },
             "daily_activities": [
-                "Visit the market",
-                "Plant new seeds",
-                "Repair fences",
+                "Eat at the Inn",
+                "Prepare dough",
+                "Chat with customers",
+                "Clean bakery",
+                "Bake bread",
+                "Wake up early",
+                "Sell goods to customers",
+                "Attend town gathering",
                 "Chat with neighbors",
-                "Collect water from well",
-                "Take produce to market",
-                "Feed animals",
-                "Tend to crops",
                 "Return home"
             ]
         },
         {
-            "name": "Aiden Green",
-            "job": "Tailor",
+            "name": "Tilly Cooper",
+            "job": "Innkeeper",
             "home": {
-                "id": 233,
-                "type": "Cottage",
+                "id": 135,
+                "type": "House",
                 "position": [
-                    1280,
-                    1952
+                    2496,
+                    1696
                 ],
                 "roommates": [
-                    "Otto Wood",
-                    "Aiden Green"
+                    "Tilly Cooper"
                 ],
-                "name": "Otto Wood and Aiden Green's House"
+                "name": "Tilly Cooper's House"
             },
             "workplace": {
                 "id": 7,
-                "type": "Workshop",
+                "type": "Inn",
+                "position": [
+                    2400,
+                    1856
+                ]
+            },
+            "daily_activities": [
+                "Serve food and drinks",
+                "Manage staff",
+                "Prepare breakfast for guests",
+                "Clean rooms",
+                "Welcome new travelers",
+                "Close up for the night",
+                "Visit the market",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Lily Green",
+            "job": "Farmer",
+            "home": {
+                "id": 25,
+                "type": "House",
+                "position": [
+                    1984,
+                    3552
+                ],
+                "roommates": [
+                    "Otto Baker",
+                    "Lily Green"
+                ],
+                "name": "Otto Baker and Lily Green's House"
+            },
+            "daily_activities": [
+                "Feed animals",
+                "Repair fences",
+                "Plant new seeds",
+                "Take produce to market",
+                "Attend town gathering",
+                "Tend to crops",
+                "Visit the market",
+                "Relax at home"
+            ]
+        },
+        {
+            "name": "Xander Ford",
+            "job": "Blacksmith",
+            "home": {
+                "id": 30,
+                "type": "House",
                 "position": [
                     1600,
-                    1952
+                    3680
+                ],
+                "roommates": [
+                    "Xander Ford",
+                    "Lily Baker"
+                ],
+                "name": "Xander Ford and Lily Baker's House"
+            },
+            "daily_activities": [
+                "Attend town gathering",
+                "Get materials ready",
+                "Sell wares",
+                "Forge tools and weapons",
+                "Collect water from well",
+                "Repair items",
+                "Work on special orders",
+                "Visit the market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Lily Baker",
+            "job": "Hunter",
+            "home": {
+                "id": 30,
+                "type": "House",
+                "position": [
+                    1600,
+                    3680
+                ],
+                "roommates": [
+                    "Xander Ford",
+                    "Lily Baker"
+                ],
+                "name": "Xander Ford and Lily Baker's House"
+            },
+            "daily_activities": [
+                "Collect water from well",
+                "Prepare hides",
+                "Check traps",
+                "Hunt for game",
+                "Track animals",
+                "Sell meat at market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Kai Green",
+            "job": "Tailor",
+            "home": {
+                "id": 177,
+                "type": "House",
+                "position": [
+                    1312,
+                    1920
+                ],
+                "roommates": [
+                    "Xander River",
+                    "Kai Green"
+                ],
+                "name": "Xander River and Kai Green's House"
+            },
+            "workplace": {
+                "id": 1,
+                "type": "Workshop",
+                "position": [
+                    1728,
+                    2080
+                ]
+            },
+            "daily_activities": [
+                "Design new styles",
+                "Collect water from well",
+                "Visit the market",
+                "Cut fabric",
+                "Meet with clients",
+                "Eat at the Inn",
+                "Make alterations",
+                "Sew garments",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Ulric Field",
+            "job": "Tailor",
+            "home": {
+                "id": 115,
+                "type": "House",
+                "position": [
+                    1280,
+                    2144
+                ],
+                "roommates": [
+                    "Ulric Field"
+                ],
+                "name": "Ulric Field's House"
+            },
+            "workplace": {
+                "id": 1,
+                "type": "Workshop",
+                "position": [
+                    1728,
+                    2080
                 ]
             },
             "daily_activities": [
                 "Meet with clients",
-                "Design new styles",
-                "Visit the market",
                 "Sew garments",
+                "Eat at the Inn",
                 "Make alterations",
+                "Design new styles",
+                "Collect water from well",
+                "Go for a walk",
                 "Cut fabric",
                 "Return home"
             ]
         },
         {
-            "name": "Julia Fisher",
+            "name": "Tilly Field",
+            "job": "Blacksmith",
+            "home": {
+                "id": 31,
+                "type": "House",
+                "position": [
+                    2208,
+                    1184
+                ],
+                "roommates": [
+                    "Tilly Field",
+                    "Doran Hill"
+                ],
+                "name": "Tilly Field and Doran Hill's House"
+            },
+            "daily_activities": [
+                "Work on special orders",
+                "Repair items",
+                "Sell wares",
+                "Get materials ready",
+                "Forge tools and weapons",
+                "Attend town gathering",
+                "Collect water from well",
+                "Visit the market",
+                "Return home"
+            ]
+        },
+        {
+            "name": "Doran Hill",
             "job": "Guard",
             "home": {
-                "id": 115,
+                "id": 31,
                 "type": "House",
                 "position": [
-                    1856,
-                    1280
+                    2208,
+                    1184
                 ],
                 "roommates": [
-                    "Julia Fisher",
-                    "Otto Thatcher"
+                    "Tilly Field",
+                    "Doran Hill"
                 ],
-                "name": "Julia Fisher and Otto Thatcher's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Town Hall",
-                "position": [
-                    1856,
-                    1408
-                ]
+                "name": "Tilly Field and Doran Hill's House"
             },
             "daily_activities": [
-                "Check on merchants",
-                "Stand watch at gate",
-                "Patrol village",
-                "Train with weapons",
-                "Chat with neighbors",
-                "Report to captain",
-                "Relax at home"
-            ]
-        },
-        {
-            "name": "Tilly Strong",
-            "job": "Innkeeper",
-            "home": {
-                "id": 148,
-                "type": "House",
-                "position": [
-                    2528,
-                    1664
-                ],
-                "roommates": [
-                    "Tilly Strong"
-                ],
-                "name": "Tilly Strong's House"
-            },
-            "workplace": {
-                "id": 40,
-                "type": "Inn",
-                "position": [
-                    2592,
-                    1760
-                ]
-            },
-            "daily_activities": [
-                "Go for a walk",
-                "Prepare breakfast for guests",
-                "Clean rooms",
-                "Collect water from well",
-                "Welcome new travelers",
-                "Attend town gathering",
-                "Manage staff",
-                "Close up for the night",
-                "Serve food and drinks"
-            ]
-        },
-        {
-            "name": "Ivan Brook",
-            "job": "Farmer",
-            "home": {
-                "id": 55,
-                "type": "House",
-                "position": [
-                    1952,
-                    3232
-                ],
-                "roommates": [
-                    "Ivan Brook",
-                    "Greta Baker"
-                ],
-                "name": "Ivan Brook and Greta Baker's House"
-            },
-            "daily_activities": [
-                "Tend to crops",
-                "Chat with neighbors",
-                "Take produce to market",
-                "Collect water from well",
-                "Feed animals",
-                "Plant new seeds",
-                "Repair fences",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Otto Thatcher",
-            "job": "Guard",
-            "home": {
-                "id": 115,
-                "type": "House",
-                "position": [
-                    1856,
-                    1280
-                ],
-                "roommates": [
-                    "Julia Fisher",
-                    "Otto Thatcher"
-                ],
-                "name": "Julia Fisher and Otto Thatcher's House"
-            },
-            "workplace": {
-                "id": 5,
-                "type": "Town Hall",
-                "position": [
-                    1856,
-                    1408
-                ]
-            },
-            "daily_activities": [
-                "Check on merchants",
-                "Go for a walk",
                 "Patrol village",
                 "Report to captain",
-                "Train with weapons",
+                "Eat at the Inn",
+                "Visit the market",
                 "Stand watch at gate",
+                "Check on merchants",
+                "Train with weapons",
                 "Relax at home"
             ]
         },
         {
-            "name": "Greta Fletcher",
-            "job": "Baker",
-            "home": {
-                "id": 181,
-                "type": "House",
-                "position": [
-                    1280,
-                    1856
-                ],
-                "roommates": [
-                    "Greta Fletcher"
-                ],
-                "name": "Greta Fletcher's House"
-            },
-            "workplace": {
-                "id": 6,
-                "type": "Bakery",
-                "position": [
-                    1472,
-                    1856
-                ]
-            },
-            "daily_activities": [
-                "Clean bakery",
-                "Sell goods to customers",
-                "Prepare dough",
-                "Visit the market",
-                "Go for a walk",
-                "Bake bread",
-                "Wake up early",
-                "Chat with customers",
-                "Relax at home"
-            ]
-        },
-        {
-            "name": "Ulric Fisher",
-            "job": "Merchant",
-            "home": {
-                "id": 116,
-                "type": "House",
-                "position": [
-                    2272,
-                    1344
-                ],
-                "roommates": [
-                    "Kai Fisher",
-                    "Ulric Fisher"
-                ],
-                "name": "The Fisher House"
-            },
-            "workplace": {
-                "id": 0,
-                "type": "Store",
-                "position": [
-                    2144,
-                    1536
-                ]
-            },
-            "daily_activities": [
-                "Attend town gathering",
-                "Arrange merchandise",
-                "Go for a walk",
-                "Count earnings",
-                "Close shop",
-                "Restock inventory",
-                "Open shop",
-                "Bargain with customers",
-                "Chat with neighbors",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Greta Baker",
-            "job": "Hunter",
-            "home": {
-                "id": 55,
-                "type": "House",
-                "position": [
-                    1952,
-                    3232
-                ],
-                "roommates": [
-                    "Ivan Brook",
-                    "Greta Baker"
-                ],
-                "name": "Ivan Brook and Greta Baker's House"
-            },
-            "daily_activities": [
-                "Hunt for game",
-                "Visit the market",
-                "Check traps",
-                "Collect water from well",
-                "Track animals",
-                "Prepare hides",
-                "Sell meat at market",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Sven River",
+            "name": "Ivan Green",
             "job": "Innkeeper",
             "home": {
-                "id": 45,
+                "id": 27,
                 "type": "Cottage",
                 "position": [
                     2048,
-                    2816
+                    2624
                 ],
                 "roommates": [
-                    "Sven River"
+                    "Ivan Green"
                 ],
-                "name": "Sven River's House"
+                "name": "Ivan Green's House"
             },
             "workplace": {
-                "id": 41,
+                "id": 15,
                 "type": "Inn",
                 "position": [
-                    2048,
-                    2720
+                    2080,
+                    2528
                 ]
             },
             "daily_activities": [
-                "Manage staff",
-                "Serve food and drinks",
-                "Welcome new travelers",
-                "Visit the market",
+                "Collect water from well",
                 "Prepare breakfast for guests",
+                "Manage staff",
                 "Close up for the night",
                 "Attend town gathering",
-                "Clean rooms"
+                "Welcome new travelers",
+                "Clean rooms",
+                "Serve food and drinks",
+                "Relax at home"
             ]
         },
         {
-            "name": "Vera Baker",
-            "job": "Baker",
+            "name": "Ivan Stone",
+            "job": "Hunter",
             "home": {
-                "id": 149,
+                "id": 32,
                 "type": "House",
                 "position": [
-                    1536,
-                    2368
+                    2336,
+                    1280
                 ],
                 "roommates": [
-                    "Yara Brook",
-                    "Vera Baker"
+                    "Ivan Stone"
                 ],
-                "name": "Yara Brook and Vera Baker's House"
-            },
-            "workplace": {
-                "id": 11,
-                "type": "Bakery",
-                "position": [
-                    1696,
-                    1984
-                ]
+                "name": "Ivan Stone's House"
             },
             "daily_activities": [
-                "Bake bread",
-                "Clean bakery",
-                "Chat with customers",
-                "Sell goods to customers",
-                "Wake up early",
+                "Eat at the Inn",
+                "Track animals",
                 "Attend town gathering",
-                "Prepare dough",
-                "Chat with neighbors",
-                "Collect water from well",
-                "Return home"
-            ]
-        },
-        {
-            "name": "Tilly White",
-            "job": "Farmer",
-            "home": {
-                "id": 58,
-                "type": "House",
-                "position": [
-                    1888,
-                    3264
-                ],
-                "roommates": [
-                    "Tilly White"
-                ],
-                "name": "Tilly White's House"
-            },
-            "daily_activities": [
-                "Feed animals",
-                "Take produce to market",
-                "Plant new seeds",
-                "Visit the market",
-                "Repair fences",
-                "Tend to crops",
-                "Go for a walk",
-                "Chat with neighbors",
+                "Prepare hides",
+                "Hunt for game",
+                "Check traps",
+                "Sell meat at market",
                 "Return home"
             ]
         }
     ],
     "house_names": {
-        "30": "Greta Cooper and Tilly Fisher's House",
-        "116": "The Fisher House",
-        "149": "Yara Brook and Vera Baker's House",
-        "22": "Kai Green and Hilda Fletcher's House",
-        "233": "Otto Wood and Aiden Green's House",
-        "222": "Ivan Brook's House",
-        "32": "Lily Black's House",
-        "115": "Julia Fisher and Otto Thatcher's House",
-        "148": "Tilly Strong's House",
-        "55": "Ivan Brook and Greta Baker's House",
-        "181": "Greta Fletcher's House",
-        "45": "Sven River's House",
-        "58": "Tilly White's House"
+        "114": "Ulric Thatcher and Bela Gray's House",
+        "13": "Lily Brown and Bela Ford's House",
+        "191": "Hilda Cooper's House",
+        "20": "Ivan Thatcher and Tilly Swift's House",
+        "177": "Xander River and Kai Green's House",
+        "141": "Aiden Dale's House",
+        "25": "Otto Baker and Lily Green's House",
+        "135": "Tilly Cooper's House",
+        "30": "Xander Ford and Lily Baker's House",
+        "115": "Ulric Field's House",
+        "31": "Tilly Field and Doran Hill's House",
+        "27": "Ivan Green's House",
+        "32": "Ivan Stone's House"
     }
 }

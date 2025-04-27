@@ -1,12 +1,13 @@
 """
-Villager Manager - Handles villager creation and management
+Enhanced Villager Manager - Handles villager creation and management using the CharacterSprite system
 """
 import random
 import pygame
-from entities.villager import Villager
+from entities.villager import Villager  # Import the new Villager class (we'll keep the file name the same)
 from ui import Interface
+
 class VillagerManager:
-    """Manages villager creation and behavior."""
+    """Manages villager creation and behavior with enhanced animation."""
     
     def __init__(self, game_state):
         """Initialize the villager manager.
@@ -17,22 +18,39 @@ class VillagerManager:
         self.game_state = game_state
     
     def create_villagers(self, num_villagers):
-        """Create villagers with pathfinding capability.
+        """Create villagers with enhanced animation using CharacterSprite.
         
         Args:
             num_villagers: Number of villagers to create
         """
-        print(f"Creating {num_villagers} villagers...")
+        print(f"Creating {num_villagers} villagers with enhanced animation...")
+        
+        # Character types to cycle through for variety
+        character_types = ["Old_man", "Old_woman", "Man", "Woman", "Boy", "Girl"]
+        
         for i in range(num_villagers):
             # Get initial placement position
             x, y = self._get_initial_villager_position()
             
-            # Create villager
-            villager = Villager(x, y, self.game_state.assets, self.game_state.TILE_SIZE)
+            # Select character type with balanced distribution
+            character_type = character_types[i % len(character_types)]
             
-            # Add to the sprite group
-            self.game_state.villagers.add(villager)
-            print(f"Created villager {i+1}: {villager.name} ({villager.job})")
+            # Create villager with specified character type
+            try:
+                villager = Villager(x, y, self.game_state.assets, self.game_state.TILE_SIZE, character_type)
+                
+                # Add to the sprite group
+                self.game_state.villagers.add(villager)
+                print(f"Created villager {i+1}: {villager.name} ({villager.job}) as {character_type}")
+            except Exception as e:
+                print(f"Error creating villager: {e}")
+                # Try again with random character type as fallback
+                try:
+                    villager = Villager(x, y, self.game_state.assets, self.game_state.TILE_SIZE)
+                    self.game_state.villagers.add(villager)
+                    print(f"Created villager {i+1} with fallback method: {villager.name} ({villager.job})")
+                except Exception as e2:
+                    print(f"Critical error creating villager: {e2}")
         
         print("All villagers created successfully!")
     
@@ -165,10 +183,14 @@ class VillagerManager:
             if sleeping_time and not villager.is_sleeping:
                 villager.is_sleeping = True
                 villager.current_activity = "Sleeping"
+                # Use CharacterSprite animation
+                villager.sprite.sleep()
                 fixed_count += 1
             elif not sleeping_time and villager.is_sleeping:
                 villager.is_sleeping = False
                 villager.current_activity = "Waking up"
+                # Use CharacterSprite animation
+                villager.sprite.wake_up()
                 fixed_count += 1
         
         return fixed_count

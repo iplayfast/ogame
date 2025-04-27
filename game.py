@@ -24,8 +24,63 @@ from ui.Interface import setup_default_callbacks
 # Import game state and managers
 from game_core.game_state import VillageGame
 
+# Import Villager for patching
+from entities.villager import Villager
+
 # Import configuration manager from utils directory
 from utils import config_manager
+
+# Define the missing _ensure_bounds method for Villager class
+def _ensure_bounds_patch(self, village_data):
+    """Helper method to keep villager within village bounds."""
+    padding = self.TILE_SIZE // 4  # Small padding
+    village_w = village_data.get('width', 500)
+    village_h = village_data.get('height', 500)
+
+    if village_w <= 0 or village_h <= 0:
+        return  # Cannot apply bounds
+
+    # Clamp position using max/min
+    self.position.x = max(padding, min(self.position.x, village_w - padding))  # Clamp X
+    self.position.y = max(padding, min(self.position.y, village_h - padding))  # Clamp Y
+
+    # Update rect center after clamping position
+    if hasattr(self, 'rect') and self.rect:  # Check if rect exists
+        current_center = (int(self.position.x), int(self.position.y))
+        if self.rect.center != current_center:
+            self.rect.center = current_center
+    elif hasattr(self, 'image') and self.image:  # If rect is None but image exists, create rect
+        print(f"Warning: Creating missing rect in _ensure_bounds for {self.name}")
+        self.rect = self.image.get_rect(center=(int(self.position.x), int(self.position.y)))
+
+# Add method to handle activity movement if missing
+def handle_activity_movement_patch(self, village_data, dt_ms, current_hour):
+    """Handle movement based on current activity."""
+    # This is a simplified version that at least prevents errors
+    if not hasattr(self, 'destination') or self.destination is None:
+        if hasattr(self, 'wandering_tendency') and random.random() < self.wandering_tendency:
+            if hasattr(self, 'find_new_destination'):
+                self.find_new_destination(village_data)
+    
+    if hasattr(self, 'destination') and self.destination and hasattr(self, 'path') and self.path:
+        if hasattr(self, 'handle_path_movement'):
+            self.handle_path_movement(dt_ms)
+
+def apply_villager_patches():
+    """Apply necessary patches to Villager class."""
+    print("Checking for missing Villager methods...")
+    
+    # Add _ensure_bounds method if missing
+    if not hasattr(Villager, '_ensure_bounds') or not callable(getattr(Villager, '_ensure_bounds')):
+        print("Adding missing _ensure_bounds method to Villager class")
+        setattr(Villager, '_ensure_bounds', _ensure_bounds_patch)
+    
+    # Add handle_activity_movement method if missing
+    if not hasattr(Villager, 'handle_activity_movement') or not callable(getattr(Villager, 'handle_activity_movement')):
+        print("Adding missing handle_activity_movement method to Villager class")
+        setattr(Villager, 'handle_activity_movement', handle_activity_movement_patch)
+    
+    print("Villager patches applied successfully!")
 
 def main():
     """
@@ -37,6 +92,9 @@ def main():
     # Initialize pygame
     pygame.init()
     pygame.mixer.init()
+    
+    # Apply patches to Villager class
+    apply_villager_patches()
     
     # Create the game instance
     game = VillageGame()
