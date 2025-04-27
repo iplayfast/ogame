@@ -162,6 +162,9 @@ def place_zone_buildings_scan(village, zone, target_count, zone_type, building_s
     
     print(f"  Placed {total_buildings_placed}/{target_count} buildings in {zone_type} zone")
 
+
+# In village_buildings.py, find the place_buildings function and modify the building count calculation:
+
 def place_buildings(village):
     """Place buildings in the village in different zones.
     
@@ -190,11 +193,18 @@ def place_buildings(village):
     waterfront_zone, center_zone, outskirts_zone = create_village_zones(village)
     
     # Number of buildings to place in each zone
-    # Scale building count with village size
-    scale_factor = (village.grid_size / 1000) ** 2
-    buildings_in_center = int(8 * scale_factor)
-    buildings_in_waterfront = int(6 * scale_factor)
-    buildings_in_outskirts = int(12 * scale_factor)
+    # MODIFIED: Use linear scaling instead of quadratic to reduce buildings
+    scale_factor = (village.grid_size / 1000)  # Removed the ** 2 to make linear
+    
+    # Check if there's a buildings_density setting in config
+    buildings_density = 1.0  # Default density multiplier
+    if hasattr(village, 'config') and 'buildings' in village.config:
+        buildings_density = village.config['buildings'].get('density', 1.0)
+    
+    # Apply density to base building counts
+    buildings_in_center = int(5 * scale_factor * buildings_density)  # Reduced from 8
+    buildings_in_waterfront = int(4 * scale_factor * buildings_density)  # Reduced from 6
+    buildings_in_outskirts = int(8 * scale_factor * buildings_density)  # Reduced from 12
     
     print(f"Building targets: {buildings_in_center} center, {buildings_in_waterfront} waterfront, {buildings_in_outskirts} outskirts")
     
@@ -218,6 +228,7 @@ def place_buildings(village):
         'buildings': village.buildings,
         'building_positions': village.building_positions
     }
+
 def create_village_zones(village):
     """Create different zones in the village (waterfront, center, outskirts).
     

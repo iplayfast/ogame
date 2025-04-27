@@ -9,7 +9,7 @@ import random
 import math
 from village.village_base import Village
 
-def generate_village(size, assets, tile_size=32):
+def generate_village(size, assets, tile_size=32, config=None):
     """
     Legacy compatibility wrapper for creating a village.
     
@@ -17,12 +17,17 @@ def generate_village(size, assets, tile_size=32):
         size: Base size parameter (will be scaled up)
         assets: Dictionary of game assets
         tile_size: Size of each tile in pixels
+        config: Configuration dictionary
         
     Returns:
         Dictionary containing complete village data
     """
     # Create a new Village instance
     village = Village(size, assets, tile_size)
+    
+    # Store config for later use by building generator
+    if config:
+        village.config = config
     
     # Return the village data for compatibility with existing code
     return village.village_data
