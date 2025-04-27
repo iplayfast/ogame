@@ -107,16 +107,21 @@ class AssetManager:
                 file_path = os.path.join(folder_path, f"{char_type}_{anim_type}.png")
                 if os.path.exists(file_path):
                     try:
-                        # Load animation using AnimatedTileset from sprite.py
+                        # Load and convert image
+                        image = pygame.image.load(file_path).convert_alpha()
+                        
+                        # Ensure we're using the AnimatedTileset from utils.sprite
                         from utils.sprite import AnimatedTileset
-                        animations[anim_type] = AnimatedTileset(file_path, 48, 48, 1)
+                        
+                        # Create AnimatedTileset with the loaded image
+                        animations[anim_type] = AnimatedTileset(image, 48, 48, 1)
                         print(f"Loaded {char_type} {anim_type} animation")
                     except Exception as e:
                         print(f"Error loading {char_type} {anim_type} animation: {e}")
             
             # Store character tilesets
             self.character_tilesets[char_type] = animations
-    
+
     def load_building_assets(self):
         """Load building sprites and textures."""
         buildings_dir = os.path.join(self.root_dir, 'buildings')

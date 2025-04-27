@@ -81,11 +81,7 @@ class UpdateManager:
                 old_sleep_state = villager.is_sleeping if hasattr(villager, 'is_sleeping') else False
                 
                 # Update the villager
-                if hasattr(villager, 'enhanced_update'):
-                    villager.enhanced_update(self.game_state.village_data, current_time, 
-                                          self.game_state.assets, self.game_state.time_manager)
-                else:
-                    villager.update(self.game_state.village_data, current_time, self.game_state.assets)
+                villager.update(self.game_state.village_data, current_time, self.game_state.assets,self.game_state.time_manager)
                 
                 # Check for state changes to notify Interface
                 

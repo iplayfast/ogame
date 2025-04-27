@@ -1,6 +1,6 @@
 {
     "villagers": {
-        "count": 20,
+        "count": 2,
         "comments": "Number of villagers to create at game start"
     },
     "buildings": {
